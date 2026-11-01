@@ -23,7 +23,7 @@ def test_real_skills_middleware_discovers_all_bundled_skills(asynchronous):
     else:
         result = middleware.before_agent(state, Runtime(), {})
     skills = result['skills_metadata']
-    assert {s['name'] for s in skills} == {'master-playbook', 'advanced-visualization', 'svg-diagrams'}
+    assert {s['name'] for s in skills} == {'advanced-visualization', 'svg-diagrams'}
     backend = build_agent_backend(make_runtime())
     for skill in skills:
         assert skill['path'].startswith('/skills/')
@@ -34,7 +34,7 @@ def test_real_skills_middleware_discovers_all_bundled_skills(asynchronous):
 
 
 def test_skill_namespace_rejects_mutation_and_state_shadowing():
-    path = '/skills/master-playbook/SKILL.md'
+    path = '/skills/advanced-visualization/SKILL.md'
     runtime = make_runtime()
     backend = build_agent_backend(runtime)
     original = backend.download_files([path])[0].content
@@ -96,7 +96,7 @@ def test_main_graph_discovers_skills_on_a_real_agent_turn(monkeypatch):
         main.agent.invoke({'messages': [HumanMessage(content='Hello')]}, config)
         state = main.agent.get_state(config).values
         assert {s['name'] for s in state['skills_metadata']} == {
-            'master-playbook', 'advanced-visualization', 'svg-diagrams',
+            'advanced-visualization', 'svg-diagrams',
         }
     finally:
         sys.modules.pop('main', None)

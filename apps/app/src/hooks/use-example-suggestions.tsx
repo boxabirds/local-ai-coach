@@ -1,14 +1,15 @@
 import { useConfigureSuggestions } from "@copilotkit/react-core/v2";
-import { DEMO_EXAMPLES } from "@/components/demo-gallery/demo-data";
+
+/** The first-run entry points (docs/design.md, Frontend design). */
+export const COACH_STARTERS = [
+  { title: "Read Priya's story", message: "Read Priya's story" },
+  { title: "Find my number", message: "Find my number" },
+  { title: "Where am I on the map?", message: "Where am I on the map?" },
+] as const;
 
 export const useExampleSuggestions = () => {
   useConfigureSuggestions({
-    suggestions: DEMO_EXAMPLES.filter(({ id }) =>
-      ["demo-pitch-roll-yaw", "trip", "split", "map"].includes(id),
-    ).map(({ title, prompt }) => ({
-      title,
-      message: prompt,
-    })),
+    suggestions: COACH_STARTERS.map(({ title, message }) => ({ title, message })),
     available: "always",
   });
 };

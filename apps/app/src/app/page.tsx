@@ -12,10 +12,9 @@ import {
   useAgent,
   useCopilotKit,
 } from "@copilotkit/react-core/v2";
-import { useExampleSuggestions, useGenerativeUIExamples } from "@/hooks";
+import { useExampleSuggestions } from "@/hooks";
 
 export default function HomePage() {
-  useGenerativeUIExamples();
   useExampleSuggestions();
   const { agent } = useAgent();
   const { newChat, hasKeys, keysOpen, setKeysOpen } = useProviderKeys();

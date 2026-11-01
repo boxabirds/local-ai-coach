@@ -1,11 +1,6 @@
 """Tests pinning the prompt contract to the canonical generateSandboxedUi tool."""
 
-import inspect
-
-import src.templates as templates
-from src.plan import plan_visualization
 from src.prompt import SYSTEM_PROMPT
-from src.templates import apply_template
 
 
 def test_prompt_uses_generate_sandboxed_ui_not_widget_renderer():
@@ -57,35 +52,3 @@ def test_prompt_forbids_top_level_await_in_js_channels():
     assert "top-level `await`" in normalized or "top-level await" in normalized
     assert "classic script" in normalized
     assert "inside an async function" in normalized
-
-
-def test_plan_visualization_docstring_names_canonical_tool():
-    assert "generateSandboxedUi" in plan_visualization.description
-    assert "widgetRenderer" not in plan_visualization.description
-
-
-def test_templates_docstrings_name_canonical_tool():
-    assert "generateSandboxedUi" in apply_template.description
-    assert "widgetRenderer" not in apply_template.description
-    assert "widgetRenderer" not in inspect.getsource(templates)
-
-
-def test_seed_templates_use_sandbox_bridge_not_global_send_prompt():
-    invoice = next(t for t in templates.SEED_TEMPLATES if t["id"] == "seed-invoice-001")
-    assert invoice["html"], "seed html should load from the frontend source"
-    assert "sendPrompt('" not in invoice["html"]
-    assert "Websandbox.connection.remote.sendPrompt" in invoice["html"]
-
-
-class _FakeRuntime:
-    state: dict = {}
-    tool_call_id = "test-call"
-
-
-def test_apply_template_appends_canonical_translation_note():
-    result = apply_template.func(runtime=_FakeRuntime(), name="Invoice Card")
-    assert "error" not in result
-    note = result.get("usage_note", "")
-    assert "css parameter" in note
-    assert "jsFunctions" in note
-    assert "Websandbox.connection.remote.sendPrompt" in note

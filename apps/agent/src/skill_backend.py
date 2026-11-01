@@ -13,7 +13,7 @@ from deepagents.backends.utils import create_file_data
 from langchain.tools import ToolRuntime
 
 SKILL_SOURCES = ["/skills/"]
-_SKILL_NAMES = ("master-playbook", "advanced-visualization", "svg-diagrams")
+_SKILL_NAMES = ("advanced-visualization", "svg-diagrams")
 _SKILL_ROOT = Path(__file__).resolve().parents[1] / "skills"
 # Fail at startup if a required bundled document is missing. No agent-controlled
 # path is ever passed to the host filesystem.

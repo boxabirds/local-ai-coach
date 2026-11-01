@@ -24,25 +24,20 @@ from src.credentials import (
 )
 from src.visualization_router import JevVisualizationMiddleware
 from src.skill_backend import SKILL_SOURCES, build_agent_backend
-from src.query import query_data
-from src.todos import AgentState, todo_tools
-from src.form import generate_form
-from src.trip_images import get_trip_stop_images
-from src.plan import plan_visualization
 from src.prompt import SYSTEM_PROMPT
 
 load_dotenv()
 
 agent = create_deep_agent(
     model=CredentialScopedModel(fallback=build_model(allow_unconfigured=True)),
-    tools=[query_data, get_trip_stop_images, plan_visualization, *todo_tools, generate_form],
+    # The demo tools are deleted; the coach's tools arrive in build step 4.
+    tools=[],
     middleware=[
         RequestModelMiddleware(),
         CopilotKitMiddleware(),
         JevVisualizationMiddleware(),
         ConsecutiveSystemMessagesMiddleware(),
     ],
-    context_schema=AgentState,
     skills=SKILL_SOURCES,
     backend=build_agent_backend,
     checkpointer=BoundedMemorySaver(max_threads=200),
@@ -82,4 +77,4 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.getenv("PORT", "8123"))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=port, reload=True)

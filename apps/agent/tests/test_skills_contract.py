@@ -6,7 +6,7 @@ import pytest
 
 SKILLS_DIR = Path(__file__).resolve().parents[1] / "skills"
 SKILL_FILES = sorted(SKILLS_DIR.glob("*/SKILL.md"))
-PROCEDURAL_SKILLS = ["master-playbook", "advanced-visualization"]
+PROCEDURAL_SKILLS = ["advanced-visualization"]
 
 STALE_INLINE_STYLE_FENCE = "```html\n<style>"
 
@@ -15,10 +15,10 @@ def skill_text(name: str) -> str:
     return (SKILLS_DIR / name / "SKILL.md").read_text()
 
 
-def test_all_three_skills_present():
+def test_bundled_skills_present():
+    # master-playbook was the demo playbook, deleted in V1 step 2.
     assert [p.parent.name for p in SKILL_FILES] == [
         "advanced-visualization",
-        "master-playbook",
         "svg-diagrams",
     ]
 

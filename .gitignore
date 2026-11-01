@@ -70,3 +70,6 @@ bun.lockb
 # Python bytecode outside apps/agent (curriculum/validate.py)
 __pycache__/
 *.pyc
+
+# pnpm store created inside the repo by the sandboxed install
+.pnpm-store/
