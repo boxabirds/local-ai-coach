@@ -17,6 +17,7 @@ export function CoachCard({
   testId,
   tone = "plain",
   state = "plain",
+  variant = "card",
   cardRef,
 }: {
   label: string;
@@ -24,12 +25,14 @@ export function CoachCard({
   testId: string;
   tone?: "plain" | "pass" | "amber";
   state?: CardState;
+  /** "thread" drops the frame, for content shown as a run of chat bubbles. */
+  variant?: "card" | "thread";
   cardRef?: RefObject<HTMLElement | null>;
 }) {
   return (
     <section
       ref={cardRef as RefObject<HTMLElement>}
-      className={`coach-card coach-card--${tone} coach-card--${state}`}
+      className={`coach-card coach-card--${tone} coach-card--${state} coach-card--${variant}`}
       data-testid={testId}
       data-state={state}
       aria-label={label}

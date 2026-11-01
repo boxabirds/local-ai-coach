@@ -76,6 +76,16 @@ describe("story card", () => {
     expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "active");
   });
 
+  it("TC-25 each beat is its own bubble and the story has no card frame while reading", async () => {
+    await openStory();
+    fireEvent.click(screen.getByRole("button", { name: "Go on" }));
+    const beats = screen.getAllByTestId("coach-beat");
+    expect(beats).toHaveLength(2);
+    for (const beat of beats) expect(beat).toHaveClass("coach-bubble");
+    expect(beats[0]).not.toContainElement(beats[1]);
+    expect(screen.getByTestId("coach-story")).toHaveClass("coach-card--thread");
+  });
+
   it("TC-11 Go on shows the next beat", async () => {
     await openStory();
     fireEvent.click(screen.getByRole("button", { name: "Go on" }));

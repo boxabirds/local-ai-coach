@@ -148,7 +148,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   }
 
   return (
-    <CoachCard label="Story" testId="coach-story" state={active ? "active" : "plain"} cardRef={cardRef}>
+    <CoachCard label="Story" testId="coach-story" state={active ? "active" : "plain"} variant="thread" cardRef={cardRef}>
       {load.state === "loading" && <p className="coach-muted">Loading the story…</p>}
       {load.state === "failed" && (
         <p className="coach-error" role="alert">
@@ -162,7 +162,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
               <div
                 key={i}
                 ref={i === shown - 1 ? newestBeat : undefined}
-                className={animate && i === shown - 1 ? "coach-beat coach-beat--new" : "coach-beat"}
+                className={animate && i === shown - 1 ? "coach-bubble coach-beat coach-beat--new" : "coach-bubble coach-beat"}
                 data-testid="coach-beat"
               >
                 <Markdown text={beat} />
@@ -170,7 +170,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
             ))}
           </div>
           {asking ? (
-            <>
+            <div className={active ? "coach-story__ask coach-story__ask--active" : "coach-story__ask"}>
               {question && <p className="coach-question">{question}</p>}
               <div className="coach-actions" role="group" aria-label={question ?? "Answers"}>
                 {options.map((option, i) => (
@@ -186,7 +186,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           ) : (
             <div className="coach-story__footer">
               <button ref={primaryRef} type="button" className="coach-button coach-button--primary" disabled={!active} onClick={next}>

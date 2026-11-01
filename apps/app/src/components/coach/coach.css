@@ -16,8 +16,8 @@
 
 /* The one card waiting for the learner. */
 .coach-card--active {
-  border-color: var(--color-lilac-dark);
-  box-shadow: 0 0 0 3px var(--color-lilac-light), 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-color: var(--coach-accent);
+  box-shadow: 0 0 0 3px var(--coach-accent-soft), 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 /* Answered cards shrink to a quiet record of what was entered. */
@@ -47,15 +47,17 @@
   color: var(--text-secondary);
 }
 
-.coach-button--primary {
-  border-color: var(--color-lilac-dark);
-  background: var(--color-lilac-light);
+.coach-button--primary,
+.coach-button--primary:hover:not(:disabled) {
+  border-color: var(--coach-accent);
+  background: var(--coach-accent);
+  color: var(--coach-accent-ink);
   font-weight: 600;
 }
 
 .coach-button:focus-visible,
 .coach-number__form input:focus-visible {
-  outline: 2px solid var(--color-lilac-dark);
+  outline: 2px solid var(--coach-accent);
   outline-offset: 2px;
 }
 
@@ -103,13 +105,19 @@
 }
 
 .coach-button {
-  padding: 6px 14px;
+  padding: 7px 14px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-glass);
-  background: var(--color-surface);
-  color: var(--text-primary);
+  border: 1px solid var(--coach-line);
+  background: var(--coach-paper);
+  color: var(--coach-ink);
   font: inherit;
+  font-weight: 500;
   cursor: pointer;
+}
+
+.coach-button:hover:not(:disabled) {
+  border-color: var(--coach-accent);
+  color: var(--coach-accent);
 }
 
 .coach-button:disabled {
@@ -120,8 +128,9 @@
 .coach-button[aria-pressed="true"],
 .coach-button--chosen {
   opacity: 1;
-  border-color: var(--color-lilac-dark);
-  background: var(--color-lilac-light);
+  border-color: var(--coach-accent);
+  background: var(--coach-accent-soft);
+  color: var(--coach-ink);
 }
 
 .coach-link {
@@ -129,7 +138,7 @@
   border: 0;
   background: none;
   padding: 0;
-  color: var(--color-lilac-dark);
+  color: var(--coach-accent);
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
@@ -146,11 +155,68 @@
   color: var(--text-secondary);
 }
 
-/* The story reads inline in the conversation, one beat at a time. */
+/* Coach-only tokens. The criticality hues (grey, amber, red) are not for UI states. */
+:root {
+  --coach-paper: #ffffff;
+  /* "Your turn": the live card and the primary button. Not grey, amber or red. */
+  --coach-accent: #1d4ed8;
+  --coach-accent-ink: #ffffff;
+  --coach-accent-soft: #dbe6ff;
+  /* Secondary buttons: paper with a clearly visible edge and dark text. */
+  --coach-line: #8b8ba3;
+  --coach-ink: #1c1c28;
+}
+
+:root.dark {
+  --coach-paper: #1a1a2e;
+  --coach-accent: #8fb0ff;
+  --coach-accent-ink: #0b1020;
+  --coach-accent-soft: #24304f;
+  --coach-line: #6b6b85;
+  --coach-ink: #ececf3;
+}
+
+/* A card that is really a run of chat messages (the story): no frame of its own. */
+.coach-card--thread,
+.coach-card--thread.coach-card--active {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The story arrives as separate chat bubbles, one per beat. */
 .coach-story__text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+}
+
+.coach-bubble {
+  max-width: 640px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  background: var(--coach-paper);
+}
+
+.coach-bubble .coach-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.coach-story__ask {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--coach-paper);
+}
+
+.coach-story__ask--active {
+  border-color: var(--coach-accent);
+  box-shadow: 0 0 0 3px var(--coach-accent-soft);
 }
 
 .coach-beat--new {
@@ -179,8 +245,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--color-border);
+  padding: 2px 4px;
 }
 
 .coach-story__count {
@@ -284,8 +349,8 @@
 
 .coach-map__stop--read,
 .coach-map__stop--rehearsed {
-  fill: var(--color-lilac-light);
-  stroke: var(--color-lilac-dark);
+  fill: var(--coach-accent-soft);
+  stroke: var(--coach-accent);
 }
 
 .coach-map__stop--reported,
