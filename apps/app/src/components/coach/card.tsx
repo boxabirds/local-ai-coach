@@ -60,12 +60,34 @@ export function useCardFocus<T extends HTMLElement>(active: boolean, align: "sta
   const cardRef = useRef<HTMLElement | null>(null);
   const primaryRef = useRef<T | null>(null);
   useEffect(() => {
-    if (!active) return;
-    cardRef.current?.scrollIntoView?.({ block: align, behavior: "smooth" });
-    const target: HTMLElement | null = primaryRef.current ?? cardRef.current;
-    target?.focus({ preventScroll: true });
+    const card = cardRef.current;
+    if (!active || !card || !isNewestCard(card)) return;
+    card.scrollIntoView?.({ block: align, behavior: "smooth" });
+    const target: HTMLElement = primaryRef.current ?? card;
+    target.focus({ preventScroll: true });
   }, [active, align]);
   return { cardRef, primaryRef };
+}
+
+/**
+ * For cards that only show something (a check result, the map): scroll into
+ * view once, when they arrive as the newest card, and never take focus, so a
+ * learner typing in the message box keeps their cursor. Older cards re-mounted
+ * from the thread never move the reader (upstream's rule in app/page.tsx).
+ */
+export function useArrivalScroll() {
+  const cardRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const card = cardRef.current;
+    if (card && isNewestCard(card)) card.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }, []);
+  return { cardRef };
+}
+
+/** True when no coach card comes after this one in the page. */
+export function isNewestCard(card: HTMLElement): boolean {
+  const cards = card.ownerDocument.querySelectorAll(".coach-card");
+  return cards[cards.length - 1] === card;
 }
 
 /** The parsed answer a completed card sent, or null. */

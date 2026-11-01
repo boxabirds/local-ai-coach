@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import {
+  UseAgentUpdate,
   useAgent,
   useComponent,
   useDefaultRenderTool,
@@ -86,9 +87,12 @@ function platform() {
   return typeof navigator === "undefined" ? "other" : detectPlatform(navigator.userAgent);
 }
 
+/** Re-render the map on state changes only, not on every streamed message. */
+const MAP_UPDATES = [UseAgentUpdate.OnStateChanged];
+
 /** The map reads the coach's progress snapshot from agent state, not from the model's args. */
 function ShowMap({ focus }: { focus?: string }) {
-  const { agent } = useAgent();
+  const { agent } = useAgent({ updates: MAP_UPDATES });
   const snapshot = (agent.state as { progress_snapshot?: MapStation[] } | undefined)?.progress_snapshot;
   return <TubeMap stations={Array.isArray(snapshot) ? snapshot : undefined} focus={focus} />;
 }

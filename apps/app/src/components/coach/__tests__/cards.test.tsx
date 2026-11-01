@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import "@testing-library/jest-dom/vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { StoryCard, STORY_URL } from "../story";
+import { StoryCard, STORY_URL, clearStoryCache } from "../story";
 import { StepCard } from "../step-card";
 import { NumberCard, WHERE_TO_LOOK, detectPlatform } from "../number-card";
 import { CheckResult } from "../check-result";
@@ -28,6 +28,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   scrollIntoView.mockClear();
+  clearStoryCache();
 });
 
 function stubFetch(response: Promise<Response>) {
@@ -81,6 +82,32 @@ describe("story card", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("couldn't load the story");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(respond).not.toHaveBeenCalled();
+  });
+
+  it("TC-42b two story cards for the same story fetch it once", async () => {
+    const fetchMock = stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
+    render(
+      <>
+        <StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="complete" result={JSON.stringify({ read: true, answer: OPTIONS[0] })} />
+        <StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />
+      </>,
+    );
+    await screen.findByRole("button", { name: OPTIONS[0] });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("TC-42c a failed fetch is not cached, so the next card retries", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("", { status: 502 }))
+      .mockResolvedValueOnce(new Response(STORY, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { unmount } = render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
+    await screen.findByRole("alert");
+    unmount();
+    render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
+    expect(await screen.findByRole("button", { name: OPTIONS[0] })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("a completed card, reloaded from the thread, shows the answer it sent and takes no focus", async () => {
@@ -183,9 +210,39 @@ describe("number card", () => {
 });
 
 describe("check result", () => {
-  it("TC-50b a new check result scrolls into view", () => {
+  it("TC-50b a new check result scrolls into view but leaves focus where it was", () => {
+    render(<input aria-label="Message box" />);
+    const box = screen.getByLabelText("Message box");
+    box.focus();
     render(<CheckResult stationId="machine" stepId="machine.2" passed evidence={SAMPLE} note={NOTE} />);
+    expect(scrollIntoView).toHaveBeenCalledExactlyOnceWith({ block: "nearest", behavior: "smooth" });
+    expect(box).toHaveFocus();
+  });
+
+  it("TC-50c older cards re-mounted from the thread do not move the reader", () => {
+    render(
+      <>
+        <CheckResult stationId="machine" stepId="machine.2" passed evidence={SAMPLE} note={NOTE} />
+        <TubeMap />
+      </>,
+    );
+    // Only the newest card (the map) scrolls; the older check result stays put.
     expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByTestId("coach-map"));
+  });
+
+  it("TC-50d an older step card does not take focus from the newest one", () => {
+    render(
+      <>
+        <StepCard stationId="machine" stepId="machine.1" text="Older" where="settings" hasDoIt={false} status="executing" respond={vi.fn()} />
+        <StepCard stationId="machine" stepId="machine.3" text="Newest" where="coach" hasDoIt={false} status="executing" respond={vi.fn()} />
+      </>,
+    );
+    const claims = screen.getAllByRole("button", { name: "I did it" });
+    expect(claims[1]).toHaveFocus();
+    // Only the newest card scrolls; the older one never runs its focus effect.
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getAllByTestId("coach-step")[1]);
   });
 
   it("TC-50 shows the verdict and note, evidence hidden", () => {

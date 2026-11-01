@@ -18,6 +18,27 @@ export type StoryCardProps = {
 
 type Load = { state: "loading" } | { state: "ready"; text: string } | { state: "failed" };
 
+/** One fetch per story per page load; a failure is forgotten so a later card can retry. */
+const stories = new Map<string, Promise<string>>();
+
+export function loadStory(storyId: string): Promise<string> {
+  let pending = stories.get(storyId);
+  if (!pending) {
+    pending = fetch(STORY_URL(storyId)).then((response) => {
+      if (!response.ok) throw new Error(String(response.status));
+      return response.text();
+    });
+    pending.catch(() => stories.delete(storyId));
+    stories.set(storyId, pending);
+  }
+  return pending;
+}
+
+/** For tests: forget every cached story. */
+export function clearStoryCache() {
+  stories.clear();
+}
+
 /** The story's own title: its first heading, without the Markdown marks. */
 function title(text: string): string {
   const heading = text.split("\n").find((line) => /^#{1,4}\s/.test(line));
@@ -35,12 +56,8 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   useEffect(() => {
     if (!storyId) return;
     let live = true;
-    fetch(STORY_URL(storyId))
-      .then(async (response) => {
-        if (!response.ok) throw new Error(String(response.status));
-        const text = await response.text();
-        if (live) setLoad({ state: "ready", text });
-      })
+    loadStory(storyId)
+      .then((text) => live && setLoad({ state: "ready", text }))
       .catch(() => live && setLoad({ state: "failed" }));
     return () => {
       live = false;

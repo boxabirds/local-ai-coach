@@ -1,5 +1,8 @@
+import type React from "react";
 import { render, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+const useAgentMock = vi.hoisted(() => vi.fn(() => ({ agent: { state: {} } })));
 
 const captured = vi.hoisted(() => ({
   useComponent: [] as Array<{ name: string }>,
@@ -17,7 +20,8 @@ vi.mock("@copilotkit/react-core/v2", () => ({
   useDefaultRenderTool: () => {
     captured.useDefaultRenderTool += 1;
   },
-  useAgent: () => ({ agent: { state: {} } }),
+  useAgent: useAgentMock,
+  UseAgentUpdate: { OnMessagesChanged: "OnMessagesChanged", OnStateChanged: "OnStateChanged", OnRunStatusChanged: "OnRunStatusChanged" },
 }));
 
 import { useCoachUI, CheckResultParams } from "../use-coach-ui";
@@ -50,6 +54,13 @@ describe("useCoachUI (TC-57)", () => {
     render(<Probe />);
     const names = [...captured.useHumanInTheLoop, ...captured.useComponent, ...captured.useRenderTool, ...captured.useFrontendTool].map((c) => c.name);
     for (const demo of ["pieChart", "barChart", "scheduleTime", "toggleTheme", "plan_visualization"]) expect(names).not.toContain(demo);
+  });
+
+  it("the map listens to agent state changes only, not every message", () => {
+    render(<Probe />);
+    const map = captured.useComponent.find((c) => c.name === "show_map") as unknown as { render: (p: { focus?: string }) => React.ReactElement };
+    render(map.render({ focus: "machine" }));
+    expect(useAgentMock).toHaveBeenCalledWith({ updates: ["OnStateChanged"] });
   });
 
   it("accepts the stub's sample check result and rejects a malformed one", () => {
