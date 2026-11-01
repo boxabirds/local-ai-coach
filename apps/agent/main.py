@@ -8,8 +8,8 @@ import warnings
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-from copilotkit import CopilotKitMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse
+from copilotkit import CopilotKitMiddleware, LangGraphAGUIAgent
 from ag_ui_langgraph import add_langgraph_fastapi_endpoint
 from deepagents import create_deep_agent
 
@@ -25,6 +25,8 @@ from src.credentials import (
 from src.visualization_router import JevVisualizationMiddleware
 from src.skill_backend import SKILL_SOURCES, build_agent_backend
 from src.prompt import SYSTEM_PROMPT
+from src.coach.curriculum import story_markdown
+from src.coach.stub import stub_graph
 
 load_dotenv()
 
@@ -59,6 +61,29 @@ async def validate_provider_credentials():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/curriculum/story/{story_id}")
+def curriculum_story(story_id: str):
+    """A story listed in curriculum/scope.json, read-only. Anything else is 404."""
+    text = story_markdown(story_id)
+    if text is None:
+        return PlainTextResponse("", status_code=404)
+    return PlainTextResponse(text, media_type="text/markdown; charset=utf-8")
+
+
+# The stub coach (build step 2): no model, no keys, walks chapter 0 and 1.
+# CredentialsMiddleware only gates "/", so this path needs no keys. Select it
+# with LANGGRAPH_DEPLOYMENT_URL=http://127.0.0.1:8123/stub.
+add_langgraph_fastapi_endpoint(
+    app=app,
+    agent=LangGraphAGUIAgent(
+        name="stub_coach",
+        description="Stub coach for Mastering Local AI: fixed wording, no model",
+        graph=stub_graph,
+    ),
+    path="/stub",
+)
 
 
 add_langgraph_fastapi_endpoint(
