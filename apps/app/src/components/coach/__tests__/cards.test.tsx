@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -37,35 +37,162 @@ function stubFetch(response: Promise<Response>) {
   return fetchMock;
 }
 
+const TOTAL_BEATS = 25;
+
+/** Renders an active story card on the real chapter 0 and waits for the first beat. */
+async function openStory(respond = vi.fn()) {
+  stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
+  render(<StoryCard storyId="legal-letter" question="The day after, what did Priya check?" options={OPTIONS} status="executing" respond={respond} />);
+  await screen.findByRole("button", { name: "Go on" });
+  return respond;
+}
+
+const beatsShown = () => screen.getAllByTestId("coach-beat").length;
+const press = (key: string, target: EventTarget = document.body) => {
+  const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+  act(() => {
+    target.dispatchEvent(event);
+  });
+  return event;
+};
+
 describe("story card", () => {
-  it("TC-40 fetches the story through the app route and renders it", async () => {
+  it("TC-40 fetches the story through the app route and shows its title first", async () => {
     const fetchMock = stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
-    render(<StoryCard storyId="legal-letter" question="The day after, what did Priya check?" options={OPTIONS} status="executing" respond={vi.fn()} />);
+    render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
     expect(fetchMock).toHaveBeenCalledWith(STORY_URL("legal-letter"));
     expect(STORY_URL("legal-letter")).toBe("/api/curriculum/story/legal-letter");
     expect(await screen.findByRole("heading", { name: "Chapter 0: The whole game" })).toBeInTheDocument();
+  });
+
+  it("TC-10 opens on the first beat with Go on focused and the count", async () => {
+    await openStory();
+    expect(beatsShown()).toBe(1);
+    expect(screen.getByRole("button", { name: "Go on" })).toHaveFocus();
+    expect(screen.getByTestId("coach-beat-count")).toHaveTextContent(`1 of ${TOTAL_BEATS}`);
+    expect(screen.getByText("Space or Enter")).toBeInTheDocument();
+    expect(screen.queryByText("The day after, what did Priya check?")).not.toBeInTheDocument();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
+    expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "active");
+  });
+
+  it("TC-11 Go on shows the next beat", async () => {
+    await openStory();
+    fireEvent.click(screen.getByRole("button", { name: "Go on" }));
+    expect(beatsShown()).toBe(2);
+    expect(screen.getByTestId("coach-beat-count")).toHaveTextContent(`2 of ${TOTAL_BEATS}`);
+    expect(screen.getByText(/Priya runs a two-person practice/)).toBeInTheDocument();
+  });
+
+  it.each([" ", "Enter"])("TC-12 TC-13 %j on the page shows the next beat", async (key) => {
+    await openStory();
+    const event = press(key);
+    expect(event.defaultPrevented).toBe(true);
+    expect(beatsShown()).toBe(2);
+  });
+
+  it("TC-14 Space in an empty text field continues and types nothing", async () => {
+    await openStory();
+    render(<textarea aria-label="Message box" defaultValue="" />);
+    const box = screen.getByLabelText("Message box");
+    const event = press(" ", box);
+    expect(event.defaultPrevented).toBe(true);
+    expect(beatsShown()).toBe(2);
+  });
+
+  it.each([" ", "Enter"])("TC-15 TC-16 %j in a field with text in it types as normal", async (key) => {
+    await openStory();
+    render(<textarea aria-label="Message box" defaultValue="Why does memory matter" />);
+    const event = press(key, screen.getByLabelText("Message box"));
+    expect(event.defaultPrevented).toBe(false);
+    expect(beatsShown()).toBe(1);
+  });
+
+  it("TC-17 other keys do nothing", async () => {
+    await openStory();
+    expect(press("x").defaultPrevented).toBe(false);
+    expect(press(" ", document.body) && beatsShown()).toBe(2);
+    press("ArrowDown");
+    expect(beatsShown()).toBe(2);
+  });
+
+  it("TC-18 Space on Go on steps exactly once", async () => {
+    await openStory();
+    const goOn = screen.getByRole("button", { name: "Go on" });
+    const event = press(" ", goOn);
+    expect(event.defaultPrevented).toBe(false); // the button's own click handles it
+    fireEvent.click(goOn); // what the browser does next for Space on a focused button
+    expect(beatsShown()).toBe(2);
+  });
+
+  it("TC-19 the last beat brings the question and focuses the first answer", async () => {
+    await openStory();
+    for (let i = 1; i < TOTAL_BEATS; i += 1) press(" ");
+    expect(beatsShown()).toBe(TOTAL_BEATS);
+    expect(screen.queryByRole("button", { name: "Go on" })).not.toBeInTheDocument();
     expect(screen.getByText("The day after, what did Priya check?")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: OPTIONS[0] })).toHaveFocus();
+    press(" ");
+    expect(beatsShown()).toBe(TOTAL_BEATS);
+  });
+
+  it("TC-20 Show the rest goes straight to the question", async () => {
+    await openStory();
+    fireEvent.click(screen.getByRole("button", { name: "Show the rest" }));
+    expect(beatsShown()).toBe(TOTAL_BEATS);
+    expect(screen.getByRole("button", { name: OPTIONS[2] })).toBeInTheDocument();
   });
 
   it("TC-41 an answer responds once, then the card collapses to a record of the answer", async () => {
-    stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
-    const respond = vi.fn();
-    render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={respond} />);
-    fireEvent.click(await screen.findByRole("button", { name: OPTIONS[1] }));
+    const respond = await openStory();
+    fireEvent.click(screen.getByRole("button", { name: "Show the rest" }));
+    fireEvent.click(screen.getByRole("button", { name: OPTIONS[1] }));
     expect(respond).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ read: true, answer: OPTIONS[1] }));
     expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "answered");
     expect(screen.getByTestId("coach-record")).toHaveTextContent(`Chapter 0: The whole game. You answered: ${OPTIONS[1]}`);
     for (const option of OPTIONS) expect(screen.queryByRole("button", { name: option })).not.toBeInTheDocument();
-    expect(respond).toHaveBeenCalledOnce();
   });
 
-  it("TC-41b an active story scrolls to its start and focuses the first answer", async () => {
+  it("TC-21 an answered card ignores the keys", async () => {
     stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
+    render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="complete" result={JSON.stringify({ read: true, answer: OPTIONS[0] })} />);
+    await screen.findByTestId("coach-record");
+    expect(press(" ").defaultPrevented).toBe(false);
+    expect(screen.queryByTestId("coach-beat")).not.toBeInTheDocument();
+  });
+
+  it("TC-22 a loading or failed card ignores the keys", async () => {
+    stubFetch(new Promise(() => undefined));
+    const { unmount } = render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
+    expect(press(" ").defaultPrevented).toBe(false);
+    unmount();
+    clearStoryCache();
+    stubFetch(Promise.resolve(new Response("", { status: 502 })));
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
-    const first = await screen.findByRole("button", { name: OPTIONS[0] });
-    expect(first).toHaveFocus();
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
-    expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "active");
+    await screen.findByRole("alert");
+    expect(press(" ").defaultPrevented).toBe(false);
+    expect(screen.queryByRole("button", { name: "Go on" })).not.toBeInTheDocument();
+  });
+
+  it("TC-23 the key listener goes when the card does", async () => {
+    await openStory();
+    cleanup();
+    expect(press(" ").defaultPrevented).toBe(false);
+  });
+
+  it("TC-24 with reduced motion turned on, beats do not animate", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce"), media: query, addEventListener() {}, removeEventListener() {} }));
+    await openStory();
+    press(" ");
+    expect(screen.getAllByTestId("coach-beat")[1]).not.toHaveClass("coach-beat--new");
+  });
+
+  it("without reduced motion, the newest beat eases in", async () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+    await openStory();
+    press(" ");
+    expect(screen.getAllByTestId("coach-beat")[1]).toHaveClass("coach-beat--new");
+    expect(screen.getAllByTestId("coach-beat")[0]).not.toHaveClass("coach-beat--new");
   });
 
   it("TC-41c a collapsed story can be read again", async () => {
@@ -92,7 +219,7 @@ describe("story card", () => {
         <StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />
       </>,
     );
-    await screen.findByRole("button", { name: OPTIONS[0] });
+    await screen.findByRole("button", { name: "Go on" });
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
@@ -106,7 +233,7 @@ describe("story card", () => {
     await screen.findByRole("alert");
     unmount();
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
-    expect(await screen.findByRole("button", { name: OPTIONS[0] })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Go on" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
