@@ -221,6 +221,10 @@ describe("story card", () => {
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="complete" result={JSON.stringify({ read: true, answer: OPTIONS[0] })} />);
     fireEvent.click(await screen.findByRole("button", { name: "Read it again" }));
     expect(screen.getByRole("heading", { name: "Chapter 0: The whole game" })).toBeInTheDocument();
+    // Read again uses the same bubbles as reading: one per sentence, all shown.
+    const bubbles = screen.getAllByTestId("coach-beat");
+    expect(bubbles).toHaveLength(TOTAL_BEATS);
+    for (const bubble of bubbles) expect(bubble).toHaveClass("coach-bubble");
   });
 
   it("TC-42 a failed fetch shows an error and never responds", async () => {

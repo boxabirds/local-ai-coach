@@ -321,16 +321,21 @@ async def walk(state: StubState, config: RunnableConfig) -> dict[str, Any]:
                 turn = Turn(text=SAVE_FAILED)
                 record = load(folder)
 
-    message_id = str(uuid.uuid4())
-    tool_calls = []
+    # The browser files a streamed tool call under a message whose id is the call's
+    # own id (ag-ui-langgraph sets parentMessageId to it). The returned messages must
+    # use the same ids, or the end-of-run snapshot replaces the card with a "new"
+    # message and the browser redraws it, losing what the learner had done.
+    messages: list[AIMessage] = []
     if turn.text:
-        await _emit_text(config, message_id, turn.text)
+        text_id = str(uuid.uuid4())
+        await _emit_text(config, text_id, turn.text)
+        messages.append(AIMessage(id=text_id, content=turn.text))
     if turn.tool:
         call_id = str(uuid.uuid4())
         await _emit_tool_call(config, call_id, turn.tool, turn.args or {})
-        tool_calls.append({"id": call_id, "name": turn.tool, "args": turn.args or {}, "type": "tool_call"})
-    message = AIMessage(id=message_id, content=turn.text or "", tool_calls=tool_calls)
-    return {"messages": [message], "progress_snapshot": snapshot(record)}
+        call = {"id": call_id, "name": turn.tool, "args": turn.args or {}, "type": "tool_call"}
+        messages.append(AIMessage(id=call_id, content="", tool_calls=[call]))
+    return {"messages": messages, "progress_snapshot": snapshot(record)}
 
 
 def build_graph():

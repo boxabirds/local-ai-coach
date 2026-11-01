@@ -350,3 +350,41 @@ def test_tc35_unknown_or_traversal_story_is_404(client, story_id):
     # An unknown id gets an empty body; an encoded slash never reaches the route
     # and gets FastAPI's generic 404. Neither may carry any curriculum text.
     assert response.text in ("", '{"detail":"Not Found"}')
+
+
+def _snapshot_messages(events: list[dict]) -> list[dict]:
+    return [e for e in events if e["type"] == "MESSAGES_SNAPSHOT"][-1]["messages"]
+
+
+@pytest.mark.parametrize(
+    "messages",
+    [
+        [{"id": "m1", "role": "user", "content": "Read Priya's story"}],  # tool call only
+        [{"id": "m1", "role": "user", "content": "Find my number"}],  # tool call only
+        _story_answer_messages(),  # text only
+    ],
+)
+def test_tc38_streamed_ids_match_the_snapshot(client, messages):
+    """A card streamed under one message id must keep it in the end-of-run snapshot,
+    or the browser redraws the card and loses the learner's progress in it."""
+    events = _events(client.post("/stub", json=_run_input(messages)))
+    snapshot_ids = {m["id"] for m in _snapshot_messages(events)}
+    for start in (e for e in events if e["type"] == "TOOL_CALL_START"):
+        holder = next(m for m in _snapshot_messages(events) if any(t["id"] == start["toolCallId"] for t in m.get("toolCalls") or []))
+        assert holder["id"] == start["parentMessageId"]
+    for text in (e for e in events if e["type"] == "TEXT_MESSAGE_START"):
+        assert text["messageId"] in snapshot_ids
+
+
+def test_tc39_do_it_sends_text_and_card_as_two_messages_with_their_own_ids(client):
+    messages = [
+        {"id": "m1", "role": "user", "content": "Find my number"},
+        {"id": "a1", "role": "assistant", "content": "", "toolCalls": [{"id": "c1", "type": "function", "function": {"name": "step_card", "arguments": json.dumps({"station_id": "machine", "step_id": "machine.1"})}}]},
+        {"id": "t1", "role": "tool", "toolCallId": "c1", "content": json.dumps({"action": "do_it"})},
+    ]
+    events = _events(client.post("/stub", json=_run_input(messages)))
+    text_id = next(e["messageId"] for e in events if e["type"] == "TEXT_MESSAGE_START")
+    start = next(e for e in events if e["type"] == "TOOL_CALL_START")
+    assert text_id != start["parentMessageId"]
+    ids = [m["id"] for m in _snapshot_messages(events)]
+    assert text_id in ids and start["parentMessageId"] in ids

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { Markdown } from "./markdown";
 import { storySentences } from "./story-beats";
@@ -37,6 +37,34 @@ export function useContinueKeys(enabled: boolean, onContinue: () => void) {
     document.addEventListener("keydown", onKey, { capture: true });
     return () => document.removeEventListener("keydown", onKey, { capture: true });
   }, [enabled, onContinue]);
+}
+
+/** The story's bubbles: the one way a story is drawn, while reading and when read again. */
+function StoryBubbles({
+  units,
+  shown,
+  animateNewest = false,
+  newestRef,
+}: {
+  units: string[];
+  shown: number;
+  animateNewest?: boolean;
+  newestRef?: Ref<HTMLDivElement>;
+}) {
+  return (
+    <div className="coach-story__text" aria-live="polite">
+      {units.slice(0, shown).map((unit, i) => (
+        <div
+          key={i}
+          ref={i === shown - 1 ? newestRef : undefined}
+          className={animateNewest && i === shown - 1 ? "coach-bubble coach-beat coach-beat--new" : "coach-bubble coach-beat"}
+          data-testid="coach-beat"
+        >
+          <Markdown text={unit} />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function prefersReducedMotion(): boolean {
@@ -146,7 +174,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
             {reopened ? "Hide the story" : "Read it again"}
           </button>
         )}
-        {reopened && load.state === "ready" && <Markdown text={load.text} />}
+        {reopened && load.state === "ready" && <StoryBubbles units={beats} shown={beats.length} />}
       </CoachCard>
     );
   }
@@ -161,18 +189,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
       )}
       {load.state === "ready" && (
         <>
-          <div className="coach-story__text" aria-live="polite">
-            {beats.slice(0, shown).map((beat, i) => (
-              <div
-                key={i}
-                ref={i === shown - 1 ? newestBeat : undefined}
-                className={animate && i === shown - 1 ? "coach-bubble coach-beat coach-beat--new" : "coach-bubble coach-beat"}
-                data-testid="coach-beat"
-              >
-                <Markdown text={beat} />
-              </div>
-            ))}
-          </div>
+          <StoryBubbles units={beats} shown={shown} animateNewest={animate} newestRef={newestBeat} />
           {asking ? (
             <div className={active ? "coach-story__ask coach-story__ask--active" : "coach-story__ask"}>
               {question && <p className="coach-question">{question}</p>}
