@@ -13,11 +13,13 @@ import {
 } from "@copilotkit/react-core/v2";
 import { useExampleSuggestions } from "@/hooks";
 import { useCoachUI } from "@/hooks/use-coach-ui";
+import { usePersistedChat, type PersistableAgent } from "@/hooks/use-persisted-chat";
 
 export default function HomePage() {
   useCoachUI();
   useExampleSuggestions();
   const { agent } = useAgent();
+  usePersistedChat(agent as unknown as PersistableAgent);
   const { newChat, hasKeys, keysOpen, setKeysOpen } = useProviderKeys();
   const { copilotkit } = useCopilotKit();
   const [error, setError] = useState<string | null>(null);

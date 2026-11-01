@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { browserStorage, clearChat } from "@/lib/chat-store";
 
 export type ProviderKeys = { openai: string; jev: string };
 type ProviderKeysContextValue = {
@@ -23,7 +24,12 @@ export function ProviderKeysProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState(0);
   const [draft, setDraft] = useState("");
   const [keysOpen, setKeysOpen] = useState(false);
-  const newChat = () => { setDraft(""); setSession((value) => value + 1); };
+  // New chat is the one deliberate way to start again: forget the kept conversation too.
+  const newChat = () => {
+    clearChat(browserStorage());
+    setDraft("");
+    setSession((value) => value + 1);
+  };
   return (
     <ProviderKeysContext.Provider value={{
       headers: keys ? { "x-openai-api-key": keys.openai, "x-jev-api-key": keys.jev } : undefined,
