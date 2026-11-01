@@ -309,7 +309,10 @@ def test_tc31_story_result_replies_with_text_and_records_read(client, tmp_path):
     assert text == stub.STORY_DONE
     assert stub.load(tmp_path)["stations"]["d_legal"]["status"] == "read"
     snapshots = [e for e in events if e["type"] == "STATE_SNAPSHOT"]
-    assert snapshots[-1]["snapshot"]["progress_snapshot"]["d_legal"] == "read"
+    stations = {item["id"]: item for item in snapshots[-1]["snapshot"]["progress_snapshot"]}
+    assert stations["d_legal"] == {"id": "d_legal", "name": "Private legal drafting", "status": "read"}
+    assert list(stations) == ["d_legal", "machine", "localchat", "prove"]
+    assert stations["machine"]["status"] == "unseen"
 
 
 def test_tc32_stub_never_touches_the_network(client, monkeypatch):

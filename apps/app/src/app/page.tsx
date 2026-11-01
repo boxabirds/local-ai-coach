@@ -13,8 +13,10 @@ import {
   useCopilotKit,
 } from "@copilotkit/react-core/v2";
 import { useExampleSuggestions } from "@/hooks";
+import { useCoachUI } from "@/hooks/use-coach-ui";
 
 export default function HomePage() {
+  useCoachUI();
   useExampleSuggestions();
   const { agent } = useAgent();
   const { newChat, hasKeys, keysOpen, setKeysOpen } = useProviderKeys();

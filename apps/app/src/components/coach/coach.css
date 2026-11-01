@@ -1,0 +1,247 @@
+/* Coach cards (components/coach). Uses the theme tokens in app/globals.css. */
+
+.coach-card {
+  margin: 8px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-glass);
+  border-radius: var(--radius-lg);
+  background: var(--color-glass-subtle);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 720px;
+}
+
+.coach-card--pass {
+  border-color: var(--color-mint-dark);
+}
+
+.coach-card--amber {
+  border-color: #d9a03f;
+}
+
+.coach-card__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.coach-step__text,
+.coach-question {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.coach-question {
+  font-weight: 600;
+}
+
+.coach-muted {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.coach-error {
+  margin: 0;
+  color: #b3261e;
+}
+
+.coach-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.coach-button {
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-glass);
+  background: var(--color-surface);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.coach-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.coach-button[aria-pressed="true"],
+.coach-button--chosen {
+  opacity: 1;
+  border-color: var(--color-lilac-dark);
+  background: var(--color-lilac-light);
+}
+
+.coach-link {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--color-lilac-dark);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.coach-hint {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.coach-hint__text {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.coach-story__text {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.coach-markdown p,
+.coach-markdown ul {
+  margin: 0 0 10px;
+  line-height: 1.55;
+}
+
+.coach-markdown h3,
+.coach-markdown h4 {
+  margin: 14px 0 6px;
+  font-weight: 600;
+}
+
+.coach-markdown ul {
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.coach-number__form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.coach-number__label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.coach-number__form input {
+  width: 8rem;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-glass);
+  background: var(--color-surface);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.coach-check__verdict {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.coach-check__note {
+  margin: 0;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.coach-evidence {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coach-pre {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.coach-pre--terminal {
+  background: #1d1d1f;
+  color: #e8e8ea;
+}
+
+.coach-map {
+  width: 100%;
+  height: auto;
+}
+
+.coach-map__line {
+  stroke: var(--text-tertiary);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.coach-map__stop {
+  fill: var(--color-surface);
+  stroke: var(--text-tertiary);
+  stroke-width: 4;
+}
+
+.coach-map__stop--read,
+.coach-map__stop--rehearsed {
+  fill: var(--color-lilac-light);
+  stroke: var(--color-lilac-dark);
+}
+
+.coach-map__stop--reported,
+.coach-map__stop--assisted {
+  fill: var(--color-surface);
+  stroke: #d9a03f;
+}
+
+.coach-map__stop--verified {
+  fill: var(--color-mint);
+  stroke: var(--color-mint-dark);
+}
+
+.coach-map__stop--skipped {
+  stroke-dasharray: 4 4;
+}
+
+.coach-map__stop--focus {
+  stroke-width: 6;
+}
+
+.coach-map__name {
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.coach-map__status {
+  font-size: 12px;
+  fill: var(--text-secondary);
+}
+
+.coach-stub-banner {
+  margin: 0 auto 8px;
+  padding: 6px 12px;
+  max-width: 720px;
+  border-radius: var(--radius-md);
+  border: 1px dashed #d9a03f;
+  font-size: 13px;
+  text-align: center;
+  color: var(--text-secondary);
+}

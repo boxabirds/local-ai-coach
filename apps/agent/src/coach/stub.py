@@ -275,16 +275,20 @@ def save(folder: Path, record: dict[str, Any]) -> None:
         raise
 
 
-def snapshot(record: dict[str, Any]) -> dict[str, str]:
-    """The V1 station statuses the map shows."""
-    return {sid: record["stations"].get(sid, {}).get("status", STATUS_ORDER[0]) for sid in curriculum.v1_stations()}
+def snapshot(record: dict[str, Any]) -> list[dict[str, str]]:
+    """The V1 stations the map shows, in reading order, with name and status."""
+    names = curriculum.station_names()
+    return [
+        {"id": sid, "name": names.get(sid, sid), "status": record["stations"].get(sid, {}).get("status", STATUS_ORDER[0])}
+        for sid in curriculum.v1_stations()
+    ]
 
 
 # ------------------------------------------------------------------ the graph
 
 
 class StubState(MessagesState):
-    progress_snapshot: dict[str, str]
+    progress_snapshot: list[dict[str, str]]
 
 
 async def _emit_text(config: RunnableConfig, message_id: str, text: str) -> None:
