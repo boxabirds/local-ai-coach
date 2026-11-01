@@ -1,16 +1,62 @@
 /* Coach cards (components/coach). Uses the theme tokens in app/globals.css. */
 
 .coach-card {
-  margin: 8px 0;
-  padding: 14px 16px;
-  border: 1px solid var(--color-border-glass);
+  margin: 12px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border, #d9d9e0);
   border-radius: var(--radius-lg);
-  background: var(--color-glass-subtle);
+  background: var(--color-surface, #fff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
   gap: 10px;
   max-width: 720px;
+}
+
+/* The one card waiting for the learner. */
+.coach-card--active {
+  border-color: var(--color-lilac-dark);
+  box-shadow: 0 0 0 3px var(--color-lilac-light), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Answered cards shrink to a quiet record of what was entered. */
+.coach-card--answered {
+  padding: 10px 14px;
+  gap: 6px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-secondary);
+}
+
+.coach-card:focus {
+  outline: none;
+}
+
+.coach-record {
+  margin: 0;
+  font-size: 14px;
+}
+
+.coach-record__label {
+  color: var(--text-tertiary);
+}
+
+.coach-step__text--done {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.coach-button--primary {
+  border-color: var(--color-lilac-dark);
+  background: var(--color-lilac-light);
+  font-weight: 600;
+}
+
+.coach-button:focus-visible,
+.coach-number__form input:focus-visible {
+  outline: 2px solid var(--color-lilac-dark);
+  outline-offset: 2px;
 }
 
 .coach-card--pass {
@@ -100,10 +146,10 @@
   color: var(--text-secondary);
 }
 
+/* The story reads inline in the conversation: the chat is the only scroller. */
 .coach-story__text {
-  max-height: 420px;
-  overflow-y: auto;
-  padding-right: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border, #d9d9e0);
 }
 
 .coach-markdown p,

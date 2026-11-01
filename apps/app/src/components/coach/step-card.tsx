@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CoachCard, parseResult, type CardStatus, type Respond } from "./card";
+import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { inline } from "./markdown";
 
 export type StepAction = "claim" | "do_it" | "skip";
@@ -15,7 +15,7 @@ const WHERE: Record<string, string> = {
   read: "Read this",
 };
 
-const ACTION_LABEL: Record<StepAction, string> = {
+export const ACTION_LABEL: Record<StepAction, string> = {
   claim: "I did it",
   do_it: "Do it for me",
   skip: "Skip",
@@ -37,7 +37,10 @@ export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false,
   const [hintOpen, setHintOpen] = useState(false);
   const [chosen, setChosen] = useState<StepAction | null>(null);
   const answered = parseResult<{ action?: StepAction }>(result)?.action ?? chosen;
+  const active = status === "executing" && Boolean(respond) && !answered;
+  const { cardRef, primaryRef } = useCardFocus<HTMLButtonElement>(active);
   const actions: StepAction[] = hasDoIt ? ["claim", "do_it", "skip"] : ["claim", "skip"];
+  const label = WHERE[where] ?? "Your next step";
 
   const act = (action: StepAction) => {
     if (!respond || answered) return;
@@ -45,8 +48,19 @@ export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false,
     respond(JSON.stringify({ action }));
   };
 
+  if (answered) {
+    return (
+      <CoachCard label={label} testId="coach-step" state="answered">
+        <p className="coach-step__text coach-step__text--done" data-step-id={stepId}>
+          {inline(text)}
+        </p>
+        <AnswerRecord label="You chose:" value={ACTION_LABEL[answered] ?? answered} />
+      </CoachCard>
+    );
+  }
+
   return (
-    <CoachCard label={WHERE[where] ?? "Your next step"} testId="coach-step">
+    <CoachCard label={label} testId="coach-step" state={active ? "active" : "plain"} cardRef={cardRef}>
       <p className="coach-step__text" data-step-id={stepId}>
         {inline(text)}
       </p>
@@ -73,10 +87,10 @@ export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false,
         {actions.map((action) => (
           <button
             key={action}
+            ref={action === "claim" ? primaryRef : undefined}
             type="button"
-            className={answered === action ? "coach-button coach-button--chosen" : "coach-button"}
-            disabled={status !== "executing" || !respond || Boolean(answered)}
-            aria-pressed={answered === action}
+            className={action === "claim" ? "coach-button coach-button--primary" : "coach-button"}
+            disabled={!active}
             onClick={() => act(action)}
           >
             {ACTION_LABEL[action]}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CoachCard } from "./card";
+import { CoachCard, useCardFocus } from "./card";
 
 export type Evidence = { probe: string; cmd: string; matched: string[] };
 
@@ -15,8 +15,9 @@ export type CheckResultProps = {
 
 export function CheckResult({ stepId, passed, evidence = [], note }: CheckResultProps) {
   const [open, setOpen] = useState(false);
+  const { cardRef } = useCardFocus(true);
   return (
-    <CoachCard label="Check" testId="coach-check" tone={passed ? "pass" : "amber"}>
+    <CoachCard label="Check" testId="coach-check" tone={passed ? "pass" : "amber"} cardRef={cardRef}>
       <p className="coach-check__verdict" data-step-id={stepId}>
         {passed ? "Passed" : "Not yet"}
       </p>

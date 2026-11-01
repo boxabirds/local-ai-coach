@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CoachCard, parseResult, type CardStatus, type Respond } from "./card";
+import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { inline } from "./markdown";
 
 export type RecapCardProps = {
@@ -20,28 +20,43 @@ export function RecapCard({ itemId, question = "", kind = "recap", options, stat
   const [draft, setDraft] = useState("");
   const [sent, setSent] = useState<Answer | null>(null);
   const answered = parseResult<Answer>(result) ?? sent;
-  const locked = status !== "executing" || !respond || answered !== null;
+  const active = status === "executing" && Boolean(respond) && answered === null;
+  const { cardRef, primaryRef } = useCardFocus<HTMLButtonElement & HTMLInputElement>(active);
+  const label = kind === "redo" ? "Now you" : "Quick recap";
 
   const send = (answer: Answer) => {
-    if (locked || !respond) return;
+    if (!active || !respond) return;
     setSent(answer);
     respond(JSON.stringify(answer));
   };
 
+  const prompt = (
+    <p className="coach-step__text" data-item-id={itemId}>
+      {inline(question)}
+    </p>
+  );
+
+  if (answered !== null) {
+    return (
+      <CoachCard label={label} testId="coach-recap" state="answered">
+        {prompt}
+        <AnswerRecord label={answered.skipped ? "You skipped it" : "You answered:"} value={answered.skipped ? "" : answered.answer} />
+      </CoachCard>
+    );
+  }
+
   return (
-    <CoachCard label={kind === "redo" ? "Now you" : "Quick recap"} testId="coach-recap">
-      <p className="coach-step__text" data-item-id={itemId}>
-        {inline(question)}
-      </p>
+    <CoachCard label={label} testId="coach-recap" state={active ? "active" : "plain"} cardRef={cardRef}>
+      {prompt}
       {options && options.length > 0 ? (
         <div className="coach-actions" role="group" aria-label={question}>
-          {options.map((option) => (
+          {options.map((option, i) => (
             <button
               key={option}
+              ref={i === 0 ? primaryRef : undefined}
               type="button"
               className="coach-button"
-              disabled={locked}
-              aria-pressed={answered?.answer === option}
+              disabled={!active}
               onClick={() => send({ answer: option })}
             >
               {option}
@@ -57,18 +72,19 @@ export function RecapCard({ itemId, question = "", kind = "recap", options, stat
           }}
         >
           <input
+            ref={primaryRef}
             type="text"
             aria-label="Your answer"
-            value={answered?.answer ?? draft}
-            disabled={locked}
+            value={draft}
+            disabled={!active}
             onChange={(event) => setDraft(event.target.value)}
           />
-          <button type="submit" className="coach-button" disabled={locked || !draft.trim()}>
+          <button type="submit" className="coach-button coach-button--primary" disabled={!active || !draft.trim()}>
             Answer
           </button>
         </form>
       )}
-      <button type="button" className="coach-link" disabled={locked} onClick={() => send({ skipped: true })}>
+      <button type="button" className="coach-link" disabled={!active} onClick={() => send({ skipped: true })}>
         Skip for now
       </button>
     </CoachCard>

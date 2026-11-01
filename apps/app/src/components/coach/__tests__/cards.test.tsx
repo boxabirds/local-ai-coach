@@ -21,9 +21,13 @@ const OPTIONS = ["Where her words went.", "How fast the model answered.", "How b
 const SAMPLE = [{ probe: "memory", cmd: "sysctl -n hw.memsize", matched: ["17179869184"] }];
 const NOTE = "Sample result. The real probe arrives in step 3.";
 
+const scrollIntoView = vi.fn();
+Element.prototype.scrollIntoView = scrollIntoView;
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  scrollIntoView.mockClear();
 });
 
 function stubFetch(response: Promise<Response>) {
@@ -42,15 +46,32 @@ describe("story card", () => {
     expect(screen.getByText("The day after, what did Priya check?")).toBeInTheDocument();
   });
 
-  it("TC-41 an answer responds once with read and the answer, then locks the options", async () => {
+  it("TC-41 an answer responds once, then the card collapses to a record of the answer", async () => {
     stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
     const respond = vi.fn();
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={respond} />);
     fireEvent.click(await screen.findByRole("button", { name: OPTIONS[1] }));
     expect(respond).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ read: true, answer: OPTIONS[1] }));
-    for (const option of OPTIONS) expect(screen.getByRole("button", { name: option })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: OPTIONS[0] }));
+    expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "answered");
+    expect(screen.getByTestId("coach-record")).toHaveTextContent(`Chapter 0: The whole game. You answered: ${OPTIONS[1]}`);
+    for (const option of OPTIONS) expect(screen.queryByRole("button", { name: option })).not.toBeInTheDocument();
     expect(respond).toHaveBeenCalledOnce();
+  });
+
+  it("TC-41b an active story scrolls to its start and focuses the first answer", async () => {
+    stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
+    render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
+    const first = await screen.findByRole("button", { name: OPTIONS[0] });
+    expect(first).toHaveFocus();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
+    expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "active");
+  });
+
+  it("TC-41c a collapsed story can be read again", async () => {
+    stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
+    render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="complete" result={JSON.stringify({ read: true, answer: OPTIONS[0] })} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Read it again" }));
+    expect(screen.getByRole("heading", { name: "Chapter 0: The whole game" })).toBeInTheDocument();
   });
 
   it("TC-42 a failed fetch shows an error and never responds", async () => {
@@ -62,10 +83,11 @@ describe("story card", () => {
     expect(respond).not.toHaveBeenCalled();
   });
 
-  it("a completed card shows the answer it sent", async () => {
+  it("a completed card, reloaded from the thread, shows the answer it sent and takes no focus", async () => {
     stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="complete" result={JSON.stringify({ read: true, answer: OPTIONS[2] })} />);
-    expect(await screen.findByRole("button", { name: OPTIONS[2] })).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByTestId("coach-record")).toHaveTextContent(OPTIONS[2]);
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });
 
@@ -89,6 +111,7 @@ describe("step card", () => {
     render(<StepCard {...props} hasDoIt status="executing" respond={respond} />);
     fireEvent.click(screen.getByRole("button", { name: label }));
     expect(respond).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ action }));
+    expect(screen.getByTestId("coach-record")).toHaveTextContent(`You chose: ${label}`);
   });
 
   it("TC-45 no Do it for me when the step has no help", () => {
@@ -97,14 +120,21 @@ describe("step card", () => {
     expect(screen.getByRole("button", { name: "I did it" })).toBeInTheDocument();
   });
 
-  it("TC-46 every choice is disabled after one is made", () => {
+  it("TC-46 after a choice the controls are gone and the step reads as answered", () => {
     const respond = vi.fn();
     render(<StepCard {...props} hasDoIt status="executing" respond={respond} />);
     fireEvent.click(screen.getByRole("button", { name: "Skip" }));
-    const group = screen.getByRole("group", { name: "What did you do?" });
-    for (const button of within(group).getAllByRole("button")) expect(button).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "I did it" }));
+    expect(screen.queryByRole("group", { name: "What did you do?" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "I did it" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("coach-step")).toHaveAttribute("data-state", "answered");
     expect(respond).toHaveBeenCalledOnce();
+  });
+
+  it("TC-46b an active step scrolls into view and focuses I did it", () => {
+    render(<StepCard {...props} hasDoIt status="executing" respond={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "I did it" })).toHaveFocus();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
+    expect(screen.getByTestId("coach-step")).toHaveAttribute("data-state", "active");
   });
 
   it("is not clickable while the call is still streaming", () => {
@@ -122,7 +152,13 @@ describe("number card", () => {
     fireEvent.change(screen.getByLabelText("Memory in GB"), { target: { value: "16" } });
     fireEvent.click(screen.getByRole("button", { name: "Check it" }));
     expect(respond).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ value: 16 }));
-    expect(screen.getByLabelText("Memory in GB")).toBeDisabled();
+    expect(screen.queryByLabelText("Memory in GB")).not.toBeInTheDocument();
+    expect(screen.getByTestId("coach-record")).toHaveTextContent("You said: 16 GB");
+  });
+
+  it("TC-47b an active number card focuses its field, so typing goes straight in", () => {
+    render(<NumberCard {...props} status="executing" respond={vi.fn()} />);
+    expect(screen.getByLabelText("Memory in GB")).toHaveFocus();
   });
 
   it.each(["", "0", "-2", "abc"])("TC-48 refuses %j", (value) => {
@@ -147,6 +183,11 @@ describe("number card", () => {
 });
 
 describe("check result", () => {
+  it("TC-50b a new check result scrolls into view", () => {
+    render(<CheckResult stationId="machine" stepId="machine.2" passed evidence={SAMPLE} note={NOTE} />);
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+  });
+
   it("TC-50 shows the verdict and note, evidence hidden", () => {
     render(<CheckResult stationId="machine" stepId="machine.2" passed evidence={SAMPLE} note={NOTE} />);
     expect(screen.getByText("Passed")).toBeInTheDocument();
@@ -203,7 +244,8 @@ describe("run confirm and recap", () => {
     expect(screen.getByText("curl -s -m 10 http://thing1:8080/v1/models")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: label }));
     expect(respond).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ confirmed }));
-    expect(screen.getByRole("button", { name: "Run" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Run" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("coach-record")).toHaveTextContent(`You chose: ${label}`);
   });
 
   it("TC-56 an option answer and a skip each respond once", () => {
@@ -217,6 +259,7 @@ describe("run confirm and recap", () => {
     fireEvent.click(screen.getByRole("button", { name: "Skip for now" }));
     expect(respond).toHaveBeenLastCalledWith(JSON.stringify({ skipped: true }));
     expect(respond).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId("coach-record")).toHaveTextContent("You skipped it");
   });
 
   it("a free-text recap needs some text before it can be answered", async () => {

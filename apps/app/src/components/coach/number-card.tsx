@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CoachCard, parseResult, type CardStatus, type Respond } from "./card";
+import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { inline } from "./markdown";
 
 export type Platform = "mac" | "linux" | "other";
@@ -33,18 +33,27 @@ export function NumberCard({ prompt = "", unit = "GB", hint, platform, status, r
   const [draft, setDraft] = useState("");
   const [sent, setSent] = useState<number | null>(null);
   const answered = parseResult<{ value?: number }>(result)?.value ?? sent;
+  const active = status === "executing" && Boolean(respond) && answered === null;
+  const { cardRef, primaryRef } = useCardFocus<HTMLInputElement>(active);
   const value = Number(draft);
   const valid = draft.trim() !== "" && Number.isFinite(value) && value > 0;
-  const locked = status !== "executing" || !respond || answered !== null;
 
   const submit = () => {
-    if (!valid || locked || !respond) return;
+    if (!valid || !active || !respond) return;
     setSent(value);
     respond(JSON.stringify({ value }));
   };
 
+  if (answered !== null) {
+    return (
+      <CoachCard label="Your number" testId="coach-number" state="answered">
+        <AnswerRecord label="You said:" value={`${answered} ${unit}`} />
+      </CoachCard>
+    );
+  }
+
   return (
-    <CoachCard label="Your number" testId="coach-number">
+    <CoachCard label="Your number" testId="coach-number" state={active ? "active" : "plain"} cardRef={cardRef}>
       <p className="coach-step__text">{inline(prompt)}</p>
       <p className="coach-muted" data-testid="coach-where-to-look">
         {inline(WHERE_TO_LOOK[platform])}
@@ -58,20 +67,20 @@ export function NumberCard({ prompt = "", unit = "GB", hint, platform, status, r
         }}
       >
         <label className="coach-number__label">
-          <span className="sr-only">Memory in {unit}</span>
           <input
+            ref={primaryRef}
             type="number"
             inputMode="decimal"
             min="0"
             step="any"
-            value={answered !== null ? String(answered) : draft}
-            disabled={locked}
+            value={draft}
+            disabled={!active}
             onChange={(event) => setDraft(event.target.value)}
             aria-label={`Memory in ${unit}`}
           />
           <span>{unit}</span>
         </label>
-        <button type="submit" className="coach-button" disabled={!valid || locked}>
+        <button type="submit" className="coach-button coach-button--primary" disabled={!valid || !active}>
           Check it
         </button>
       </form>

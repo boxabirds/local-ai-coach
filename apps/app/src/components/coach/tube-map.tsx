@@ -1,4 +1,6 @@
-import { CoachCard } from "./card";
+"use client";
+
+import { CoachCard, useCardFocus } from "./card";
 
 /**
  * The V1 line of the map: the story's destination and the three lessons, in
@@ -35,8 +37,9 @@ const HEIGHT = 120;
 export function TubeMap({ stations = DEFAULT_STATIONS, focus }: { stations?: MapStation[]; focus?: string }) {
   const list = stations.length ? stations : DEFAULT_STATIONS;
   const width = PAD_X * 2 + STEP_X * (list.length - 1);
+  const { cardRef } = useCardFocus(true);
   return (
-    <CoachCard label="Your map" testId="coach-map">
+    <CoachCard label="Your map" testId="coach-map" cardRef={cardRef}>
       <svg
         className="coach-map"
         viewBox={`0 0 ${width} ${HEIGHT}`}
