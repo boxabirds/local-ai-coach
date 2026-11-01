@@ -1,6 +1,7 @@
 /**
- * Splits a story's Markdown into beats: short runs of whole blocks the reader
- * advances through one at a time (Ceetrix story 3).
+ * Splits a story's Markdown into the units the reader advances through one at a
+ * time (Ceetrix story 3). The story card shows one sentence per bubble
+ * (storySentences); storyBeats (runs of whole blocks) is kept for longer texts.
  *
  * A block is a heading line, a paragraph, or a list. Every heading starts a new
  * beat and stays with what follows it. Otherwise blocks are added to a beat
@@ -62,4 +63,65 @@ export function storyBeats(markdown: string, limit: number = BEAT_WORDS): string
   }
   if (beat.length) beats.push(beat);
   return beats.map((blocks) => blocks.join("\n\n"));
+}
+
+const OPENERS: Record<string, string> = { "(": ")", "“": "”", "‘": "’", "[": "]" };
+const CLOSERS = new Set(Object.values(OPENERS));
+const ENDS = new Set([".", "!", "?", "…"]);
+const TRAILING = new Set([...CLOSERS, '"', "'"]);
+const NEXT_STARTS = /[A-Z0-9“‘("'\[*_`]/;
+
+/**
+ * One paragraph into sentences. A sentence ends at . ! ? or … (with any closing
+ * quote or bracket after it) followed by a space and a capital, digit, quote or
+ * bracket, and never inside brackets or quotes, so "(I made Priya up. The
+ * afternoon...)" stays whole. Joining the sentences with spaces gives back the
+ * paragraph with its whitespace collapsed.
+ */
+export function sentences(paragraph: string): string[] {
+  const text = paragraph.replace(/\s+/g, " ").trim();
+  if (!text) return [];
+  const out: string[] = [];
+  const open: string[] = [];
+  let start = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    let closedAfterEnd = false;
+    if (OPENERS[ch]) open.push(OPENERS[ch]);
+    else if (open.length && ch === open[open.length - 1]) {
+      open.pop();
+      // "(... recognise.)" ends a sentence once its bracket closes.
+      closedAfterEnd = ENDS.has(text[i - 1]);
+    }
+    if ((!ENDS.has(ch) && !closedAfterEnd) || open.length) continue;
+    let end = i + 1;
+    while (end < text.length && TRAILING.has(text[end]) && !(open.length && text[end] === open[open.length - 1])) end += 1;
+    if (text[end] === " " && NEXT_STARTS.test(text[end + 1] ?? "")) {
+      out.push(text.slice(start, end));
+      start = end + 1;
+      i = end;
+    }
+  }
+  if (start < text.length) out.push(text.slice(start));
+  return out;
+}
+
+/**
+ * The story as one unit per bubble: each sentence of each paragraph, each list
+ * item, and each heading joined to the sentence that follows it.
+ */
+export function storySentences(markdown: string): string[] {
+  const units: string[] = [];
+  let headings: string[] = [];
+  const push = (unit: string) => {
+    units.push(headings.length ? [...headings, unit].join("\n\n") : unit);
+    headings = [];
+  };
+  for (const block of storyBlocks(markdown)) {
+    if (HEADING.test(block)) headings.push(block);
+    else if (LIST_ITEM.test(block)) block.split("\n").forEach(push);
+    else sentences(block).forEach(push);
+  }
+  if (headings.length) units.push(headings.join("\n\n"));
+  return units;
 }

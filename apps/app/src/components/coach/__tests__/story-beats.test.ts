@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { BEAT_WORDS, storyBeats, storyBlocks } from "../story-beats";
+import { BEAT_WORDS, sentences, storyBeats, storyBlocks, storySentences } from "../story-beats";
 
 const STORY = readFileSync(resolve(__dirname, "../../../../../../curriculum/stories/legal-letter.md"), "utf8");
 const HEADING = /^#{1,6}\s/;
@@ -63,5 +63,48 @@ describe("storyBeats boundaries", () => {
     const half = para(BEAT_WORDS / 2);
     expect(storyBeats(`${half}\n\n${half}\n\none`)).toEqual([`${half}\n\n${half}`, "one"]);
     expect(storyBeats(`${half}\n\n${half}`)).toHaveLength(1);
+  });
+});
+
+describe("storySentences: one bubble per sentence", () => {
+  const units = storySentences(STORY);
+
+  it("TC-30 chapter 0 gives 102 bubbles, the first with the chapter title and one sentence", () => {
+    expect(units).toHaveLength(102);
+    expect(units[0]).toBe(
+      "## Chapter 0: The whole game\n\n### What this chapter covers\n\nI'm going to tell you a story about a solicitor called Priya, a laptop, and a letter that never left the room.",
+    );
+    expect(units[1]).toBe("Then I'm going to ask you why the ending matters.");
+  });
+
+  it("TC-31 nothing is lost: the sentences add back up to every paragraph", () => {
+    const flat = (text: string) => text.replace(/\s+/g, " ").trim();
+    const fromUnits = flat(units.join(" "));
+    const fromBlocks = flat(storyBlocks(STORY).join(" "));
+    expect(fromUnits).toBe(fromBlocks);
+  });
+
+  it("TC-32 no bubble splits a bracket or a quotation", () => {
+    for (const unit of units) {
+      expect((unit.match(/\(/g) ?? []).length).toBe((unit.match(/\)/g) ?? []).length);
+      expect((unit.match(/“/g) ?? []).length).toBe((unit.match(/”/g) ?? []).length);
+    }
+    expect(units).toContain("(I made Priya up. The afternoon, I suspect, you'll recognise.)");
+  });
+
+  it.each([
+    ["Two. Sentences here.", ["Two.", "Sentences here."]],
+    ["Is it? Yes! Fine… really.", ["Is it?", "Yes!", "Fine… really."]],
+    ["(Inside. Still inside.) Outside.", ["(Inside. Still inside.)", "Outside."]],
+    ["She said “Stop. Now.” Then left.", ["She said “Stop. Now.”", "Then left."]],
+    ["Version 1.5 works. Next.", ["Version 1.5 works.", "Next."]],
+    ["no capital. after it", ["no capital. after it"]],
+    ["", []],
+  ])("TC-33 sentences(%j)", (input, expected) => {
+    expect(sentences(input)).toEqual(expected);
+  });
+
+  it("TC-34 each list item is its own bubble and a trailing heading is kept", () => {
+    expect(storySentences("Intro.\n\n- one\n- two\n\n## End")).toEqual(["Intro.", "- one", "- two", "## End"]);
   });
 });

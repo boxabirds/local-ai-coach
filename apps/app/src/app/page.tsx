@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ProviderKeysDialog } from "@/components/chat/provider-keys-dialog";
 import { useProviderKeys } from "@/components/chat/provider-keys";
-import { COACH_STUB, KeyGatedChatView } from "@/components/chat/key-gated-chat-view";
+import { COACH_STUB, KeyGatedChatView, StubBadge } from "@/components/chat/key-gated-chat-view";
 import { ReaderScrollView } from "@/components/chat/reader-scroll-view";
 import { AnswerMarkdown } from "@/components/chat/answer-markdown";
 import {
@@ -81,7 +81,10 @@ export default function HomePage() {
         Skip to chat
       </a>
       <header className="chat-header">
-        <span className="chat-name">Mastering Local AI coach</span>
+        <span className="chat-name">
+          Mastering Local AI coach
+          <StubBadge />
+        </span>
         <nav aria-label="Main navigation">
           <button type="button" onClick={newChat} disabled={agent.isRunning || retrying}>
             New chat

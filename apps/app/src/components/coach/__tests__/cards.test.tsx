@@ -37,7 +37,8 @@ function stubFetch(response: Promise<Response>) {
   return fetchMock;
 }
 
-const TOTAL_BEATS = 25;
+/** One bubble per sentence: chapter 0 has 102 (headings ride with the next sentence). */
+const TOTAL_BEATS = 102;
 
 /** Renders an active story card on the real chapter 0 and waits for the first beat. */
 async function openStory(respond = vi.fn()) {
@@ -70,7 +71,7 @@ describe("story card", () => {
     expect(beatsShown()).toBe(1);
     expect(screen.getByRole("button", { name: "Go on" })).toHaveFocus();
     expect(screen.getByTestId("coach-beat-count")).toHaveTextContent(`1 of ${TOTAL_BEATS}`);
-    expect(screen.getByText("Space or Enter")).toBeInTheDocument();
+    expect(screen.getByText("or press Space")).toBeInTheDocument();
     expect(screen.queryByText("The day after, what did Priya check?")).not.toBeInTheDocument();
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
     expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "active");
@@ -86,12 +87,22 @@ describe("story card", () => {
     expect(screen.getByTestId("coach-story")).toHaveClass("coach-card--thread");
   });
 
+  it("TC-26 each step scrolls the Go on row into view, and the question box at the end", async () => {
+    await openStory();
+    scrollIntoView.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Go on" }));
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(screen.getByTestId("coach-story-footer"));
+    fireEvent.click(screen.getByRole("button", { name: "Show the rest" }));
+    const ask = screen.getByText("The day after, what did Priya check?").parentElement;
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(ask);
+  });
+
   it("TC-11 Go on shows the next beat", async () => {
     await openStory();
     fireEvent.click(screen.getByRole("button", { name: "Go on" }));
     expect(beatsShown()).toBe(2);
     expect(screen.getByTestId("coach-beat-count")).toHaveTextContent(`2 of ${TOTAL_BEATS}`);
-    expect(screen.getByText(/Priya runs a two-person practice/)).toBeInTheDocument();
+    expect(screen.getAllByTestId("coach-beat")[1]).toHaveTextContent(/^Then I'm going to ask you why the ending matters\.$/);
   });
 
   it.each([" ", "Enter"])("TC-12 TC-13 %j on the page shows the next beat", async (key) => {
@@ -135,7 +146,7 @@ describe("story card", () => {
     expect(beatsShown()).toBe(2);
   });
 
-  it("TC-19 the last beat brings the question and focuses the first answer", async () => {
+  it("TC-19 the last sentence brings the question and focuses the first answer", async () => {
     await openStory();
     for (let i = 1; i < TOTAL_BEATS; i += 1) press(" ");
     expect(beatsShown()).toBe(TOTAL_BEATS);

@@ -47,14 +47,6 @@
   color: var(--text-secondary);
 }
 
-.coach-button--primary,
-.coach-button--primary:hover:not(:disabled) {
-  border-color: var(--coach-accent);
-  background: var(--coach-accent);
-  color: var(--coach-accent-ink);
-  font-weight: 600;
-}
-
 .coach-button:focus-visible,
 .coach-number__form input:focus-visible {
   outline: 2px solid var(--coach-accent);
@@ -120,6 +112,16 @@
   color: var(--coach-accent);
 }
 
+/* After the base rule on purpose: same specificity, so order decides. */
+.coach-button--primary,
+.coach-button--primary:hover:not(:disabled) {
+  border-color: var(--coach-accent);
+  background: var(--coach-accent);
+  color: var(--coach-accent-ink);
+  font-weight: 600;
+}
+
+
 .coach-button:disabled {
   cursor: default;
   opacity: 0.55;
@@ -179,6 +181,7 @@
 /* A card that is really a run of chat messages (the story): no frame of its own. */
 .coach-card--thread,
 .coach-card--thread.coach-card--active {
+  max-width: 640px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -193,11 +196,14 @@
 }
 
 .coach-bubble {
-  max-width: 640px;
   padding: 12px 16px;
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-lg);
   background: var(--coach-paper);
+}
+
+.coach-bubble .coach-markdown > :first-child {
+  margin-top: 0;
 }
 
 .coach-bubble .coach-markdown > :last-child {
@@ -242,16 +248,22 @@
 
 .coach-story__footer {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding: 2px 4px;
-}
-
-.coach-story__count {
-  margin-left: auto;
   font-size: 13px;
   color: var(--text-tertiary);
+}
+
+.coach-story__progress {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coach-story__footer .coach-link {
+  font-size: 13px;
+  line-height: 1;
 }
 
 .coach-markdown p,
@@ -383,13 +395,14 @@
   fill: var(--text-secondary);
 }
 
-.coach-stub-banner {
-  margin: 0 auto 8px;
-  padding: 6px 12px;
-  max-width: 720px;
-  border-radius: var(--radius-md);
-  border: 1px dashed #d9a03f;
-  font-size: 13px;
-  text-align: center;
+/* Sits in the header next to the coach's name. */
+.coach-stub-badge {
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--coach-line);
+  font-size: 12px;
+  font-weight: 500;
   color: var(--text-secondary);
+  white-space: nowrap;
 }

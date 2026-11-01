@@ -10,19 +10,24 @@ import { useProviderKeys } from "./provider-keys";
  * the stub (LANGGRAPH_DEPLOYMENT_URL=http://127.0.0.1:8123/stub).
  */
 export const COACH_STUB = process.env.NEXT_PUBLIC_COACH_STUB === "1";
-export const STUB_BANNER = "Stub coach, no model. Fixed wording, nothing leaves this machine.";
+export const STUB_BANNER = "Stub coach, no model";
+const STUB_BANNER_DETAIL = "Fixed wording, no keys, nothing leaves this machine.";
+
+/** Shown in the page header while the stub coach is on. */
+export function StubBadge() {
+  if (!COACH_STUB) return null;
+  return (
+    <span className="coach-stub-badge" role="status" title={STUB_BANNER_DETAIL} data-testid="coach-stub-banner">
+      {STUB_BANNER}
+    </span>
+  );
+}
 
 /** Gate submission before CopilotKit adds a message or starts a provider request. */
 function KeyGatedChatViewComponent(props: ComponentProps<typeof CopilotChatView>) {
   const { hasKeys, draft, setDraft, setKeysOpen } = useProviderKeys();
   const open = COACH_STUB || hasKeys;
   return (
-    <>
-      {COACH_STUB && (
-        <p className="coach-stub-banner" role="status" data-testid="coach-stub-banner">
-          {STUB_BANNER}
-        </p>
-      )}
       <CopilotChatView
         {...props}
         inputValue={draft}
@@ -46,7 +51,6 @@ function KeyGatedChatViewComponent(props: ComponentProps<typeof CopilotChatView>
           props.onSelectSuggestion?.(suggestion, index);
         }}
       />
-    </>
   );
 }
 

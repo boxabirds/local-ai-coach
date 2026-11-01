@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { Markdown } from "./markdown";
-import { storyBeats } from "./story-beats";
+import { storySentences } from "./story-beats";
 
 const CONTINUE_KEYS = new Set([" ", "Enter"]);
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
@@ -93,9 +93,10 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   const answered = parseResult<{ answer?: string }>(result)?.answer ?? chosen;
   const active = status === "executing" && Boolean(respond) && !answered && load.state === "ready";
   const { cardRef, primaryRef } = useCardFocus<HTMLButtonElement>(active, "start");
-  const beats = useMemo(() => (load.state === "ready" ? storyBeats(load.text) : []), [load]);
+  const beats = useMemo(() => (load.state === "ready" ? storySentences(load.text) : []), [load]);
   const asking = shown >= beats.length;
   const newestBeat = useRef<HTMLDivElement | null>(null);
+  const footer = useRef<HTMLDivElement | null>(null);
   const firstAnswer = useRef<HTMLButtonElement | null>(null);
 
   const next = useCallback(() => {
@@ -108,9 +109,12 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   };
   useContinueKeys(active && !asking, next);
 
-  // Keep each new beat in view; once the question is up, the first answer has the focus.
+  // After each beat, bring the Go on row into view (the new beat sits just above it);
+  // at the question, bring the answers into view. The first answer then has the focus.
   useEffect(() => {
-    if (active && shown > 1) newestBeat.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    if (!active || shown <= 1) return;
+    const target = footer.current ?? newestBeat.current?.parentElement?.nextElementSibling ?? newestBeat.current;
+    target?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [active, shown]);
   useEffect(() => {
     if (active && asking && shown > 1) firstAnswer.current?.focus({ preventScroll: true });
@@ -188,17 +192,19 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
               </div>
             </div>
           ) : (
-            <div className="coach-story__footer">
+            <div className="coach-story__footer" ref={footer} data-testid="coach-story-footer">
               <button ref={primaryRef} type="button" className="coach-button coach-button--primary" disabled={!active} onClick={next}>
                 Go on
               </button>
-              <span className="coach-muted">Space or Enter</span>
-              <span className="coach-story__count" data-testid="coach-beat-count">
-                {shown} of {beats.length}
+              <span>or press Space</span>
+              <span className="coach-story__progress">
+                <span data-testid="coach-beat-count">
+                  {shown} of {beats.length}
+                </span>
+                <button type="button" className="coach-link" disabled={!active} onClick={showRest}>
+                  Show the rest
+                </button>
               </span>
-              <button type="button" className="coach-link" disabled={!active} onClick={showRest}>
-                Show the rest
-              </button>
             </div>
           )}
         </>

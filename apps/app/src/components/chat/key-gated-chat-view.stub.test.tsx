@@ -21,10 +21,11 @@ async function mount(flag: string | undefined) {
   if (flag === undefined) vi.stubEnv("NEXT_PUBLIC_COACH_STUB", "");
   else vi.stubEnv("NEXT_PUBLIC_COACH_STUB", flag);
   const { ProviderKeysProvider, useProviderKeys } = await import("./provider-keys");
-  const { KeyGatedChatView } = await import("./key-gated-chat-view");
+  const { KeyGatedChatView, StubBadge } = await import("./key-gated-chat-view");
   function Harness() {
     const { keysOpen } = useProviderKeys();
     return <>
+      <StubBadge />
       <KeyGatedChatView onSubmitMessage={submit} onSelectSuggestion={select} />
       {keysOpen && <div role="dialog">keys</div>}
     </>;
