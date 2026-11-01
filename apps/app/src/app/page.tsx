@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ProviderKeysDialog } from "@/components/chat/provider-keys-dialog";
 import { useProviderKeys } from "@/components/chat/provider-keys";
-import { KeyGatedChatView } from "@/components/chat/key-gated-chat-view";
-import Image from "next/image";
+import { COACH_STUB, KeyGatedChatView } from "@/components/chat/key-gated-chat-view";
 import { ReaderScrollView } from "@/components/chat/reader-scroll-view";
 import { AnswerMarkdown } from "@/components/chat/answer-markdown";
 import {
@@ -82,7 +81,7 @@ export default function HomePage() {
         Skip to chat
       </a>
       <header className="chat-header">
-        <span className="chat-name">Open Intelligent UI</span>
+        <span className="chat-name">Mastering Local AI coach</span>
         <nav aria-label="Main navigation">
           <button type="button" onClick={newChat} disabled={agent.isRunning || retrying}>
             New chat
@@ -90,27 +89,6 @@ export default function HomePage() {
           <button type="button" onClick={() => setKeysOpen(true)} disabled={agent.isRunning || retrying} aria-haspopup="dialog">
             API keys{hasKeys ? " •" : ""}
           </button>
-          <a
-            href="https://github.com/CopilotKit/OpenIntelligentUI"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub ↗
-          </a>
-          <a
-            className="chat-brand"
-            href="https://copilotkit.ai"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              src="/copilotkit-logo.svg"
-              alt="CopilotKit"
-              width={125}
-              height={28}
-              priority
-            />
-          </a>
         </nav>
       </header>
       {keysOpen && <ProviderKeysDialog onClose={() => setKeysOpen(false)} disabled={agent.isRunning || retrying} />}
@@ -140,10 +118,13 @@ export default function HomePage() {
               )
             }
             labels={{
-              welcomeMessageText: "What would you like to explore?",
-              chatInputPlaceholder: "Ask anything…",
-              chatDisclaimerText:
-                hasKeys ? "AI can make mistakes. Check important details." : "Add your OpenAI and Jev API keys to start. Keys clear when you refresh.",
+              welcomeMessageText: "This is the coach for Mastering Local AI. Start with the story.",
+              chatInputPlaceholder: "Ask the coach…",
+              chatDisclaimerText: COACH_STUB
+                ? "Stub coach: no model and no keys."
+                : hasKeys
+                  ? "The coach uses two hosted services for now. Your own model stays local."
+                  : "Connect the coach: add your OpenAI and Jev API keys. Keys clear when you refresh.",
             }}
           />
         </div>

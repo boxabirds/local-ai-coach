@@ -1,4 +1,4 @@
-.PHONY: help install setup dev dev-app dev-agent dev-mcp build lint check clean
+.PHONY: help install setup dev dev-stub dev-app dev-agent dev-mcp build lint check clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -16,6 +16,13 @@ setup: install ## Full setup: install deps and create .env from template
 
 dev: ## Start all services (frontend + agent + mcp)
 	pnpm dev
+
+STUB_URL := http://127.0.0.1:8123/stub
+
+dev-stub: ## Start the stub coach: no model, no keys (writes ~/.local-ai-coach/progress.stub.json)
+	pnpm exec concurrently --names app,agent --kill-others \
+		"cd apps/app && NEXT_PUBLIC_COACH_STUB=1 LANGGRAPH_DEPLOYMENT_URL=$(STUB_URL) pnpm dev" \
+		"pnpm dev:agent"
 
 dev-app: ## Start Next.js frontend only (http://localhost:3000)
 	pnpm dev:app
