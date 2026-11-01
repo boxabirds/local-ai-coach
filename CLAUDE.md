@@ -1,44 +1,51 @@
-# Open Generative UI by CopilotKit
+# local-ai-coach: working rules
 
-This repository builds a general assistant experience around **answers you can interact with**: understand a topic, compare options, or make a useful tool. It is not primarily a todo-list template. Existing todo and form tools are compatibility examples, not the product's organizing concept.
+This repo is a fork of CopilotKit/OpenIntelligentUI, kept as shipped, with a coaching curriculum, components, tools and a local evidence collector added. It is V1 of the coach for the book series Mastering Local AI. Read `docs/design.md` before changing anything; it is the technical design and the build order. `docs/poc-plan.md` is the product plan it implements; `docs/spec.md` is the longer-term spec (V2 and after). Where this file and `docs/design.md` disagree, the design wins and this file is wrong.
 
-## Boundaries and source of truth
+## What V1 is
 
-- Frontend: `apps/app/`, Next.js and CopilotKit v2.
-- Agent: `apps/agent/main.py`, `src/prompt.py`, `src/model.py`, and `skills/`.
-- Custom UI: `apps/app/src/components/generative-ui/open-generative-ui/`.
-- Validated host callbacks: `apps/app/src/lib/sandbox/`.
-- Standalone MCP: `apps/mcp/`; its HTML assembler and legacy bridge are separate from the web app.
-- Shared styling: `packages/design-system/`.
+- The upstream stack runs unchanged: Python LangGraph agent on :8123, CopilotKit runtime route, Next.js chat, hosted OpenAI `chat-latest`, hosted Jev via TypeSafe. Both hosted providers stay in V1. Do not replace them.
+- Scope: Priya's story (chapter 0), Know your machine, Local chat, Prove it stays local. macOS and Linux. Nothing else.
+- The local story is a model on a machine the learner owns, reached over their own network or their tailnet (Tailscale). Not "wifi off": that framing is gone from the taxonomy, the chapters and the design. The proof reads where the chat app's bytes go (`connections` probe: loopback, private or tailnet only; `tailnet` probe: `tailscale status --json` to match a tailnet address to a machine the learner owns). The PoC's reference setup is the model on a second machine over Tailscale; the check also passes with the model on the laptop itself.
+- Everything we add lives in new files: `apps/agent/src/coach/`, `apps/agent/skills/{coach-playbook,step-contract,evidence-rules}/`, `apps/app/src/hooks/use-coach-ui.tsx`, `apps/app/src/components/coach/`, `curriculum/`.
 
-Use the product name in visible copy. Preserve repository URLs, package names, `openGenerativeUI`, `generateSandboxedUi`, activity/event names, and deployment service names unless a task explicitly migrates them.
+## Build order (one step per session, tests green and a commit at the end of each)
 
-## Agent behavior
+1. Contract and content: `curriculum/` (stations.json, lessons JSON for the four stations, map.json, stories, chapters) and `curriculum/validate.py`. Done when the validator passes.
+2. Shell and cards: strip the demo, register the eight components as CopilotKit hooks, stub agent that walks the steps with canned prose. Done when chapter 1 runs end to end in the sandbox with no model.
+3. Evidence collector: `src/coach/probes.py`, consent, Check result card. Done when Find your number and Local chat verify on a real Mac and a real Linux laptop, and Prove it stays local verifies with the model on a second machine over Tailscale.
+4. Agent, as designed: coach prompt, skills, tools, `CoachStateMiddleware`. Done when the coach teaches chapter 1 from the contract with the real model.
+5. Recap and `assisted` re-runs, `tester.sh`. Done when a second session a day later opens with a recap.
 
-Choose text for direct answers, native components when their schemas fit, and custom UI when a diagram or interaction helps. There is no mandatory acknowledgement/plan/build/narrate sequence. Distinct sections may use multiple tools; do not repeat a successful build merely because it returned "UI generated".
+Start step 1 in plan mode and show the plan before writing code.
 
-Label sample assumptions and distinguish user inputs, retrieved evidence, and calculated values. `query_data` returns a metadata envelope with bundled sample CSV rows and does not apply its query. There is no built-in live weather or business-data connection. Never imply a mock form authenticates or persists data.
+## Files you do not touch
 
-Generated controls must work, validate numerical edge cases, support keyboard access and narrow screens, and expose useful errors. Use the user's selected values when sending a deliberate follow-up. Each follow-up is a new turn/output; do not assume a cross-call patch API or persist iframe state through rerenders.
+`apps/app/src/components/generative-ui/open-generative-ui/`, `apps/app/src/lib/sandbox/prompt-bridge.tsx`, `apps/app/src/lib/copilotkit-runtime-options.ts`, `apps/app/src/app/api/copilotkit/route.ts`, `apps/agent/src/credentials.py`, `apps/agent/src/model.py`, `apps/agent/src/visualization_router.py`, `packages/design-system/`. Upstream fixes merge into these; our code goes around them.
 
-## Streaming contract
+## Hard rules
 
-Emit `initialHeight`, `placeholderMessages`, `css`, `html`, `jsFunctions`, `jsExpressions` in that order. Styles belong in `css`; functions and invocations use their separate channels. Those JavaScript channels run as classic scripts, so dynamic imports with await belong inside async functions, never at top level.
+- The agent binds to `127.0.0.1`, never `0.0.0.0` (`main.py` and the `dev:agent` script).
+- No telemetry: delete `launch-telemetry.ts` and PostHog; set `DO_NOT_TRACK=1` in `.env.example`.
+- Probes are `subprocess.run(argv, shell=False, timeout=5)`. Never a shell string. Never write anything. Return matched lines only, never raw output. Every probe name is in the allowlist in `probes.py`; a lesson that names another fails validation.
+- `progress.json` (`~/.local-ai-coach/`) is written only by `set_progress`, `end_session` and the review scheduler, by atomic rename. Status moves up only: unseen, read, rehearsed, reported, assisted, verified; `skipped` from anything below verified.
+- `run_do_it` runs only after a `run_confirm` result in the thread, in the agent's PTY, and records `assisted`.
+- Learner-facing text (prompt, skills, card copy, lesson JSON) follows `panel/style-guide.md` and `panel/authoring-policy.md`: no em or en dashes, nothing from the avoid list, UK spelling, define a term before using it. Check prose with `python3 panel/stylecheck.py --book <file>`.
+- Keep upstream's streaming tool contract text in `src/prompt.py` verbatim; `test_canonical_contract.py` and `test_skills_contract.py` must stay green.
+- Pin every dependency at the versions in the lockfiles. No upgrades during V1.
 
-Use the existing validated `Websandbox.connection.remote.sendPrompt({ text })` and HTTPS `openLink({ url })` bridge. Do not replace it with unrestricted parent messages. The sandbox has no same-origin storage or fetch access. Preserve preview isolation, final sandbox initialization, and incremental streaming behavior.
+## Kept from upstream CLAUDE.md
 
-## Configuration and checks
+- `generateSandboxedUi` parameter order: `initialHeight`, `placeholderMessages`, `css`, `html`, `jsFunctions`, `jsExpressions`. Styles only in `css`. JS channels are classic scripts: no top-level await.
+- Use the validated `sendPrompt` / `openLink` sandbox bridge, never raw postMessage. Preserve preview isolation and incremental streaming.
+- Label sample data as sample. Never imply a mock form authenticates.
+- Checks: `pnpm install`, `pnpm test`, `uv run --directory apps/agent pytest`, `pnpm lint`, `pnpm build`. A rendered chat shell does not prove generation works.
+- Keep secrets out of source, logs and screenshots.
 
-The local default model is `chat-latest` (ChatGPT Instant). `claude-*` requires `ANTHROPIC_API_KEY`; `chat-latest` and `gpt-*` require `OPENAI_API_KEY`. Jev routing requires `TYPESAFE_API_KEY`. Do not invent native model APIs or silently change pinned model IDs. See `render.yaml` for its separate explicit deployment model setting.
+## Where things are
 
-```bash
-pnpm install
-pnpm test
-uv run --directory apps/agent pytest
-pnpm lint
-pnpm build
-```
-
-Use focused tests while developing, then relevant workspace checks. Inspect the [launch workflow](docs/deployment.md#verification-and-launch) for browser and live-provider validation. A rendered chat shell does not prove AI generation works. Keep secrets out of source, generated UI, logs, and screenshots. Do not describe a local build as a deployed release.
-
-See [Architecture](docs/architecture.md) and [Product and agent behavior](docs/interactive-answers.md).
+- `docs/design.md`: the design, section by section (stack as it is, architecture, repo plan, agent, frontend, on-disk contracts, probes, session flow, running, testing, risks).
+- `curriculum/stations.json`: the 139-station graph, source of truth for the map.
+- `curriculum/stories/legal-letter.md`: chapter 0, read by the `story` card.
+- `curriculum/chapters/know-your-machine.md`: chapter 1 with YAML front-matter (the front-matter is never shown to the learner).
+- `panel/`: authoring policy, style guide, the panel brief, the final chapter text, `stylecheck.py`.

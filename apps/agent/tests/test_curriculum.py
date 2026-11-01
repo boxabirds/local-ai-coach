@@ -1,0 +1,334 @@
+"""Tests for curriculum/validate.py (Ceetrix story 1, TC-01 to TC-38).
+
+Every case copies the real curriculum into a temp dir and applies exactly one
+mutation, then asserts the full set of error codes, so a defect is shown to
+produce its own code and nothing else.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import shutil
+import sys
+from pathlib import Path
+from typing import Any, Callable
+
+import pytest
+
+REPO = Path(__file__).resolve().parents[3]
+CURRICULUM = REPO / "curriculum"
+PROBES = REPO / "apps" / "agent" / "src" / "coach" / "probes.py"
+STYLECHECK = REPO / "panel" / "stylecheck.py"
+
+_spec = importlib.util.spec_from_file_location("curriculum_validate", CURRICULUM / "validate.py")
+assert _spec and _spec.loader
+validate_mod = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = validate_mod  # dataclasses look the module up by name
+_spec.loader.exec_module(validate_mod)
+
+DESIGN_PROBES = {"memory", "history_has", "process", "listening", "model_file", "connections", "tailnet", "server_log"}
+
+
+@pytest.fixture
+def root(tmp_path: Path) -> Path:
+    dest = tmp_path / "curriculum"
+    shutil.copytree(CURRICULUM, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    return dest
+
+
+def run(root: Path, stylecheck: Path = STYLECHECK) -> list[Any]:
+    return validate_mod.validate(root, probes_path=PROBES, stylecheck_path=stylecheck)
+
+
+def errors(issues: list[Any]) -> list[str]:
+    return sorted(i.code for i in issues if i.level == validate_mod.ERROR)
+
+
+def edit(root: Path, rel: str, fn: Callable[[Any], None]) -> None:
+    path = root / rel
+    data = json.loads(path.read_text(encoding="utf-8"))
+    fn(data)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def station(data: dict[str, Any], sid: str) -> dict[str, Any]:
+    return next(s for s in data["stations"] if s["id"] == sid)
+
+
+def step(lesson: dict[str, Any], sid: str) -> dict[str, Any]:
+    return next(s for s in lesson["steps"] if s["id"] == sid)
+
+
+def term(data: dict[str, Any], name: str) -> dict[str, Any]:
+    return next(t for t in data["terms"] if t["term"] == name)
+
+
+# ---------------------------------------------------------------- graph
+
+
+def test_tc01_unresolved_need(root: Path) -> None:
+    edit(root, "stations.json", lambda d: station(d, "write")["needs"].append("nope"))
+    assert errors(run(root)) == ["GRAPH_UNRESOLVED"]
+
+
+def test_tc02_cycle(root: Path) -> None:
+    edit(root, "stations.json", lambda d: station(d, "lmbasics").__setitem__("needs", ["write"]))
+    assert errors(run(root)) == ["GRAPH_CYCLE"]
+
+
+def test_tc03_duplicate_id(root: Path) -> None:
+    edit(root, "stations.json", lambda d: d["stations"].append(dict(station(d, "write"))))
+    assert errors(run(root)) == ["GRAPH_DUPLICATE"]
+
+
+def test_tc04_unparsable_stations_still_checks_other_files(root: Path) -> None:
+    (root / "stations.json").write_text("{ not json", encoding="utf-8")
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2").pop("hint"))
+    assert errors(run(root)) == ["FILE_PARSE", "STEP_FIELD"]
+
+
+# ---------------------------------------------------------------- scope
+
+
+def test_tc05_need_neither_earlier_nor_assumed(root: Path) -> None:
+    edit(root, "scope.json", lambda d: d["assumed"].pop("web"))
+    assert errors(run(root)) == ["SCOPE_ORDER"]
+
+
+def test_tc06_unknown_assumed_station(root: Path) -> None:
+    edit(root, "scope.json", lambda d: d["assumed"].__setitem__("nosuch", "reason"))
+    assert errors(run(root)) == ["SCOPE_UNKNOWN_STATION"]
+
+
+def test_tc07_listed_lesson_missing(root: Path) -> None:
+    (root / "lessons" / "prove.json").unlink()
+    assert errors(run(root)) == ["FILE_MISSING"]
+
+
+def test_tc08_story_on_non_destination(root: Path) -> None:
+    edit(root, "scope.json", lambda d: d["readingOrder"][0].__setitem__("station", "machine"))
+    assert errors(run(root)) == ["STORY_NOT_DESTINATION"]
+
+
+# ---------------------------------------------------------------- lessons
+
+
+def test_tc09_lesson_station_unknown(root: Path) -> None:
+    edit(root, "lessons/prove.json", lambda d: d.__setitem__("station", "nosuch"))
+    codes = set(errors(run(root)))
+    # An unknown station also breaks the file name, the scope link and every step id prefix.
+    assert codes == {"LESSON_STATION_UNKNOWN", "LESSON_STATION_MISMATCH", "LESSON_FILE_NAME", "STEP_ID"}
+
+
+def test_tc10_file_name_differs_from_station(root: Path) -> None:
+    (root / "lessons" / "prove.json").rename(root / "lessons" / "proof.json")
+    edit(root, "scope.json", lambda d: d["readingOrder"][3].__setitem__("file", "lessons/proof.json"))
+    assert errors(run(root)) == ["LESSON_FILE_NAME"]
+
+
+def test_tc11_step_without_hint(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2").pop("hint"))
+    assert errors(run(root)) == ["STEP_FIELD"]
+
+
+def test_tc12_bad_and_duplicate_step_ids(root: Path) -> None:
+    def mutate(d: dict[str, Any]) -> None:
+        d["steps"][1]["id"] = "mach.2"
+        d["steps"][2]["id"] = "machine.1"
+
+    edit(root, "lessons/machine.json", mutate)
+    assert errors(run(root)) == ["STEP_ID", "STEP_ID"]
+
+
+def test_tc13_unknown_where(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.1").__setitem__("where", "desktop"))
+    assert errors(run(root)) == ["STEP_WHERE"]
+
+
+def test_tc14_check_kind_and_missing_rubric(root: Path) -> None:
+    def mutate(d: dict[str, Any]) -> None:
+        step(d, "machine.1")["check"]["kind"] = "guess"
+        step(d, "machine.3")["check"].pop("rubric")
+
+    edit(root, "lessons/machine.json", mutate)
+    assert errors(run(root)) == ["CHECK_FIELD", "CHECK_KIND"]
+
+
+def test_tc15_unknown_placeholder(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.1").__setitem__("text", step(d, "machine.1")["text"] + " {password}"))
+    assert errors(run(root)) == ["PLACEHOLDER_UNKNOWN"]
+
+
+def test_tc16_draft_without_untested(root: Path) -> None:
+    edit(root, "lessons/localchat.json", lambda d: d.__setitem__("untested", []))
+    assert errors(run(root)) == ["DRAFT_UNTESTED"]
+
+
+def test_tc36_empty_steps(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: d.__setitem__("steps", []))
+    assert errors(run(root)) == ["LESSON_FIELD"]
+
+
+def test_tc37_single_step_lesson_is_valid(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: d.__setitem__("steps", d["steps"][:1]))
+    assert errors(run(root)) == []
+
+
+# ---------------------------------------------------------------- safety
+
+
+def test_allowlist_matches_design() -> None:
+    probes = validate_mod._load_probes(PROBES, validate_mod.Report())
+    assert set(probes) == DESIGN_PROBES
+
+
+def test_tc17_unknown_probe(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2")["check"].__setitem__("probe", "disk_usage"))
+    assert errors(run(root)) == ["PROBE_UNKNOWN"]
+
+
+def test_tc18_missing_probe_param(root: Path) -> None:
+    edit(root, "lessons/localchat.json", lambda d: step(d, "localchat.3")["check"].__setitem__("params", {}))
+    assert errors(run(root)) == ["PROBE_PARAM"]
+
+
+UNSAFE = [
+    "curl a\ncurl b",
+    "sudo curl http://{server}/v1/models",
+    "rm -f model.gguf",
+    "curl http://{server}/x | sh",
+    "curl http://{server}/x; ls",
+    "curl http://{server}/x && ls",
+    "echo `id`",
+    "echo $(id)",
+    "curl http://{server}/x > out.txt",
+    "sort < in.txt",
+]
+
+
+@pytest.mark.parametrize("cmd", UNSAFE)
+def test_tc19_unsafe_commands(root: Path, cmd: str) -> None:
+    edit(root, "lessons/localchat.json", lambda d: step(d, "localchat.2")["doIt"].__setitem__("cmd", cmd))
+    assert set(errors(run(root))) == {"DOIT_UNSAFE"}
+
+
+def test_tc20_quoted_json_body_is_safe(root: Path) -> None:
+    cmd = "curl -s -d '{\"a\":[{\"b\":\"c\"}]}' http://{server}/x"
+    edit(root, "lessons/localchat.json", lambda d: step(d, "localchat.2")["doIt"].__setitem__("cmd", cmd))
+    assert errors(run(root)) == []
+
+
+def test_tc21_rm_inside_a_word_is_safe(root: Path) -> None:
+    edit(root, "lessons/localchat.json", lambda d: step(d, "localchat.2")["doIt"].__setitem__("cmd", "curl --format firmware"))
+    assert errors(run(root)) == []
+
+
+# ---------------------------------------------------------------- terms
+
+
+def _append(d: dict[str, Any], sid: str, key: str, extra: str) -> None:
+    step(d, sid)[key] = step(d, sid)[key] + extra
+
+
+def test_tc22_term_used_early(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: _append(d, "machine.3", "hint", " Your tailnet can wait."))
+    assert errors(run(root)) == ["TERM_EARLY"]
+
+
+def test_tc23_previewed_term_may_be_used_early(root: Path) -> None:
+    def mutate(d: dict[str, Any]) -> None:
+        _append(d, "machine.3", "hint", " Your tailnet can wait.")
+        d["previews"] = ["tailnet"]
+
+    edit(root, "lessons/machine.json", mutate)
+    assert errors(run(root)) == []
+
+
+def test_tc24_own_term_not_in_teaches(root: Path) -> None:
+    edit(root, "lessons/localchat.json", lambda d: d["teaches"].remove("address"))
+    # One TERM_NOT_TAUGHT per string that uses the term, so the author sees every place.
+    assert set(errors(run(root))) == {"TEACHES_MISSING", "TERM_NOT_TAUGHT"}
+
+
+def test_tc25_teaches_unknown_term(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: d["teaches"].append("quantisation"))
+    assert errors(run(root)) == ["TEACHES_UNKNOWN"]
+
+
+def test_tc26_term_inside_code_is_ignored(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: _append(d, "machine.3", "text", " `tailnet`"))
+    assert errors(run(root)) == []
+
+
+def test_tc27_map_disagrees_with_chapter(root: Path) -> None:
+    edit(root, "map.json", lambda d: term(d, "memory").__setitem__("gloss", "Where your laptop keeps things."))
+    assert errors(run(root)) == ["CHAPTER_TERM_MISMATCH"]
+
+
+def test_tc28_chapter_term_missing_from_map(root: Path) -> None:
+    edit(root, "map.json", lambda d: d["terms"].remove(term(d, "rule of thumb (three quarters)")))
+    assert errors(run(root)) == ["CHAPTER_TERM_MISSING", "TEACHES_UNKNOWN"]
+
+
+def test_tc29_first_at_unknown(root: Path) -> None:
+    edit(root, "map.json", lambda d: term(d, "tailnet").__setitem__("firstAt", "nowhere"))
+    assert errors(run(root)) == ["MAP_FIRSTAT", "TEACHES_UNKNOWN"]
+
+
+def test_tc38_term_never_defined_in_v1(root: Path) -> None:
+    edit(root, "map.json", lambda d: term(d, "tailnet").__setitem__("firstAt", None))
+    edit(root, "lessons/prove.json", lambda d: d["teaches"].remove("tailnet"))
+    assert set(errors(run(root))) == {"TERM_EARLY"}
+
+
+def test_tc30_avoid_synonym_is_only_a_warning(root: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    edit(root, "lessons/machine.json", lambda d: _append(d, "machine.2", "hint", " Not the disk."))
+    issues = run(root)
+    assert errors(issues) == []
+    assert any(i.code == "AVOID_SYNONYM" and "machine.2.hint" in i.where for i in issues)
+    assert validate_mod.main([str(root)]) == 0
+
+
+# ---------------------------------------------------------------- voice
+
+
+def test_tc31_dashes(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: _append(d, "machine.2", "hint", " Easy — promise."))
+    edit(root, "map.json", lambda d: term(d, "server").__setitem__("gloss", term(d, "server")["gloss"] + " Always on – mostly."))
+    assert errors(run(root)) == ["STYLE_DASH", "STYLE_DASH"]
+
+
+def test_tc32_avoid_list_phrase(root: Path) -> None:
+    edit(root, "lessons/localchat.json", lambda d: d.__setitem__("why", "Genuinely, " + d["why"]))
+    assert errors(run(root)) == ["STYLE_AVOID"]
+
+
+def test_tc33_style_script_missing(root: Path, tmp_path: Path) -> None:
+    assert set(errors(run(root, stylecheck=tmp_path / "missing.py"))) == {"STYLE_TOOL"}
+
+
+# ---------------------------------------------------------------- content and CLI
+
+
+def _tree_hash(path: Path) -> str:
+    digest = hashlib.sha256()
+    for f in sorted(p for p in path.rglob("*") if p.is_file() and "__pycache__" not in p.parts):
+        digest.update(str(f.relative_to(path)).encode())
+        digest.update(f.read_bytes())
+    return digest.hexdigest()
+
+
+def test_tc34_real_curriculum_is_valid_and_untouched() -> None:
+    before = _tree_hash(CURRICULUM)
+    assert errors(validate_mod.validate()) == []
+    assert _tree_hash(CURRICULUM) == before
+
+
+def test_tc35_cli_exit_codes(root: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert validate_mod.main([str(CURRICULUM)]) == 0
+    assert "The curriculum is valid" in capsys.readouterr().out
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2")["check"].__setitem__("probe", "disk_usage"))
+    assert validate_mod.main([str(root)]) == 1
+    assert "PROBE_UNKNOWN" in capsys.readouterr().out

@@ -1,0 +1,168 @@
+# Front-matter for Book 1, chapter 1: Know your machine.
+# Read by the build and the checker. Never rendered on the page.
+# Fields marked "author" need the author's hands or hardware before publication.
+
+book: 1
+chapter: 1
+title: Know your machine
+slug: know-your-machine
+
+whatIsNew: >
+  One number (memory, in GB) decides whether a model runs at all, and the
+  reader gets it from their own settings in two minutes with nothing
+  installed. Every other hardware guide starts from specs, benchmarks or a
+  GPU; this one defers all three to Book 2 and says so.
+
+testedOn:                     # author: fill before publication
+  status: not yet tested      # the chapter's claims are arithmetic, not stopwatch; see sources
+  month: 2026-11
+  machines:
+    - name: author Mac        # the "128" on the author's sticky note
+      memory_gb: 128
+      os: macOS
+      checked: []             # click path "About This Mac > Memory" to be confirmed on this version
+    - name: 16 GB laptop, no GPU
+      memory_gb: 16
+      os: ""                  # author: Windows or Linux, whichever is to hand
+      checked: []             # Windows "Installed RAM (usable)" wording to be confirmed
+  models: []                  # none run in this chapter
+
+stations:
+  - id: machine
+    name: Know your machine
+    colour: amber             # inYourHead: know what it does
+    zone: 1
+    needs: []
+    proof: >
+      Say your number without looking; then for a 2 GB, a 5 GB and a 20 GB
+      file say fits or does not fit. On 16 GB: fits, fits, no. On 32: the
+      last one fits too.
+    whyThisColour: >
+      The app finds the number for the reader and usually picks well, so
+      grey is tempting. The day it picks wrong the reader must know what it
+      was measuring or they blame the model and give up. Not red: nothing
+      fails silently or expensively; the symptom is loud.
+    whenItGoesWrong:
+      - symptom: 'Download reaches 100%, then the app says nothing, or "loading" forever, or quietly picks a different model'
+        cause: The model file is bigger than memory
+        fix: Compare file size with the sticky note; pick the smaller size
+      - symptom: Model fits and runs but takes a minute to say hello
+        cause: Room is nearly full; the machine is working hard
+        fix: Nothing broken; Book 2 covers living with it, shrinking the model, or buying more room
+
+beforeYouStart:               # resources, not knowledge
+  software: []
+  downloads: []
+  accounts: []
+  physical:
+    - A computer whose settings you can open (Mac, Windows or Linux)
+    - A sticky note and a pen
+  diskFreeGb: 0
+  memoryFreeGb: 0
+  timeMinutes: 5
+  costsMoney: false
+
+reEntry:                      # terms defined earlier, recapped on first use here
+  - term: model
+    definedIn: Book 1, chapter 0
+    recap: A model is the file that does the thinking. One file.
+  - term: station
+    definedIn: Book 1, chapter 0
+    recap: A skill on the map. Each has a colour.
+  - term: colours (grey, amber, red)
+    definedIn: Book 1, chapter 0
+    recap: "Grey, press go. Amber, know what it does but not how to fix it. Red, understand it well enough to tell when it is wrong."
+
+terms:                        # map.json entries this chapter defines
+  - term: memory
+    gloss: >
+      The space your laptop works in; whatever it is doing right now has to
+      be in there. Measured in gigabytes; the Settings line that says
+      Memory or RAM.
+    analogy: The room (the drive is the warehouse; the choir sings in the room, not the warehouse)
+    recap: Memory (Book 1, ch 1) is the room a model has to fit in, whole, before it can speak. Your sticky-note number.
+    station: machine
+    avoid: [RAM as a different thing from memory, storage, space, disk]
+  - term: model file
+    gloss: >
+      The single file a model is downloaded as; the whole of the clever part
+      in one lump. No account, no key, no phoning home. Closer to a film
+      file than to an app.
+    analogy: "A film file: copy it to another machine with enough memory and it plays there too"
+    recap: The model file (Book 1, ch 1) is one file holding the whole model. Fits in memory or it does not run.
+    station: machine
+    avoid: [weights, checkpoint, binary, the model (when the file is meant)]
+  - term: rule of thumb (three quarters)
+    gloss: >
+      If the file is more than about three quarters of your memory number,
+      expect a squeeze; bigger than the number, it does not run.
+    analogy: Elbow room, because the laptop is already using some memory for being a laptop
+    recap: "Three quarters of your number is comfortable; over it is a squeeze; over the number is no."
+    station: machine
+    avoid: [headroom, overhead, VRAM budget]
+
+previews:                     # mentioned on purpose before their own chapter
+  - term: two rooms (separate graphics card memory)
+    taughtIn: Book 2
+    note: Named as "a complication you can ignore for now"; changes how fast, never whether
+  - term: model sizes and the numbers on the label (quantisation, parameters)
+    taughtIn: Book 1, chapter 2
+    note: "Chapter 2 opens the file"
+  - term: memory-mapped loading
+    taughtIn: Book 1, chapter 2
+    note: The pedantic parenthesis about apps that pull the file in as they go
+
+analogies:                    # one per section, for the checker
+  - section: Find your number
+    analogy: The sticky note on the lid
+  - section: Why it fits or it doesn't
+    analogy: "Memory is the room; the drive is the warehouse; the model is a choir that must be in the building before the concert"
+  - section: The model file is the whole brain
+    analogy: A film file, not an app
+  - section: Have you got it?
+    analogy: '"Rubbish model," says everyone who skipped this chapter. Small room.'
+  - section: Where that leaves you
+    analogy: More hardware knowledge than the forums, for the price of a sticky note
+
+jokes:
+  - "On Linux you already know, and I know you know."
+  - "Mine says 128… which is showing off."
+  - "The choir doesn't sing in the warehouse."
+  - "the forums will tell you otherwise, LOUDLY"
+
+sources:                      # principle 3; tested/untested labelled
+  - claim: macOS shows memory under Apple menu > About This Mac > Memory
+    source: Apple Support, About This Mac
+    url: https://support.apple.com/guide/mac-help/about-this-mac-mchlp2894/mac
+    status: untested on current macOS version (author)
+  - claim: Windows shows "Installed RAM" with an "(x GB usable)" figure under Settings > System > About
+    source: Microsoft Support, Find out how much RAM your PC has
+    url: ""                   # author: confirm current page and wording
+    status: untested
+  - claim: A model must be loaded into memory before inference; some runtimes memory-map the file and load lazily
+    source: llama.cpp documentation (mmap and --no-mmap)
+    url: https://github.com/ggml-org/llama.cpp
+    status: tested by the author in earlier work, not re-run for this chapter
+  - claim: 16 GB and 32 GB machines run the model Priya used
+    source: arithmetic from the model table file sizes; not timed
+    status: not tested; stated as arithmetic in the text
+  - claim: The three-quarters rule of thumb
+    source: the author's own rule; labelled as such on the page
+    status: opinion, labelled
+  - claim: Machines with a separate graphics card have GPU memory distinct from system memory; fitting there changes speed, not whether it runs
+    source: Book 2 chapter on GPU memory (forward reference)
+    status: untested in this chapter
+
+companionRepo:
+  name: awesome-local-ai
+  url: https://github.com/boxabirds/awesome-local-ai
+  pointsTo:
+    - one-line memory command per OS
+    - the live model table (file sizes, sizes available, first chapter used)
+
+authorWork:                   # before publication
+  - Fill testedOn with real machines and the month
+  - Confirm the macOS and Windows click paths and wording
+  - Build the model table (every model the series uses: file size, available sizes, first chapter) from awesome-local-ai
+  - Write the source notes with links; label tested and untested
+  - Decide which chat app chapter 0 names, so chapter 2 can open its model file

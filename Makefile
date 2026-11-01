@@ -1,4 +1,4 @@
-.PHONY: help install setup dev dev-app dev-agent dev-mcp build lint clean
+.PHONY: help install setup dev dev-app dev-agent dev-mcp build lint check clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -31,6 +31,9 @@ build: ## Build all apps
 
 lint: ## Lint all apps
 	pnpm lint
+
+check: ## Validate the curriculum (lessons, term register, probes, voice rules)
+	uv run --directory apps/agent python ../../curriculum/validate.py
 
 clean: ## Clean build artifacts
 	pnpm clean

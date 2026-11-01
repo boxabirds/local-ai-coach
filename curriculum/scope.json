@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "note": "What V1 of the coach teaches, in reading order. The order is the define-before-use clock: a term may be used in an item only if it is defined in that item or an earlier one.",
+  "readingOrder": [
+    { "id": "legal-letter", "kind": "story", "station": "d_legal", "file": "stories/legal-letter.md" },
+    { "id": "machine", "kind": "lesson", "station": "machine", "file": "lessons/machine.json", "chapter": "chapters/know-your-machine.md" },
+    { "id": "localchat", "kind": "lesson", "station": "localchat", "file": "lessons/localchat.json" },
+    { "id": "prove", "kind": "lesson", "station": "prove", "file": "lessons/prove.json" }
+  ],
+  "assumed": {
+    "lmbasics": "Book 1 chapter 2 is not in V1. The Local chat lesson uses only the model and model file, which chapter 0 and chapter 1 define.",
+    "web": "No V1 lesson for it. The Prove it stays local lesson defines every network term it uses (address, destination, private address, tailnet, public address)."
+  }
+}

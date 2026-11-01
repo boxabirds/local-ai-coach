@@ -66,3 +66,7 @@ bun.lockb
 
 # References
 .references
+
+# Python bytecode outside apps/agent (curriculum/validate.py)
+__pycache__/
+*.pyc

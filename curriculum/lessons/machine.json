@@ -1,0 +1,61 @@
+{
+  "station": "machine",
+  "status": "final",
+  "source": "chapters/know-your-machine.md",
+  "untested": [
+    "The macOS click path (Apple menu, About This Mac, Memory) is not confirmed on the current macOS version (chapter 1 sources).",
+    "The Linux hint (free -h, the Mem line) has not been run this month and its output is not captured."
+  ],
+  "teaches": ["memory", "model file", "rule of thumb (three quarters)"],
+  "previews": [],
+  "stands": "GB is short for gigabyte, the unit memory is counted in.",
+  "why": "One number decides whether a model runs at all. The app found Priya's number for her, and it chose well. One day it'll choose badly, and the sticky note is how you check.",
+  "mnem": "Memory is the room, not the speed.",
+  "steps": [
+    {
+      "id": "machine.1",
+      "text": "Find your number: how much **memory** your machine has, in GB. (Memory is the space your laptop works in. Whatever it's doing right now has to be in there.) On a Mac: Apple menu, About This Mac, the line that says Memory.",
+      "where": "settings",
+      "hint": "It might say RAM instead. Same thing. On Linux you already know, and I know you know (`free -h`, the Mem line).",
+      "doIt": { "kind": "instructions", "explain": "I'll give you the exact clicks for your machine, one at a time." },
+      "check": {
+        "kind": "ask",
+        "question": "Found it? Write it on a sticky note and put it on the lid.",
+        "rubric": "The learner says they have found the Memory or RAM line. No number is needed yet."
+      }
+    },
+    {
+      "id": "machine.2",
+      "text": "Type the number from your sticky note. I'll check it against what the machine says.",
+      "where": "coach",
+      "hint": "Just the number, in GB. If you see two numbers, use the bigger one.",
+      "doIt": { "kind": "instructions", "explain": "I'll read the number from the machine myself and show you exactly what I ran." },
+      "check": { "kind": "real", "probe": "memory", "params": {}, "compare": "typed", "toleranceGb": 1 },
+      "onFail": {
+        "pattern": "mismatch",
+        "say": "You typed {typed} and the machine says {measured}. Did you read the drive by mistake? The drive is the warehouse. Memory is the room."
+      }
+    },
+    {
+      "id": "machine.3",
+      "text": "Now the test. For each of these, say fits or doesn't fit: a 2 GB **model file**, a 5 GB one, a 20 GB one. (The model file is the single file a model is downloaded as: the whole of the clever part, in one lump.)",
+      "where": "coach",
+      "hint": "My **rule of thumb**: under about three quarters of your number, fine. Over it, a squeeze. Bigger than the number, no.",
+      "doIt": { "kind": "instructions", "explain": "I'll work it through with your number, one file at a time." },
+      "check": {
+        "kind": "ask",
+        "question": "A 2 GB file, a 5 GB file, a 20 GB file: fits or doesn't fit?",
+        "rubric": "Judge against the measured number N. A file fits if it is no bigger than N, and is a squeeze if it is over three quarters of N. On 16 GB: fits, fits, no. On 32 GB: fits, fits, fits. On 8 GB: fits, fits (a squeeze), no."
+      },
+      "onFail": {
+        "pattern": "wrong",
+        "say": "Close. A 20 GB file needs 20 GB of room, and the drive doesn't count. The choir doesn't sing in the warehouse."
+      }
+    }
+  ],
+  "recap": [
+    "Memory is the room a model has to fit in, whole, before it can speak. Your sticky-note number.",
+    "The model file is one file holding the whole model. Fits in memory or it does not run.",
+    "Three quarters of your number is comfortable; over it is a squeeze; over the number is no."
+  ]
+}
