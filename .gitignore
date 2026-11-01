@@ -73,3 +73,7 @@ __pycache__/
 
 # pnpm store created inside the repo by the sandboxed install
 .pnpm-store/
+
+# Playwright output
+apps/app/test-results/
+apps/app/playwright-report/
