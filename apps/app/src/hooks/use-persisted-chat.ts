@@ -26,7 +26,11 @@ export type PersistableAgent = {
  * what was restored. So the restore is applied again once, when the first run
  * finishes, if the conversation was wiped by it.
  */
-export function usePersistedChat(agent: PersistableAgent, storage: Storage | undefined = browserStorage()) {
+export function usePersistedChat(
+  agent: PersistableAgent,
+  storage: Storage | undefined = browserStorage(),
+  onRestored?: () => void,
+) {
   useEffect(() => {
     let pending: { messages: ChatMessage[]; state: Record<string, unknown> } | null = null;
     if (agent.messages.length === 0) {
@@ -35,6 +39,7 @@ export function usePersistedChat(agent: PersistableAgent, storage: Storage | und
         pending = { messages: restorable(kept.messages), state: kept.state };
         agent.setMessages(pending.messages);
         agent.setState(pending.state);
+        onRestored?.();
       }
     }
     const save = () => saveChat(storage, agent.messages, agent.state);
@@ -45,10 +50,13 @@ export function usePersistedChat(agent: PersistableAgent, storage: Storage | und
         if (pending && agent.messages.length === 0) {
           agent.setMessages(pending.messages);
           agent.setState(pending.state);
+          onRestored?.();
         }
         pending = null;
       },
     });
     return () => subscription.unsubscribe();
+    // onRestored is read once per agent on purpose; the page passes a stable callback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agent, storage]);
 }

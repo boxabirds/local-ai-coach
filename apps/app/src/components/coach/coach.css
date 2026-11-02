@@ -5,7 +5,7 @@
   padding: 16px 18px;
   border: 1px solid var(--color-border, #d9d9e0);
   border-radius: var(--radius-lg);
-  background: var(--color-surface, #fff);
+  background: var(--coach-paper);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   color: var(--text-primary);
   display: flex;
@@ -167,6 +167,8 @@
   /* Secondary buttons: paper with a clearly visible edge and dark text. */
   --coach-line: #8b8ba3;
   --coach-ink: #1c1c28;
+  /* Commands and matched lines: a neutral grey, not the upstream lavender. */
+  --coach-code: #f2f2f4;
 }
 
 :root.dark {
@@ -176,6 +178,7 @@
   --coach-accent-soft: #24304f;
   --coach-line: #6b6b85;
   --coach-ink: #ececf3;
+  --coach-code: #23233a;
 }
 
 /* A card that is really a run of chat messages (the story): no frame of its own. */
@@ -300,7 +303,7 @@
   padding: 6px 8px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-glass);
-  background: var(--color-surface);
+  background: var(--coach-paper);
   color: var(--text-primary);
   font: inherit;
 }
@@ -330,7 +333,7 @@
   margin: 0;
   padding: 8px 10px;
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: var(--coach-code);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px;
   white-space: pre-wrap;
@@ -354,7 +357,7 @@
 }
 
 .coach-map__stop {
-  fill: var(--color-surface);
+  fill: var(--coach-paper);
   stroke: var(--text-tertiary);
   stroke-width: 4;
 }
@@ -367,7 +370,7 @@
 
 .coach-map__stop--reported,
 .coach-map__stop--assisted {
-  fill: var(--color-surface);
+  fill: var(--coach-paper);
   stroke: #d9a03f;
 }
 
@@ -405,4 +408,32 @@
   font-weight: 500;
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+/* --- Conversation spacing ------------------------------------------------- */
+/* Messages that are only a coach card have nothing to copy: no toolbar. */
+.chat-content [data-testid="copilot-assistant-message"]:has(.coach-card) [data-testid="copilot-assistant-toolbar"] {
+  display: none;
+}
+
+/* Text messages keep their copy button, floated over the message's lower edge
+   so the hidden-until-hover toolbar no longer reserves 36px under every line. */
+.chat-content [data-testid="copilot-user-message"],
+.chat-content [data-testid="copilot-assistant-message"] {
+  position: relative;
+}
+
+.chat-content [data-testid="copilot-user-toolbar"],
+.chat-content [data-testid="copilot-assistant-toolbar"] {
+  position: absolute;
+  bottom: -14px;
+  z-index: 1;
+}
+
+.chat-content [data-testid="copilot-user-toolbar"] {
+  right: 0;
+}
+
+.chat-content [data-testid="copilot-assistant-toolbar"] {
+  left: 0;
 }

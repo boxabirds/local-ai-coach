@@ -17,6 +17,9 @@ const QUESTION = "The day after, what did Priya check?";
 const ANSWER = "Where her words went.";
 const BASE = "http://127.0.0.1:3100";
 const VIEWPORT = { width: 1280, height: 860 };
+const PAPER = "rgb(255, 255, 255)";
+/** A one-line user message: bubble plus breathing room, no reserved toolbar. */
+const MAX_USER_BLOCK = 80;
 
 async function openBrowser(): Promise<{ browser: Browser; page: Page }> {
   const browser = await chromium.launch({ args: ["--single-process"] });
@@ -135,6 +138,18 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(map).toBeVisible();
     await expect(map.locator("[data-station='machine']")).toHaveAttribute("data-status", "reported");
     await expect(map.locator("[data-station='d_legal']")).toHaveAttribute("data-status", "read");
+    // Every station name fits inside the map: none clipped at the edges.
+    const svg = (await map.locator("svg").boundingBox())!;
+    for (const name of await map.locator(".coach-map__name").all()) {
+      const label = (await name.boundingBox())!;
+      expect(label.x).toBeGreaterThanOrEqual(svg.x);
+      expect(label.x + label.width).toBeLessThanOrEqual(svg.x + svg.width);
+    }
+    // Once the arrival scroll settles, the map sits above the message box, not under it.
+    await page.waitForTimeout(800);
+    const mapBox = (await map.boundingBox())!;
+    const inputBox = (await page.getByTestId("copilot-chat-input").boundingBox())!;
+    expect(mapBox.y + mapBox.height).toBeLessThanOrEqual(inputBox.y + 1);
     await shot(page, "05-map");
     expect(progress().stations.machine.status).toBe("reported");
   });
@@ -146,6 +161,21 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(page.getByText("You said: 16 GB")).toBeVisible();
     await expect(page.getByText("Passed")).toBeVisible();
     await expect(page.getByTestId("coach-map")).toBeVisible();
+    await page.waitForTimeout(500); // the restore scroll settles
+
+    // Opens at the end: the last message is on screen.
+    const last = page.getByTestId("copilot-assistant-message").last();
+    const box = (await last.boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(VIEWPORT.height);
+
+    // No reserved toolbar space: a one-line user message and a card-only message stay compact.
+    const userBlock = (await page.getByTestId("copilot-user-message").first().boundingBox())!;
+    expect(userBlock.height).toBeLessThanOrEqual(MAX_USER_BLOCK);
+    const cardMessage = page.getByTestId("copilot-assistant-message").filter({ has: page.getByTestId("coach-number") });
+    await expect(cardMessage.getByTestId("copilot-assistant-toolbar")).toBeHidden();
+
+    // Cards sit on paper, not the upstream lavender surface.
+    await expect(page.getByTestId("coach-check")).toHaveCSS("background-color", PAPER);
     await shot(page, "06-after-reload");
   });
 

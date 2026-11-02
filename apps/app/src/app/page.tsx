@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ProviderKeysDialog } from "@/components/chat/provider-keys-dialog";
 import { useProviderKeys } from "@/components/chat/provider-keys";
 import { COACH_STUB, KeyGatedChatView, StubBadge } from "@/components/chat/key-gated-chat-view";
@@ -16,6 +16,9 @@ import { useCoachUI } from "@/hooks/use-coach-ui";
 import { usePersistedChat, type PersistableAgent } from "@/hooks/use-persisted-chat";
 import { newThreadId } from "@/lib/chat-store";
 
+/** Frames to keep pinning the end while restored cards finish laying out. */
+const RESTORE_SCROLL_FRAMES = 10;
+
 export default function HomePage() {
   useCoachUI();
   useExampleSuggestions();
@@ -23,7 +26,17 @@ export default function HomePage() {
   // so the restored conversation lands in the agent copy the chat actually renders.
   const [threadId] = useState(newThreadId);
   const { agent } = useAgent({ threadId });
-  usePersistedChat(agent as unknown as PersistableAgent);
+  // A restored conversation opens at its end, where the learner left off.
+  const scrollToEnd = useCallback(() => {
+    const settle = (frames: number) =>
+      requestAnimationFrame(() => {
+        const scroller = chatRoot.current?.querySelector<HTMLElement>(".reader-scroll-view");
+        if (scroller) scroller.scrollTop = scroller.scrollHeight;
+        if (frames > 0) settle(frames - 1);
+      });
+    settle(RESTORE_SCROLL_FRAMES);
+  }, []);
+  usePersistedChat(agent as unknown as PersistableAgent, undefined, scrollToEnd);
   const { newChat, hasKeys, keysOpen, setKeysOpen } = useProviderKeys();
   const { copilotkit } = useCopilotKit();
   const [error, setError] = useState<string | null>(null);

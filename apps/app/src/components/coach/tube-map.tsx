@@ -29,7 +29,8 @@ export const STATUS_WORD: Record<string, string> = {
 };
 
 const STEP_X = 160;
-const PAD_X = 60;
+/** Half the widest station name at 13px, so end labels are never clipped. */
+const PAD_X = 100;
 const LINE_Y = 40;
 const RADIUS = 14;
 const HEIGHT = 120;
