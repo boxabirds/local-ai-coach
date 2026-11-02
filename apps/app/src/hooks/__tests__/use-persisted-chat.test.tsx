@@ -13,7 +13,13 @@ import { SNAPSHOT, STUB_RUN } from "@/lib/__tests__/chat-fixtures";
 class FakeAgent implements PersistableAgent {
   messages: ChatMessage[] = [];
   state: Record<string, unknown> = {};
-  private subscribers = new Set<{ onMessagesChanged?: () => void; onStateChanged?: () => void }>();
+  private subscribers = new Set<{ onMessagesChanged?: () => void; onStateChanged?: () => void; onRunFinalized?: () => void }>();
+  /** What CopilotChat's connect run does to a new thread: replace the messages with the server's (none), then finish. */
+  connectEmptyThread() {
+    this.setMessages([]);
+    this.setState({});
+    this.subscribers.forEach((s) => s.onRunFinalized?.());
+  }
   setMessages(messages: ChatMessage[]) {
     this.messages = messages;
     this.subscribers.forEach((s) => s.onMessagesChanged?.());
@@ -22,7 +28,7 @@ class FakeAgent implements PersistableAgent {
     this.state = state;
     this.subscribers.forEach((s) => s.onStateChanged?.());
   }
-  subscribe(subscriber: { onMessagesChanged?: () => void; onStateChanged?: () => void }) {
+  subscribe(subscriber: { onMessagesChanged?: () => void; onStateChanged?: () => void; onRunFinalized?: () => void }) {
     this.subscribers.add(subscriber);
     return { unsubscribe: () => void this.subscribers.delete(subscriber) };
   }
@@ -46,6 +52,25 @@ describe("usePersistedChat", () => {
     render(<Harness agent={agent} />);
     expect(agent.messages).toEqual(STUB_RUN);
     expect(agent.state).toEqual(SNAPSHOT);
+  });
+
+  it("TC-20b the restore survives the chat's connect run wiping a new thread", () => {
+    saveChat(localStorage, STUB_RUN, SNAPSHOT);
+    const agent = new FakeAgent();
+    render(<Harness agent={agent} />);
+    act(() => agent.connectEmptyThread());
+    expect(agent.messages).toEqual(STUB_RUN);
+    expect(agent.state).toEqual(SNAPSHOT);
+    expect(loadChat(localStorage)?.messages).toEqual(STUB_RUN);
+  });
+
+  it("TC-20c a later run that empties the chat is not undone (only the first run after load)", () => {
+    saveChat(localStorage, STUB_RUN, SNAPSHOT);
+    const agent = new FakeAgent();
+    render(<Harness agent={agent} />);
+    act(() => agent.connectEmptyThread());
+    act(() => agent.connectEmptyThread());
+    expect(agent.messages).toEqual([]);
   });
 
   it("TC-21 never overwrites a conversation already in the agent", () => {

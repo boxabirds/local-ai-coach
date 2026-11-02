@@ -30,9 +30,17 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${APP_PORT}`,
     viewport: { width: 1280, height: 860 },
     trace: "retain-on-failure",
+    // Claude Code issue #82660: the sandbox denies the Mach service Chromium's
+    // helper processes register; single-process mode skips those helpers.
+    launchOptions: { args: ["--single-process"] },
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 860 } } }],
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 860 }, launchOptions: { args: ["--single-process"] } },
+    },
+  ],
   webServer: [
     {
       command: `uv run --directory ../agent uvicorn main:app --host 127.0.0.1 --port ${AGENT_PORT}`,

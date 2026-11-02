@@ -7,6 +7,18 @@
  */
 
 export const CHAT_KEY = "coach.chat.v1";
+/**
+ * A thread id for this page load, shared by the page's agent and the chat.
+ * CopilotChat otherwise makes its own random thread and talks to a separate,
+ * empty per-thread copy of the agent, so restored messages would land where
+ * nothing reads them. It is deliberately new on every load: reusing the old
+ * thread makes CopilotKit reconnect to the server's copy of it and replay a
+ * card that was still waiting, whose answer then never completes. The kept
+ * messages carry the conversation instead (AG-UI sends them on every run).
+ */
+export function newThreadId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `t-${Date.now()}-${Math.random()}`;
+}
 
 /** This browser's localStorage, or undefined on the server or where reading it throws. */
 export function browserStorage(): Storage | undefined {

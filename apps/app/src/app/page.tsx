@@ -14,11 +14,15 @@ import {
 import { useExampleSuggestions } from "@/hooks";
 import { useCoachUI } from "@/hooks/use-coach-ui";
 import { usePersistedChat, type PersistableAgent } from "@/hooks/use-persisted-chat";
+import { newThreadId } from "@/lib/chat-store";
 
 export default function HomePage() {
   useCoachUI();
   useExampleSuggestions();
-  const { agent } = useAgent();
+  // One thread id for the page's agent and the chat (new each load; see newThreadId),
+  // so the restored conversation lands in the agent copy the chat actually renders.
+  const [threadId] = useState(newThreadId);
+  const { agent } = useAgent({ threadId });
   usePersistedChat(agent as unknown as PersistableAgent);
   const { newChat, hasKeys, keysOpen, setKeysOpen } = useProviderKeys();
   const { copilotkit } = useCopilotKit();
@@ -113,6 +117,7 @@ export default function HomePage() {
         )}
         <div className="chat-content" ref={chatRoot}>
           <CopilotChat
+            threadId={threadId}
             chatView={KeyGatedChatView}
             autoScroll={false}
             scrollView={ReaderScrollView}
