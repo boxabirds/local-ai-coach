@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
 /**
@@ -12,6 +12,9 @@ import { join } from "node:path";
 const AGENT_PORT = 8125;
 const APP_PORT = 3100;
 const AGENT_URL = `http://127.0.0.1:${AGENT_PORT}`;
+
+// Browsers live in a folder the agent's sandbox can write (see e2e/README.md).
+process.env.PLAYWRIGHT_BROWSERS_PATH ??= join(homedir(), ".cache", "hardened-harness", "ms-playwright");
 
 // One fresh progress folder per run; the specs read it through this variable.
 process.env.COACH_E2E_HOME ??= mkdtempSync(join(tmpdir(), "coach-e2e-"));
