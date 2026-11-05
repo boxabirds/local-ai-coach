@@ -217,3 +217,15 @@ Consequences, to settle:
 Decided (Julian, 2026-11-05): **Priya's reason, and the book's, is control.** Local AI is not cost-effective now for most people: a Copilot licence is cheaper, faster and better. The book says so plainly and never claims savings, speed or quality over hosted AI. Checked 2026-11-05: the curriculum and book text make no cost-saving claim. Chapter 0 already frames it as control ("local AI is a different deal from a subscription. Nobody else is running it... how much of the running is yours"), and the author's Book 2 promise to "come clean about what that cost" fits.
 
 Decided (Julian, 2026-11-05): inbox sorting is out of the job table. Research on which office jobs people find local AI compelling for: `20261105-office-use-cases-research.md`.
+
+## 11. The legal tool and redact-then-hosted (Julian, 2026-11-05)
+
+Decided:
+1. **The legal tool is "compare two versions of a contract".** Built by a coding agent (`codingagent`), hinted in chapter 1's job table, built in later chapters. No destination exists for it yet; candidate: a new destination on Priya's path between `d_legal` and `d_bundle`.
+2. **Redact-then-hosted is a job.** A local model removes names and identifying details, a hosted model works on the clean copy, and the local side puts the details back. Hosted AI is better (section 10), so the book teaches using it safely instead of avoiding it.
+
+Reach:
+- `minimise` ("Minimise and redact before prompting", zone 1, needs `extract`) already exists; its proof ("A test record with names and numbers reaches the model as placeholders only") fits as is. What's new is pointing it at a hosted model and putting it on Priya's path.
+- **It conflicts with chapter 5's proof.** `prove` and `d_legal` pass only when the chat app talks to loopback, private or tailnet addresses. A redact-then-hosted job talks to a public address by design, so the same check fails it. It needs its own proof: what left the machine contained only placeholders. That is much harder to show than "where the bytes went", and the `connections` probe can't see contents. Candidate: the learner's own pipeline logs exactly what it sent, and the check reads that log for any name from the original. This is a design question for the author and a new probe.
+- The thesis line in section 10 ("Priya drafts with an AI that is local and trusted") widens to: local where it must be, hosted where it's safe, and she decides which.
+- Redaction is best effort (research note): "You're accountable" applies to what the redactor missed.
