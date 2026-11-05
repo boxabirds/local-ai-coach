@@ -164,7 +164,9 @@ Decided 2026-11-05 (Julian), decisions 2 and 3:
 
 Feedback: "knowing your number" reads as ominous ("your number is up"). It's also out of date: chapter 1 now has two facts, not one number.
 
-Proposed: name the thing itself. "How much memory your computer has", and with the second fact, "how much graphics card memory". Avoid "find your memory" and "check your memory", which read as the reader's own memory.
+Decided (Julian, 2026-11-05): **frame it as the reader's goal, not the hardware fact.** The chapter's question is "What local AI can I do with my computer?". The two memory facts are how you answer it, not the headline. This is also chapter 1's learning objective (decision 1): the reader leaves able to say which everyday jobs their computer does comfortably, which slowly, and which not at all, and why, from its memory and graphics card memory.
+
+Wherever "your number" stands for the goal (headings, the promise, the recap), it becomes the goal. Wherever it stands for the fact (the card where the reader types it, the check), it becomes the fact by name: "memory" or "graphics card memory".
 
 Places that change:
 - book text: `panel/final-narrative.md` and `curriculum/chapters/know-your-machine.md` (the "Find your number" heading, "Knowing your number is two minutes of your life, once.", the proof, the recap, and every "your number" in between, 9 in the chapter);
@@ -175,3 +177,5 @@ Places that change:
 ## 8. The time promises
 
 The chapter promises two minutes (finding the memory number), five minutes (the chapter's hands-on part) and five seconds (judging a model page afterwards). They tell a nervous beginner the step is small, which is what gets them to start. None has been timed with a reader, and the two new facts make the first longer on Windows and Linux. For a book about proof, an untimed promise is a liability. Proposed: time the new chapter 1 on one real person before publishing, and print only the times that held.
+
+Open (author): the station and chapter title "Know your machine" is framed as a fact too. A goal-framed title would match, for example "What can my computer do?". A station rename is a taxonomy change.
