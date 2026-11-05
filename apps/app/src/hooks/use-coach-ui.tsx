@@ -32,7 +32,7 @@ import "@/components/coach/coach.css";
  */
 
 const StoryParams = z.object({
-  story_id: z.string(),
+  story_id: z.string().describe("The story's id from the curriculum, for example legal-letter (not its station id)"),
   question: z.string().optional(),
   options: z.array(z.string()).optional(),
 });

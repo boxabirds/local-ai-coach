@@ -172,8 +172,11 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
     if (active && asking && shown > 1) firstAnswer.current?.focus({ preventScroll: true });
   }, [active, asking, shown]);
 
+  // While the arguments stream in, storyId grows a character at a time ("d", "d_", ...):
+  // fetch only once it has finished arriving.
+  const settled = status !== "inProgress";
   useEffect(() => {
-    if (!storyId) return;
+    if (!storyId || !settled) return;
     let live = true;
     loadStory(storyId)
       .then((text) => live && setLoad({ state: "ready", text }))
@@ -181,7 +184,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
     return () => {
       live = false;
     };
-  }, [storyId]);
+  }, [storyId, settled]);
 
   const pick = (option: string) => {
     if (!respond || answered) return;

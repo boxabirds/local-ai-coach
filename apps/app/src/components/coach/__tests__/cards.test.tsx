@@ -695,3 +695,16 @@ describe("map station names wrap (story 14)", () => {
     expect(nameLines("Supercalifragilisticexpialidocious")).toEqual(["Supercalifragilisticexpialidocious"]);
   });
 });
+
+describe("story card while its arguments stream (bug: partial ids fetched)", () => {
+  it("doesn't fetch until the story id has finished arriving", async () => {
+    const fetchMock = stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
+    const { rerender } = render(<StoryCard storyId="d" status="inProgress" />);
+    rerender(<StoryCard storyId="d_" status="inProgress" />);
+    rerender(<StoryCard storyId="legal-letter" status="inProgress" />);
+    expect(fetchMock).not.toHaveBeenCalled();
+    rerender(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
+    await screen.findByRole("button", { name: "Go on" });
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(STORY_URL("legal-letter"));
+  });
+});

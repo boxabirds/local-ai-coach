@@ -121,10 +121,11 @@ def map_stations() -> list[str]:
 
 
 def story_markdown(story_id: str) -> str | None:
-    """The story text for an id listed in scope.json as a story, else None."""
+    """The story text for an id listed in scope.json as a story, or for the station that story
+    belongs to (a model may pass the station, d_legal, for the story, legal-letter); else None."""
     folder = root()
     for item in _scope(folder)["readingOrder"]:
-        if item["kind"] == STORY_KIND and item["id"] == story_id:
+        if item["kind"] == STORY_KIND and story_id in (item["id"], item["station"]):
             return (folder / item["file"]).read_text(encoding="utf-8")
     return None
 

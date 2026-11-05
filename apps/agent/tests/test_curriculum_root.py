@@ -121,3 +121,10 @@ def test_s14_map_shows_stations_listed_as_shown_after_the_taught_ones(monkeypatc
 
 def test_s14_without_shown_stations_the_map_is_the_reading_order():
     assert curriculum.map_stations() == curriculum.v1_stations()
+
+
+def test_bug_a_story_asked_for_by_its_station_id_still_loads():
+    """The real model called story_card with the story's station (d_legal) instead of its id."""
+    story = next(item for item in curriculum.scope()["readingOrder"] if item["kind"] == curriculum.STORY_KIND)
+    assert curriculum.story_markdown(story["station"]) == curriculum.story_markdown(story["id"])
+    assert curriculum.story_markdown("not-a-story") is None
