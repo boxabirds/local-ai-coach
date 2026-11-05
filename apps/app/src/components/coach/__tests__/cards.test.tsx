@@ -7,7 +7,7 @@ import { StoryCard, STORY_URL, clearStoryCache } from "../story";
 import { StepCard } from "../step-card";
 import { NumberCard, WHERE_TO_LOOK, detectPlatform } from "../number-card";
 import { CheckResult } from "../check-result";
-import { DEFAULT_STATIONS, TubeMap } from "../tube-map";
+import { DEFAULT_STATIONS, TubeMap, progressFill } from "../tube-map";
 import { RunConfirm } from "../run-confirm";
 import { RecapCard } from "../recap-card";
 
@@ -420,7 +420,14 @@ describe("check result", () => {
   });
 });
 
-describe("map", () => {
+describe("map: criticality by shape and colour, progress by fill (story 5)", () => {
+  const station = (container: HTMLElement, id: string) => container.querySelector(`g[data-station='${id}']`)!;
+  const fillHeight = (g: Element) => Number(g.querySelector("[data-testid='coach-map-fill']")!.getAttribute("height"));
+  const outlineClass = (g: Element) => g.querySelector("[data-testid='coach-map-outline']")!.getAttribute("class")!;
+  const MARKER_HEIGHT = 30;
+  /** The triangle runs from the top of the box to 0.85 of the half-height below centre. */
+  const TRIANGLE_SHARE = (1 + 0.85) / 2;
+
   it("TC-53 marks each V1 station with its snapshot status", () => {
     const stations = DEFAULT_STATIONS.map((s) => (s.id === "machine" ? { ...s, status: "reported" } : s.id === "d_legal" ? { ...s, status: "read" } : s));
     const { container } = render(<TubeMap stations={stations} focus="machine" />);
@@ -432,14 +439,114 @@ describe("map", () => {
       ["prove", "unseen"],
     ]);
     expect(screen.getByText("you told me")).toBeInTheDocument();
-    expect(screen.getByRole("img")).toHaveAccessibleName(/Know your machine: you told me/);
   });
 
-  it("TC-54 with no snapshot shows the four stations, all not started", () => {
+  it("TC-54 with no snapshot shows the four stations, all not started, each in its own criticality", () => {
     const { container } = render(<TubeMap />);
-    const statuses = Array.from(container.querySelectorAll("g[data-station]")).map((g) => g.getAttribute("data-status"));
-    expect(statuses).toEqual(["unseen", "unseen", "unseen", "unseen"]);
+    const stops = Array.from(container.querySelectorAll("g[data-station]"));
+    expect(stops.map((g) => [g.getAttribute("data-status"), g.getAttribute("data-criticality")])).toEqual([
+      ["unseen", "red"],
+      ["unseen", "amber"],
+      ["unseen", "grey"],
+      ["unseen", "red"],
+    ]);
     expect(screen.getAllByText("not started")).toHaveLength(4);
+  });
+
+  it.each([
+    ["unseen", 0],
+    ["read", 0.25],
+    ["rehearsed", 0.25],
+    ["reported", 0.5],
+    ["assisted", 0.5],
+    ["verified", 1],
+    ["skipped", 0],
+    ["something new", 0],
+  ])("S5 TC-04 progressFill(%j) is %d", (status, fill) => {
+    expect(progressFill(status)).toBe(fill);
+  });
+
+  it.each([
+    ["grey", "M 85 40 a 15 15"],
+    ["amber", "L 115 40"],
+    ["red", "L 116.5"],
+  ] as const)("S5 TC-05 %s draws its own shape", (criticality, pathHint) => {
+    const { container } = render(<TubeMap stations={[{ id: "x", name: "X", status: "unseen", criticality }]} />);
+    const g = station(container, "x");
+    expect(g.getAttribute("data-criticality")).toBe(criticality);
+    expect(g.querySelector("[data-testid='coach-map-outline']")!.getAttribute("d")).toContain(pathHint);
+    expect(Boolean(g.querySelector(".coach-map__alert"))).toBe(criticality === "red");
+  });
+
+  it("S5 TC-05b an unrated station is a neutral circle and nothing breaks", () => {
+    const { container } = render(<TubeMap stations={[{ id: "unknown", name: "Unknown", status: "read" }]} />);
+    const g = station(container, "unknown");
+    expect(g.getAttribute("data-criticality")).toBe("none");
+    expect(outlineClass(g)).toContain("coach-crit--none");
+    expect(g).toHaveAccessibleName("Unknown: not rated, read");
+  });
+
+  const CRITS = ["grey", "amber", "red"] as const;
+  const FILLS = [
+    ["unseen", 0],
+    ["read", 0.25],
+    ["reported", 0.5],
+    ["verified", 1],
+  ] as const;
+  it.each(CRITS.flatMap((c) => FILLS.map(([status, fill]) => [c, status, fill] as const)))(
+    "S5 TC-06 %s at %s fills %d of the marker, outline by criticality only",
+    (criticality, status, fill) => {
+      const { container } = render(<TubeMap stations={[{ id: "x", name: "X", status, criticality }]} />);
+      const g = station(container, "x");
+      const shapeHeight = criticality === "red" ? MARKER_HEIGHT * TRIANGLE_SHARE : MARKER_HEIGHT;
+      expect(fillHeight(g)).toBeCloseTo(shapeHeight * fill);
+      expect(outlineClass(g)).toContain(`coach-crit--${criticality}`);
+      expect(outlineClass(g)).not.toMatch(/coach-map__stop--|reported|assisted|verified|read/);
+    },
+  );
+
+  it("S5 TC-07 a skipped station has a dashed outline and no fill", () => {
+    const { container } = render(<TubeMap stations={[{ id: "x", name: "X", status: "skipped", criticality: "amber" }]} />);
+    const g = station(container, "x");
+    expect(outlineClass(g)).toContain("coach-map__outline--skipped");
+    expect(fillHeight(g)).toBe(0);
+    expect(screen.getByText("skipped")).toBeInTheDocument();
+  });
+
+  it("S5 TC-08 a checked station reads checked with a tick", () => {
+    render(<TubeMap stations={[{ id: "x", name: "X", status: "verified", criticality: "grey" }]} />);
+    expect(screen.getByText("✓ checked")).toBeInTheDocument();
+  });
+
+  it("S5 TC-09 the key names the three shapes", () => {
+    render(<TubeMap />);
+    const key = screen.getByTestId("coach-map-key");
+    expect(key).toHaveTextContent("press go");
+    expect(key).toHaveTextContent("know what it does");
+    expect(key).toHaveTextContent("must understand");
+    expect(Array.from(key.querySelectorAll("[data-key]")).map((k) => k.getAttribute("data-key"))).toEqual(["grey", "amber", "red"]);
+  });
+
+  it("S5 TC-10 each station is named with its criticality and progress", () => {
+    const stations = DEFAULT_STATIONS.map((s) => (s.id === "machine" ? { ...s, status: "reported" } : s));
+    render(<TubeMap stations={stations} />);
+    expect(screen.getByRole("img", { name: "Know your machine: know what it does, you told me" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Prove it stays local: must understand, not started" })).toBeInTheDocument();
+  });
+
+  it("S5 TC-10b an old snapshot without criticality gets the curriculum's rating for V1 stations", () => {
+    const { container } = render(<TubeMap stations={[{ id: "machine", name: "Know your machine", status: "read" }]} />);
+    expect(station(container, "machine").getAttribute("data-criticality")).toBe("amber");
+  });
+});
+
+describe("check result tone (story 5)", () => {
+  it("S5 TC-11 a check that has not passed is neutral, never amber", () => {
+    render(<CheckResult stationId="machine" stepId="machine.2" passed={false} evidence={[]} note="x" />);
+    const card = screen.getByTestId("coach-check");
+    expect(card).toHaveClass("coach-card--notyet");
+    expect(card.className).not.toMatch(/amber/);
+    expect(screen.getByText("Not yet")).toBeInTheDocument();
   });
 });
 

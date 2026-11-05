@@ -310,7 +310,7 @@ def test_tc31_story_result_replies_with_text_and_records_read(client, tmp_path):
     assert stub.load(tmp_path)["stations"]["d_legal"]["status"] == "read"
     snapshots = [e for e in events if e["type"] == "STATE_SNAPSHOT"]
     stations = {item["id"]: item for item in snapshots[-1]["snapshot"]["progress_snapshot"]}
-    assert stations["d_legal"] == {"id": "d_legal", "name": "Private legal drafting", "status": "read"}
+    assert stations["d_legal"] == {"id": "d_legal", "name": "Private legal drafting", "status": "read", "criticality": "red"}
     assert list(stations) == ["d_legal", "machine", "localchat", "prove"]
     assert stations["machine"]["status"] == "unseen"
 
@@ -388,3 +388,25 @@ def test_tc39_do_it_sends_text_and_card_as_two_messages_with_their_own_ids(clien
     assert text_id != start["parentMessageId"]
     ids = [m["id"] for m in _snapshot_messages(events)]
     assert text_id in ids and start["parentMessageId"] in ids
+
+
+# ------------------------------------------------------------------ criticality (story 5)
+
+
+def test_s5_tc01_criticality_follows_in_your_head():
+    rated = curriculum.station_criticality()
+    assert {rated["localchat"], rated["machine"], rated["prove"]} == {"grey", "amber", "red"}
+    assert (rated["localchat"], rated["machine"], rated["prove"]) == ("grey", "amber", "red")
+    assert set(rated.values()) == {"grey", "amber", "red"}
+    assert len(rated) == 139
+
+
+def test_s5_tc02_unknown_station_has_no_criticality():
+    assert "no-such-station" not in curriculum.station_criticality()
+    assert curriculum.CRITICALITY.get("something else") is None
+
+
+def test_s5_tc03_snapshot_carries_criticality():
+    entries = {e["id"]: e for e in stub.snapshot(stub.empty_record())}
+    assert {sid: e["criticality"] for sid, e in entries.items()} == {"d_legal": "red", "machine": "amber", "localchat": "grey", "prove": "red"}
+    assert all(e["status"] == "unseen" for e in entries.values())

@@ -51,6 +51,30 @@ def station_names() -> dict[str, str]:
     return names
 
 
+# The book's three criticality colours, from each station's "inYourHead" (Ceetrix story 5).
+CRITICALITY = {"press go": "grey", "know what it does": "amber", "must understand": "red"}
+
+
+@lru_cache(maxsize=1)
+def station_criticality() -> dict[str, str]:
+    """Station id to grey, amber or red; stations without a known rating are left out."""
+    rated: dict[str, str] = {}
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            colour = CRITICALITY.get(node.get("inYourHead", ""))
+            if isinstance(node.get("id"), str) and "needs" in node and colour:
+                rated[node["id"]] = colour
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(_read_json(CURRICULUM / "stations.json"))
+    return rated
+
+
 def v1_stations() -> list[str]:
     """The V1 stations in reading order: the story's destination, then each lesson."""
     return [item["station"] for item in scope()["readingOrder"]]

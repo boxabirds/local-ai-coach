@@ -18,6 +18,8 @@ const ANSWER = "Where her words went.";
 const BASE = "http://127.0.0.1:3100";
 const VIEWPORT = { width: 1280, height: 860 };
 const PAPER = "rgb(255, 255, 255)";
+/** The reserved criticality colours (coach.css --crit-*), light theme. */
+const CRIT = { grey: "rgb(107, 114, 128)", amber: "rgb(180, 83, 9)", red: "rgb(185, 28, 28)" } as const;
 /** A one-line user message: bubble plus breathing room, no reserved toolbar. */
 const MAX_USER_BLOCK = 80;
 
@@ -138,6 +140,21 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(map).toBeVisible();
     await expect(map.locator("[data-station='machine']")).toHaveAttribute("data-status", "reported");
     await expect(map.locator("[data-station='d_legal']")).toHaveAttribute("data-status", "read");
+
+    // Story 5: criticality by shape and colour, progress by fill.
+    const marker = (id: string) => map.locator(`[data-station='${id}']`);
+    for (const [id, criticality, fill] of [
+      ["d_legal", "red", "0.25"],
+      ["machine", "amber", "0.5"],
+      ["localchat", "grey", "0"],
+      ["prove", "red", "0"],
+    ] as const) {
+      await expect(marker(id)).toHaveAttribute("data-criticality", criticality);
+      await expect(marker(id)).toHaveAttribute("data-fill", fill);
+      await expect(marker(id).getByTestId("coach-map-outline")).toHaveCSS("stroke", CRIT[criticality]);
+    }
+    await expect(marker("machine").getByTestId("coach-map-fill")).toHaveCSS("fill", CRIT.amber);
+    await expect(map.getByTestId("coach-map-key")).toContainText("must understand");
     // Every station name fits inside the map: none clipped at the edges.
     const svg = (await map.locator("svg").boundingBox())!;
     for (const name of await map.locator(".coach-map__name").all()) {

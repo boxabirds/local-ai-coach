@@ -57,8 +57,8 @@
   border-color: var(--color-mint-dark);
 }
 
-.coach-card--amber {
-  border-color: #d9a03f;
+.coach-card--notyet {
+  border-color: var(--coach-line);
 }
 
 .coach-card__label {
@@ -169,6 +169,11 @@
   --coach-ink: #1c1c28;
   /* Commands and matched lines: a neutral grey, not the upstream lavender. */
   --coach-code: #f2f2f4;
+  /* Criticality (the book's grey, amber, red). Reserved: used only in .coach-crit rules.
+     Each is at least 3:1 against paper for the outlines. */
+  --crit-grey: #6b7280;
+  --crit-amber: #b45309;
+  --crit-red: #b91c1c;
 }
 
 :root.dark {
@@ -179,6 +184,9 @@
   --coach-line: #6b6b85;
   --coach-ink: #ececf3;
   --coach-code: #23233a;
+  --crit-grey: #a1a1aa;
+  --crit-amber: #f59e0b;
+  --crit-red: #f87171;
 }
 
 /* A card that is really a run of chat messages (the story): no frame of its own. */
@@ -351,40 +359,52 @@
 }
 
 .coach-map__line {
-  stroke: var(--text-tertiary);
+  stroke: var(--coach-line);
   stroke-width: 6;
   stroke-linecap: round;
 }
 
-.coach-map__stop {
+/* Criticality: colour and shape, the only place these three colours are used. */
+.coach-map__paper {
   fill: var(--coach-paper);
-  stroke: var(--text-tertiary);
-  stroke-width: 4;
 }
 
-.coach-map__stop--read,
-.coach-map__stop--rehearsed {
-  fill: var(--coach-accent-soft);
-  stroke: var(--coach-accent);
+.coach-map__outline {
+  fill: none;
+  stroke-width: 3;
+  stroke-linejoin: round;
 }
 
-.coach-map__stop--reported,
-.coach-map__stop--assisted {
-  fill: var(--coach-paper);
-  stroke: #d9a03f;
+.coach-map__outline--key {
+  stroke-width: 2;
 }
 
-.coach-map__stop--verified {
-  fill: var(--color-mint);
-  stroke: var(--color-mint-dark);
+.coach-map__outline--skipped {
+  stroke-dasharray: 4 3;
 }
 
-.coach-map__stop--skipped {
-  stroke-dasharray: 4 4;
+.coach-map__outline--focus {
+  stroke-width: 4.5;
 }
 
-.coach-map__stop--focus {
-  stroke-width: 6;
+.coach-map__outline.coach-crit--grey { stroke: var(--crit-grey); }
+.coach-map__outline.coach-crit--amber { stroke: var(--crit-amber); }
+.coach-map__outline.coach-crit--red { stroke: var(--crit-red); }
+.coach-map__outline.coach-crit--none { stroke: var(--coach-line); }
+
+/* Progress: how far the fill rises inside the marker, in the station's own colour. */
+.coach-map__fill.coach-crit--grey { fill: var(--crit-grey); }
+.coach-map__fill.coach-crit--amber { fill: var(--crit-amber); }
+.coach-map__fill.coach-crit--red { fill: var(--crit-red); }
+.coach-map__fill.coach-crit--none { fill: var(--coach-line); }
+
+.coach-map__alert {
+  font-size: 15px;
+  font-weight: 800;
+  fill: var(--coach-ink);
+  stroke: var(--coach-paper);
+  stroke-width: 3;
+  paint-order: stroke;
 }
 
 .coach-map__name {
@@ -394,6 +414,11 @@
 }
 
 .coach-map__status {
+  font-size: 12px;
+  fill: var(--text-secondary);
+}
+
+.coach-map__key {
   font-size: 12px;
   fill: var(--text-secondary);
 }

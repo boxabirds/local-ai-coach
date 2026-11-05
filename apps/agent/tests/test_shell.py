@@ -68,3 +68,19 @@ def test_tc37_app_scripts_turn_off_runtime_telemetry():
     scripts = json.loads((REPO / "apps" / "app" / "package.json").read_text())["scripts"]
     assert scripts["dev"].startswith("DO_NOT_TRACK=1 ")
     assert scripts["start"].startswith("DO_NOT_TRACK=1 ")
+
+
+# ------------------------------------------------------------------ story 5: reserved colours
+
+
+def test_s5_tc13_criticality_colours_are_reserved():
+    """The book's grey, amber and red are used only to show a station's criticality."""
+    css = (APP_SRC / "components" / "coach" / "coach.css").read_text()
+    rules = re.findall(r"([^{}]+)\{([^{}]*)\}", css)
+    for selector, body in rules:
+        if "var(--crit-" in body:
+            assert "coach-crit" in selector, f"criticality colour used outside a .coach-crit rule: {selector.strip()}"
+    # The old amber literal used for progress and "not yet" is gone everywhere.
+    for source in APP_SRC.rglob("*"):
+        if source.suffix in {".css", ".ts", ".tsx"}:
+            assert "#d9a03f" not in source.read_text().lower(), source

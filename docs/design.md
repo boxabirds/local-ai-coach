@@ -116,8 +116,8 @@ One file, `apps/app/src/hooks/use-coach-ui.tsx`, replaces `use-generative-ui-exa
 | `number_card` | `useHumanInTheLoop` | `{ prompt: string, unit: "GB" }` | Number input plus "where to look" per OS (read from `navigator.platform`) | `{ value: number }` |
 | `run_confirm` | `useHumanInTheLoop` | `{ cmd: string, explain: string }` | Shows the exact command and its one-line explanation; Run or Cancel | `{ confirmed: boolean }` |
 | `recap_card` | `useHumanInTheLoop` | `{ item_id, question, kind: "recap" \| "redo", options?: string[] }` | One question or a "now you" step; Skip defers | `{ answer?: string, skipped?: boolean }` |
-| `check_result` | `useComponent` | `{ station_id, step_id, passed: boolean, evidence: { probe, cmd, matched: string[] }[], note?: string }` | Green or amber card; "show me what you looked at" expands the exact command and matched lines | (no response) |
-| `show_map` | `useComponent` | `{ focus?: station_id }` | The tube map SVG, ported from the existing artifact with its data from `useAgent().state.progress_snapshot`; click a station to `sendPrompt("tell me about <station>")` | (no response) |
+| `check_result` | `useComponent` | `{ station_id, step_id, passed: boolean, evidence: { probe, cmd, matched: string[] }[], note?: string }` | Passed (green, with the word) or Not yet (neutral, with the words); never amber, which is reserved for criticality; "show me what you looked at" expands the exact command and matched lines | (no response) |
+| `show_map` | `useComponent` | `{ focus?: station_id }` | The tube map SVG with its data from `useAgent().state.progress_snapshot`. Each station shows two separate facts: criticality (from `stations.json` `inYourHead`) by colour and shape, grey circle, amber diamond, red triangle with "!", with a key; and the learner's progress by how full the marker is (empty, a quarter, a half, full; dashed when skipped) plus a word. Progress never changes colour. Click a station to `sendPrompt("tell me about <station>")` (later) | (no response) |
 | `terminal_transcript` | `useRenderTool` on `run_do_it` | tool args and result | Streams the PTY output as the tool runs, keeps it in the thread | n/a |
 | `sandbox_event` | `useFrontendTool` | `{ step_id, event }` | Not for the model to call; the sandbox terminal calls it so the event lands in the thread and `run_check(kind="sim")` can read it | n/a |
 
@@ -163,6 +163,8 @@ Additions made in build step 1, so the four V1 items could be written against it
 - Fill-in values the coach replaces from the learner's record: `{server}`, `{server_name}`, `{chat_app}`, `{measured}`, `{typed}`, `{address}`. Any other `{name}` fails validation.
 - `curriculum/scope.json` gives the reading order (the define-before-use clock) and the stations V1 assumes without teaching (`lmbasics`, `web`). `map.json` terms carry `forms[]` (the spellings matched) and `firstAt` (the reading-order item that defines them). Chapter 1's front-matter `terms` must agree with `map.json`.
 - The term check covers registered terms only. A technical word with no `map.json` entry is invisible to it; that is left to a human read.
+
+**Showing criticality and progress.** Two dimensions, two channels (decided 2026-11-05 from WCAG 1.4.1, Garner's separable dimensions, ski-trail ratings, ISO 3864 hazard signs and Harvey balls): the book's grey, amber and red appear only as a station's criticality, always with a shape and a word; progress is fill and words, never hue. `coach.css` holds the reserved `--crit-*` tokens and a test fails if they are used anywhere else.
 
 **Progress** lives in `~/.local-ai-coach/progress.json`, created on first run, written only by `set_progress`, `end_session` and the review scheduler, always by atomic rename. The spec's schema with the two statuses the PoC added:
 
@@ -228,7 +230,7 @@ Turn by turn for a first-time learner on a Mac, showing which piece acts. Jev is
 | 7 | "Local chat" | `get_station(localchat)`; `step_card(localchat.1, where: sandbox)` | Sandbox terminal mounts; learner types `curl http://{server}/v1/models`; `sandbox_event` fires; card auto-responds `rehearsed` |
 | 8 | (returns) | `set_progress(localchat, rehearsed)`; `step_card(localchat.2, where: real-terminal, has_do_it: true)` | Learner clicks `Do it for me` |
 | 9 | (do\_it returns) | `run_confirm(cmd, explain)` | Learner clicks Run |
-| 10 | (confirmed) | `run_do_it` streams the PTY (the model list from the learner's server); the coach asks for the model name; `set_progress(localchat, assisted)`; then `step_card(localchat.3, where: chat-app)` and `run_check` runs `connections` on the chat app | Transcript card shows the output; amber-ringed check: "done for you; redo it yourself to fill the ring" |
+| 10 | (confirmed) | `run_do_it` streams the PTY (the model list from the learner's server); the coach asks for the model name; `set_progress(localchat, assisted)`; then `step_card(localchat.3, where: chat-app)` and `run_check` runs `connections` on the chat app | Transcript card shows the output; the map marker is half filled with "done for you"; redoing it yourself fills it |
 | 11 | "Prove it stays local" | `step_card(prove.1, where: read)`: the three kinds of address that are yours; then `step_card(prove.2, where: sandbox)`: spot the public address in a practice list | Card, then sandbox |
 | 12 | (answer) | `step_card(prove.3, where: chat-app)`: ask the chat app for something long; `run_check` runs `connections` and `tailnet` while it answers | Card, then `check_result` with both halves of the evidence |
 | 13 | "bye" | `end_session(summary)`; review items scheduled for tomorrow | Text: what was done, what is due |

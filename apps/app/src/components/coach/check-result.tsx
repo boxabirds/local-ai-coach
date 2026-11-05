@@ -17,7 +17,7 @@ export function CheckResult({ stepId, passed, evidence = [], note }: CheckResult
   const [open, setOpen] = useState(false);
   const { cardRef } = useArrivalScroll();
   return (
-    <CoachCard label="Check" testId="coach-check" tone={passed ? "pass" : "amber"} cardRef={cardRef}>
+    <CoachCard label="Check" testId="coach-check" tone={passed ? "pass" : "notyet"} cardRef={cardRef}>
       <p className="coach-check__verdict" data-step-id={stepId}>
         {passed ? "Passed" : "Not yet"}
       </p>

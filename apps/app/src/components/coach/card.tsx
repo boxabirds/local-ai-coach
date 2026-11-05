@@ -23,7 +23,7 @@ export function CoachCard({
   label: string;
   children: ReactNode;
   testId: string;
-  tone?: "plain" | "pass" | "amber";
+  tone?: "plain" | "pass" | "notyet";
   state?: CardState;
   /** "thread" drops the frame, for content shown as a run of chat bubbles. */
   variant?: "card" | "thread";

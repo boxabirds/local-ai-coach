@@ -276,12 +276,17 @@ def save(folder: Path, record: dict[str, Any]) -> None:
 
 
 def snapshot(record: dict[str, Any]) -> list[dict[str, str]]:
-    """The V1 stations the map shows, in reading order, with name and status."""
+    """The V1 stations the map shows, in reading order: name, the learner's status,
+    and the station's criticality from the curriculum (omitted when unrated)."""
     names = curriculum.station_names()
-    return [
-        {"id": sid, "name": names.get(sid, sid), "status": record["stations"].get(sid, {}).get("status", STATUS_ORDER[0])}
-        for sid in curriculum.v1_stations()
-    ]
+    rated = curriculum.station_criticality()
+    entries = []
+    for sid in curriculum.v1_stations():
+        entry = {"id": sid, "name": names.get(sid, sid), "status": record["stations"].get(sid, {}).get("status", STATUS_ORDER[0])}
+        if sid in rated:
+            entry["criticality"] = rated[sid]
+        entries.append(entry)
+    return entries
 
 
 # ------------------------------------------------------------------ the graph
