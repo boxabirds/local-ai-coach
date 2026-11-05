@@ -1,6 +1,6 @@
 # Proposal: the pedagogical flow for "what can my machine do?" (Book 1)
 
-Status: proposed 2026-11-05. Builds on `20261105-what-fits-proposal.md` (the impact check) and answers it with a flow. Nothing in the curriculum or the book has changed. Every change to book text or to stations is the author's decision.
+Status: proposed 2026-11-05. Decided so far: the letter comparison uses real outputs from one family, Qwen (Julian, 2026-11-05). Builds on `20261105-what-fits-proposal.md` (the impact check) and answers it with a flow. Nothing in the curriculum or the book has changed. Every change to book text or to stations is the author's decision.
 
 ## 1. The idea in one line
 
@@ -69,7 +69,9 @@ Every cell is measured, and the table says on which machines (this 16 GB Mac and
 - **Quantisation:** the dial between fit and quality (the existing `quant` station: "Fit versus quality is a dial you can measure").
 - **Context length:** how much working space it can use, which is the memory chapter 1 left a quarter for.
 
-Then the letter, three ways. Priya's letter written by a small, a medium and a large setup, **simulated and labelled as simulated**, with the measured speed beside each. The small one gets the law wrong and copies the landlord's capitals back; the medium one is the "decent trainee"; the large one is better and still not perfect. Then the line the chapter has been heading for: whichever one you use, you read it, you fix it, and you sign it. That answers the question chapter 0 added.
+**Learning objective (Julian, 2026-11-05):** model size matters not just because of what fits on your machine, but because of quality, and to some extent speed.
+
+Then the letter, three ways: Priya's request, the same fictional materials, sent to three sizes of one model generation (first run: Qwen 3 at 0.6B, 8B and 32B, because gruntus's Ollama 0.9.6 is too old for Qwen 3.5's 0.8B, 9B and 27B; the run can be repeated on 3.5 after an Ollama upgrade). Materials and script: `docs/design/letter-run/`, run on a real machine, **real outputs, not simulated**, each run three times, with memory in use, time to the first word and words per second beside each. Each letter is checked against the materials for wrong facts and invented law, and the checks are shown. Then the line the chapter has been heading for: whichever one you use, you read it, you fix it, and you sign it. That answers the question chapter 0 added.
 
 ### Chapters 3, 4 and 5
 
