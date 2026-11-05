@@ -604,3 +604,15 @@ def test_s8_tc16_a_long_or_multi_line_quote_is_shortened_and_beats_the_starters(
 def test_s8_tc16_not_a_quoted_question(text):
     turn = stub.decide([HumanMessage(content=text)], LESSON)
     assert not (turn.text or "").startswith("You asked about")
+
+
+def test_s8_quoted_question_through_the_request_handler(client, tmp_path):
+    """A quoted question, as the browser sends it, gets the acknowledgement as streamed text,
+    no card, and nothing written."""
+    content = "> One destination. backroom. Nothing else.\n\nWhy only one?"
+    events = _events(client.post("/stub", json=_run_input([{"id": "m1", "role": "user", "content": content}])))
+    assert "TOOL_CALL_START" not in _types(events)
+    text = "".join(e["delta"] for e in events if e["type"] == "TEXT_MESSAGE_CONTENT")
+    assert text == stub.QUOTE_ACK.format(quote="One destination. backroom. Nothing else.")
+    assert _types(events)[-1] == "RUN_FINISHED"
+    assert not (tmp_path / "progress.stub.json").exists()
