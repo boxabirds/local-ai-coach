@@ -30,6 +30,7 @@ from src.coach.middleware import CoachStateMiddleware
 from src.coach.tools import COACH_TOOLS
 from src.coach.stub import stub_graph
 from src.coach.stored_keys import StoredKeys, router as keys_router
+from src.coach.turn_log import TurnLog
 
 load_dotenv()
 
@@ -43,6 +44,8 @@ agent = create_deep_agent(
         CoachStateMiddleware(),
         JevVisualizationMiddleware(),
         ConsecutiveSystemMessagesMiddleware(),
+        # Last, so it logs exactly what the model is sent (story 19).
+        TurnLog(),
     ],
     skills=SKILL_SOURCES,
     backend=build_agent_backend,
