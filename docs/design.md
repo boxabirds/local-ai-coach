@@ -13,7 +13,7 @@ What that buys and what it costs:
 
 V2 and after moves the pieces in-house one at a time, keeping the CopilotKit frontend hooks because they are the part that worked: the agent to TypeScript over the brain contract (Claude Agent SDK or a local OpenAI-style loop), Jev to a local decision model or to no router at all, Next.js to a static build served by one Bun process, and finally an installer. The spec and PoC tabs in the companion doc describe that end state; this document is V1 only.
 
-Scope is unchanged from the PoC plan: Priya's story, Know your machine, Local chat, and Prove it stays local, on macOS and Linux, with the real-machine evidence loop and the simulation loop both working for those four. The local story is a model on a machine the learner owns, reached over their own network or their tailnet (Tailscale), not a laptop with its wifi off; the proof reads where the chat app's bytes go.
+Scope is unchanged from the PoC plan: Priya's story, What can my computer do? (was Know your machine), Local chat, and Is my chat app talking to anyone else? (was Prove it stays local), on macOS and Linux, with the real-machine evidence loop and the simulation loop both working for those four. The local story is a model on a machine the learner owns, reached over their own network or their tailnet (Tailscale), not a laptop with its wifi off; the proof reads where the chat app's bytes go.
 
 ## The stack as it is
 
@@ -149,9 +149,9 @@ curriculum/
   scope.json           V1 reading order (story, then the three lessons) and assumed stations
   map.json             term register for the four V1 stations only
   lessons/
-    machine.json       Know your machine: the Find your number steps
+    machine.json       What can my computer do?: the memory, graphics card memory and fits steps
     localchat.json     Local chat steps (draft)
-    prove.json         Prove it stays local: the Wednesday check steps (draft)
+    prove.json         Is my chat app talking to anyone else?: the Wednesday check steps (draft)
   stories/
     legal-letter.md    Priya, chapter 0, the story for destination d_legal
   chapters/
@@ -245,7 +245,7 @@ Turn by turn for a first-time learner on a Mac, showing which piece acts. Jev is
 | 8 | (returns) | `set_progress(localchat, rehearsed)`; `step_card(localchat.2, where: real-terminal, has_do_it: true)` | Learner clicks `Do it for me` |
 | 9 | (do\_it returns) | `run_confirm(cmd, explain)` | Learner clicks Run |
 | 10 | (confirmed) | `run_do_it` streams the PTY (the model list from the learner's server); the coach asks for the model name; `set_progress(localchat, assisted)`; then `step_card(localchat.3, where: chat-app)` and `run_check` runs `connections` on the chat app | Transcript card shows the output; the map marker is half filled with "done for you"; redoing it yourself fills it |
-| 11 | "Prove it stays local" | `step_card(prove.1, where: read)`: the three kinds of address that are yours; then `step_card(prove.2, where: sandbox)`: spot the public address in a practice list | Card, then sandbox |
+| 11 | "Is my chat app talking to anyone else?" | `step_card(prove.1, where: read)`: the three kinds of address that are yours; then `step_card(prove.2, where: sandbox)`: spot the public address in a practice list | Card, then sandbox |
 | 12 | (answer) | `step_card(prove.3, where: chat-app)`: ask the chat app for something long; `run_check` runs `connections` and `tailnet` while it answers | Card, then `check_result` with both halves of the evidence |
 | 13 | "bye" | `end_session(summary)`; review items scheduled for tomorrow | Text: what was done, what is due |
 | next day | Opens the app | `before_agent` loads `due_reviews`; model opens with `recap_card` | One question; the `localchat.2` redo is offered |

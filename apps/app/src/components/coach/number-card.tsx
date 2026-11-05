@@ -48,14 +48,14 @@ export function NumberCard({ prompt = "", unit = "GB", hint, figure, platform, s
 
   if (answered !== null) {
     return (
-      <CoachCard label="Your number" testId="coach-number" state="answered">
+      <CoachCard label="Memory, in GB" testId="coach-number" state="answered">
         <AnswerRecord label="You said:" value={`${answered} ${unit}`} />
       </CoachCard>
     );
   }
 
   return (
-    <CoachCard label="Your number" testId="coach-number" state={active ? "active" : "plain"} cardRef={cardRef}>
+    <CoachCard label="Memory, in GB" testId="coach-number" state={active ? "active" : "plain"} cardRef={cardRef}>
       {figure && <Figure id={figure} />}
       <p className="coach-step__text">{inline(prompt)}</p>
       <p className="coach-muted" data-testid="coach-where-to-look">

@@ -79,3 +79,14 @@ def test_tc05_sessions_are_appended(tmp_path):
     progress.save(tmp_path, record)
     assert json.loads((tmp_path / "progress.json").read_text())["sessions"] == [
         {"at": AT, "summary": "Found the number."}, {"at": AT, "summary": "Fits test."}]
+
+
+def test_s14_tc06_statuses_survive_a_station_rename(tmp_path):
+    """Progress is keyed by station id, so renaming a station in stations.json keeps every status."""
+    record = progress.empty_record()
+    progress.apply(record, "station", "machine", "verified", AT)
+    progress.apply(record, "station", "prove", "reported", AT)
+    progress.save(tmp_path, record)
+    loaded = progress.load(tmp_path)
+    assert progress.status_of(loaded, "station", "machine") == "verified"
+    assert progress.status_of(loaded, "station", "prove") == "reported"

@@ -7,7 +7,7 @@ import { StoryCard, STORY_URL, clearStoryCache } from "../story";
 import { StepCard } from "../step-card";
 import { NumberCard, WHERE_TO_LOOK, detectPlatform } from "../number-card";
 import { CheckResult } from "../check-result";
-import { DEFAULT_STATIONS, TubeMap, progressFill } from "../tube-map";
+import { DEFAULT_STATIONS, TubeMap, nameLines, progressFill } from "../tube-map";
 import { RunConfirm } from "../run-confirm";
 import { RecapCard } from "../recap-card";
 import { ConsentCard } from "../consent-card";
@@ -436,25 +436,19 @@ describe("map: criticality by shape and colour, progress by fill (story 5)", () 
     const stations = DEFAULT_STATIONS.map((s) => (s.id === "machine" ? { ...s, status: "reported" } : s.id === "d_legal" ? { ...s, status: "read" } : s));
     const { container } = render(<TubeMap stations={stations} focus="machine" />);
     const stops = Array.from(container.querySelectorAll("g[data-station]"));
-    expect(stops.map((g) => [g.getAttribute("data-station"), g.getAttribute("data-status")])).toEqual([
-      ["d_legal", "read"],
-      ["machine", "reported"],
-      ["localchat", "unseen"],
-      ["prove", "unseen"],
-    ]);
+    expect(stops.map((g) => [g.getAttribute("data-station"), g.getAttribute("data-status")])).toEqual(
+      stations.map((s) => [s.id, s.status]),
+    );
     expect(screen.getByText("you told me")).toBeInTheDocument();
   });
 
-  it("TC-54 with no snapshot shows the four stations, all not started, each in its own criticality", () => {
+  it("TC-54 with no snapshot shows the default stations, all not started, each in its own criticality", () => {
     const { container } = render(<TubeMap />);
     const stops = Array.from(container.querySelectorAll("g[data-station]"));
-    expect(stops.map((g) => [g.getAttribute("data-status"), g.getAttribute("data-criticality")])).toEqual([
-      ["unseen", "red"],
-      ["unseen", "amber"],
-      ["unseen", "grey"],
-      ["unseen", "red"],
-    ]);
-    expect(screen.getAllByText("not started")).toHaveLength(4);
+    expect(stops.map((g) => [g.getAttribute("data-status"), g.getAttribute("data-criticality")])).toEqual(
+      DEFAULT_STATIONS.map((s) => ["unseen", s.criticality]),
+    );
+    expect(screen.getAllByText("not started")).toHaveLength(DEFAULT_STATIONS.length);
   });
 
   it.each([
@@ -534,12 +528,13 @@ describe("map: criticality by shape and colour, progress by fill (story 5)", () 
   it("S5 TC-10 each station is named with its criticality and progress", () => {
     const stations = DEFAULT_STATIONS.map((s) => (s.id === "machine" ? { ...s, status: "reported" } : s));
     render(<TubeMap stations={stations} />);
-    expect(screen.getByRole("img", { name: "Know your machine: know what it does, you told me" })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Prove it stays local: must understand, not started" })).toBeInTheDocument();
+    const name = (id: string) => DEFAULT_STATIONS.find((s) => s.id === id)!.name;
+    expect(screen.getByRole("img", { name: `${name("machine")}: know what it does, you told me` })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: `${name("prove")}: must understand, not started` })).toBeInTheDocument();
   });
 
   it("S5 TC-10b an old snapshot without criticality gets the curriculum's rating for V1 stations", () => {
-    const { container } = render(<TubeMap stations={[{ id: "machine", name: "Know your machine", status: "read" }]} />);
+    const { container } = render(<TubeMap stations={[{ id: "machine", name: "A station", status: "read" }]} />);
     expect(station(container, "machine").getAttribute("data-criticality")).toBe("amber");
   });
 });
@@ -690,5 +685,13 @@ describe("choice card with streamed arguments (story 11)", () => {
     expect(within(screen.getByRole("group", { name: "Small" })).getByRole("button", { name: "Yes" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
     expect(JSON.parse(respond.mock.calls[0][0])).toEqual({ answers: ["Yes", "No"] });
+  });
+});
+
+describe("map station names wrap (story 14)", () => {
+  it("keeps a short name on one line and splits a long one near the middle", () => {
+    expect(nameLines("Local chat")).toEqual(["Local chat"]);
+    expect(nameLines("Is my chat app talking to anyone else?")).toEqual(["Is my chat app talking", "to anyone else?"]);
+    expect(nameLines("Supercalifragilisticexpialidocious")).toEqual(["Supercalifragilisticexpialidocious"]);
   });
 });

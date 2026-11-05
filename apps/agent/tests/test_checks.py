@@ -151,7 +151,7 @@ RIGHT_16 = ["Yes", "Yes", "No"]
 
 @pytest.mark.parametrize("room, answers, passed", [
     (16, RIGHT_16, True),
-    (8, RIGHT_16, True),  # 5 is under three quarters of 8: a squeeze still fits
+    (8, RIGHT_16, True),  # the two-option fit grade: 5 GB is no bigger than 8 GB, so it fits
     (32, RIGHT_16, False),  # on 32 the 20 fits
     (32, ["Yes", "Yes", "Yes"], True),
     (4, ["Yes", "No", "No"], True),

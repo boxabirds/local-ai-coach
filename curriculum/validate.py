@@ -32,6 +32,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ROOT = REPO_ROOT / "curriculum"
 DEFAULT_PROBES = REPO_ROOT / "apps" / "agent" / "src" / "coach" / "probes.py"
 DEFAULT_STYLECHECK = REPO_ROOT / "panel" / "stylecheck.py"
+# The app's map shows these names before the coach sends a snapshot; they must match stations.json.
+DEFAULT_APP_STATIONS = REPO_ROOT / "apps" / "app" / "src" / "components" / "coach" / "tube-map.tsx"
+APP_STATION = re.compile(r'\{\s*id:\s*"([^"]+)",\s*name:\s*"([^"]+)"')
 
 STYLECHECK_TIMEOUT_S = 30
 
@@ -274,10 +277,17 @@ def check_scope(scope: dict[str, Any], stations: dict[str, dict[str, Any]] | Non
         report.error("SCOPE_FIELD", rel, "readingOrder must be a non-empty list")
         return []
     assumed = scope.get("assumed") or {}
+    shown = scope.get("shownOnMap") or {}
+    if not isinstance(shown, dict):
+        report.error("SCOPE_FIELD", rel, "shownOnMap must be an object of station id to a note")
+        shown = {}
     if stations is not None:
         for sid in assumed:
             if sid not in stations:
                 report.error("SCOPE_UNKNOWN_STATION", f"{rel}#assumed", f"assumed station {sid!r} is not in stations.json")
+        for sid in shown:
+            if sid not in stations:
+                report.error("SCOPE_UNKNOWN_STATION", f"{rel}#shownOnMap", f"station {sid!r} shown on the map is not in stations.json")
     seen_ids: set[str] = set()
     earlier_stations: set[str] = set()
     items: list[dict[str, Any]] = []
@@ -616,8 +626,8 @@ UNSAFE_TAGS = {"script", "foreignObject", "style", "iframe", "image", "use", "a"
 CRITICALITY = {"press go": "grey", "know what it does": "amber", "must understand": "red"}
 CRIT_CLASS = re.compile(r"\bcoach-crit--(\w+)\b")
 # The chapter 1 rule of thumb, kept here apart from the figure generator so a mistake there is caught.
-THREE_QUARTERS = 0.75
-FIT_WORDS = {"fits": "Fits", "squeeze": "A squeeze", "no": "Doesn't run"}
+HALF = 0.5
+FIT_WORDS = {"fits": "Fits", "depends": "Depends", "no": "Doesn't fit"}
 STORED = "stored"
 PLACE_DRIVE = "drive"
 
@@ -625,8 +635,8 @@ PLACE_DRIVE = "drive"
 def fit_verdict(file_gb: float, room_gb: float) -> str:
     if file_gb > room_gb:
         return "no"
-    if file_gb > THREE_QUARTERS * room_gb:
-        return "squeeze"
+    if file_gb >= HALF * room_gb:
+        return "depends"
     return "fits"
 
 
@@ -919,9 +929,29 @@ def check_voice(blocks: list[tuple[str, list[tuple[str, str]]]], stylecheck: Pat
 # ---------------------------------------------------------------- entry points
 
 
-def validate(root: Path = DEFAULT_ROOT, probes_path: Path = DEFAULT_PROBES, stylecheck_path: Path = DEFAULT_STYLECHECK) -> list[Issue]:
+def check_app_names(stations: dict[str, dict[str, Any]], tsx: Path, report: Report) -> None:
+    """The station names written into the app (its map before a snapshot) are the curriculum's."""
+    try:
+        source = tsx.read_text(encoding="utf-8")
+    except OSError:
+        report.error("FILE_MISSING", str(tsx), "the app's default station list was not found")
+        return
+    for sid, name in APP_STATION.findall(source):
+        want = (stations.get(sid) or {}).get("name")
+        if want is None:
+            report.error("APP_STATION_NAME", tsx.name, f"station {sid!r} is not in stations.json")
+        elif name != want:
+            report.error("APP_STATION_NAME", tsx.name, f"{sid!r} is shown as {name!r}; stations.json says {want!r}")
+
+
+def validate(root: Path = DEFAULT_ROOT, probes_path: Path = DEFAULT_PROBES, stylecheck_path: Path = DEFAULT_STYLECHECK,
+             app_stations: Path | None = None) -> list[Issue]:
+    """app_stations: the app file whose default station names must match; checked for the real
+    curriculum by default, and for another root only when passed (the tests' frozen copy has old names)."""
     report = Report()
     root = Path(root)
+    if app_stations is None and root.resolve() == DEFAULT_ROOT.resolve():
+        app_stations = DEFAULT_APP_STATIONS
 
     stations_doc = _load_json(root / "stations.json", "stations.json", report)
     stations: dict[str, dict[str, Any]] | None = None
@@ -931,6 +961,8 @@ def validate(root: Path = DEFAULT_ROOT, probes_path: Path = DEFAULT_PROBES, styl
         report.error("FILE_PARSE", "stations.json", "expected an object with a stations list")
 
     probes = _load_probes(Path(probes_path), report)
+    if app_stations is not None and stations is not None:
+        check_app_names(stations, Path(app_stations), report)
 
     scope = _load_json(root / "scope.json", "scope.json", report)
     items = check_scope(scope, stations, root, report) if isinstance(scope, dict) else []

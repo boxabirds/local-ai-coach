@@ -1,18 +1,20 @@
 ---
-# Front-matter for Book 1, chapter 1: Know your machine.
+# Front-matter for Book 1, chapter 1: What can my computer do?
 # Read by the build and the checker. Never rendered on the page.
 # Fields marked "author" need the author's hands or hardware before publication.
 
 book: 1
 chapter: 1
-title: Know your machine
+title: What can my computer do?
 slug: know-your-machine
 
 whatIsNew: >
-  One number (memory, in GB) decides whether a model runs at all, and the
-  reader gets it from their own settings in two minutes with nothing
-  installed. Every other hardware guide starts from specs, benchmarks or a
-  GPU; this one defers all three to Book 2 and says so.
+  Starts from the reader's goal (what local AI can I do with my computer?),
+  not from specs. Two facts from the reader's own settings (memory, and
+  graphics card memory if any), a rule of thumb wide enough that "fits" and
+  "doesn't" are almost certain, and Priya's own letter written by three sizes
+  of model and a hosted one, measured in November 2026, so size means quality
+  and speed, not only room.
 
 testedOn:                     # author: fill before publication
   status: not yet tested      # the chapter's claims are arithmetic, not stopwatch; see sources
@@ -26,18 +28,22 @@ testedOn:                     # author: fill before publication
       memory_gb: 16
       os: ""                  # author: Windows or Linux, whichever is to hand
       checked: []             # Windows "Installed RAM (usable)" wording to be confirmed
-  models: []                  # none run in this chapter
+  models:                     # the letter run, docs/design/letter-run/20261105-letter-run.md
+    - qwen3:0.6b, qwen3:8b, qwen3:32b (Q4_K_M), Ollama 0.9.6, Linux, RTX 4090, graphics card on and off
+    - qwen3:0.6b, qwen3:8b, Ollama 0.40.14, MacBook Air M2 16 GB (busy, not a quiet machine)
+    - chat-latest (OpenAI), hosted reference
 
 stations:
   - id: machine
-    name: Know your machine
+    name: What can my computer do?
     colour: amber             # inYourHead: know what it does
     zone: 1
     needs: []
     proof: >
-      Say your number without looking; then for a 2 GB, a 5 GB and a 20 GB
-      file say fits or does not fit. On 16 GB: fits, fits, no. On 32: the
-      last one fits too.
+      Say your two facts without looking; then for a 2 GB, a 5 GB and a 20 GB
+      file say fits, depends or doesn't. On 16 GB with no graphics card:
+      fits, fits, doesn't. On 32: fits, fits, depends. Then name one of
+      Priya's jobs your computer does comfortably and one it doesn't.
     whyThisColour: >
       The app finds the number for the reader and usually picks well, so
       grey is tempting. The day it picks wrong the reader must know what it
@@ -48,8 +54,8 @@ stations:
         cause: The model file is bigger than memory
         fix: Compare file size with the sticky note; pick the smaller size
       - symptom: Model fits and runs but takes a minute to say hello
-        cause: Room is nearly full; the machine is working hard
-        fix: Nothing broken; Book 2 covers living with it, shrinking the model, or buying more room
+        cause: It has spilled off the graphics card memory, or there isn't any
+        fix: Nothing broken; Book 2 covers living with it, shrinking the model, or a bigger graphics card
 
 beforeYouStart:               # resources, not knowledge
   software: []
@@ -60,7 +66,6 @@ beforeYouStart:               # resources, not knowledge
     - A sticky note and a pen
   diskFreeGb: 0
   memoryFreeGb: 0
-  timeMinutes: 5
   costsMoney: false
 
 reEntry:                      # terms defined earlier, recapped on first use here
@@ -76,36 +81,37 @@ reEntry:                      # terms defined earlier, recapped on first use her
 
 terms:                        # map.json entries this chapter defines
   - term: memory
-    gloss: >
-      The space your laptop works in; whatever it is doing right now has to
-      be in there. Measured in gigabytes; the Settings line that says
-      Memory or RAM.
-    analogy: The room (the drive is the warehouse; the choir sings in the room, not the warehouse)
-    recap: Memory (Book 1, ch 1) is the room a model has to fit in, whole, before it can speak. Your sticky-note number.
+    gloss: "The space your computer works in; whatever it is doing right now has to be in there. Measured in gigabytes; the Settings line that says Memory or RAM."
+    analogy: "The room (the drive is the warehouse; the choir sings in the room, not the warehouse)"
+    recap: "Memory (Book 1, ch 1) is the room a model has to fit in, with room to work, before it can speak. The first fact on your sticky note."
     station: machine
-    avoid: [RAM as a different thing from memory, storage, space, disk]
+    avoid: ["RAM as a different thing from memory", "storage", "space", "disk"]
   - term: model file
-    gloss: >
-      The single file a model is downloaded as; the whole of the clever part
-      in one lump. No account, no key, no phoning home. Closer to a film
-      file than to an app.
+    gloss: "The single file a model is downloaded as; the whole of the clever part in one lump. No account, no key, no phoning home. Closer to a film file than to an app."
     analogy: "A film file: copy it to another machine with enough memory and it plays there too"
-    recap: The model file (Book 1, ch 1) is one file holding the whole model. Fits in memory or it does not run.
+    recap: "The model file (Book 1, ch 1) is one file holding the whole model. Where you start when asking whether it fits, never the whole answer."
     station: machine
-    avoid: [weights, checkpoint, binary, the model (when the file is meant)]
-  - term: rule of thumb (three quarters)
-    gloss: >
-      If the file is more than about three quarters of your memory number,
-      expect a squeeze; bigger than the number, it does not run.
-    analogy: Elbow room, because the laptop is already using some memory for being a laptop
-    recap: "Three quarters of your number is comfortable; over it is a squeeze; over the number is no."
+    avoid: ["weights", "checkpoint", "binary", "the model (when the file is meant)"]
+  - term: working space
+    gloss: "Everything a running model needs in memory besides its file: the program that runs it, the conversation so far, and a few helpers. It isn't a fixed amount: it changes with the program and its settings."
+    analogy: "The choir isn't the only thing in the room: there's the stage crew and the music stands too"
+    recap: "Working space (Book 1, ch 1) is what a running model needs beyond its file. Chapter 2 turns its dials."
     station: machine
-    avoid: [headroom, overhead, VRAM budget]
+    avoid: ["overhead", "KV cache (until Book 2)", "context (until chapter 2)"]
+  - term: graphics card memory
+    gloss: "Memory on a graphics card, separate from the computer's normal memory: much smaller and much faster. Only some computers have it; Macs and office laptops don't."
+    analogy: "A workbench in the corner of the room: small, and everything on it goes faster"
+    recap: "Graphics card memory (Book 1, ch 1) is the small fast workbench beside the room. A model that fits on it is quick; one that spills off runs at the room's pace."
+    station: machine
+    avoid: ["VRAM", "GPU memory", "video memory", "shared memory", "unified memory"]
+  - term: rule of thumb (half)
+    gloss: "Wide on purpose, so the answer is almost always obvious: a model file under half your memory fits; bigger than your memory, it doesn't; anywhere between, it depends on the settings."
+    analogy: "A room with a half mark on the floor: under the mark there's room to work, past the walls there's none"
+    recap: "Under half your memory fits; bigger than your memory doesn't; between, it depends."
+    station: machine
+    avoid: ["headroom", "overhead", "VRAM budget", "three quarters"]
 
 previews:                     # mentioned on purpose before their own chapter
-  - term: two rooms (separate graphics card memory)
-    taughtIn: Book 2
-    note: Named as "a complication you can ignore for now"; changes how fast, never whether
   - term: model sizes and the numbers on the label (quantisation, parameters)
     taughtIn: Book 1, chapter 2
     note: "Chapter 2 opens the file"
@@ -114,12 +120,14 @@ previews:                     # mentioned on purpose before their own chapter
     note: The pedantic parenthesis about apps that pull the file in as they go
 
 analogies:                    # one per section, for the checker
-  - section: Find your number
-    analogy: The sticky note on the lid
-  - section: Why it fits or it doesn't
+  - section: "Fact one: how much memory"
     analogy: "Memory is the room; the drive is the warehouse; the model is a choir that must be in the building before the concert"
-  - section: The model file is the whole brain
-    analogy: A film file, not an app
+  - section: "Fact two: graphics card memory"
+    analogy: A workbench in the corner of the room
+  - section: Will it fit?
+    analogy: The half mark on the floor
+  - section: What can it do, then?
+    analogy: The small model writing the landlord's letter instead of the tenant's
   - section: Have you got it?
     analogy: '"Rubbish model," says everyone who skipped this chapter. Small room.'
   - section: Where that leaves you
@@ -127,7 +135,8 @@ analogies:                    # one per section, for the checker
 
 jokes:
   - "On Linux you already know, and I know you know."
-  - "Mine says 128… which is showing off."
+  - "Mine says 128… which is really showing off."
+  - "the forty tabs you're not admitting to"
   - "The choir doesn't sing in the warehouse."
   - "the forums will tell you otherwise, LOUDLY"
 
@@ -144,15 +153,15 @@ sources:                      # principle 3; tested/untested labelled
     source: llama.cpp documentation (mmap and --no-mmap)
     url: https://github.com/ggml-org/llama.cpp
     status: tested by the author in earlier work, not re-run for this chapter
-  - claim: 16 GB and 32 GB machines run the model Priya used
-    source: arithmetic from the model table file sizes; not timed
-    status: not tested; stated as arithmetic in the text
-  - claim: The three-quarters rule of thumb
-    source: the author's own rule; labelled as such on the page
-    status: opinion, labelled
-  - claim: Machines with a separate graphics card have GPU memory distinct from system memory; fitting there changes speed, not whether it runs
-    source: Book 2 chapter on GPU memory (forward reference)
-    status: untested in this chapter
+  - claim: Memory in use, speed and quality of the letter at three model sizes and hosted
+    source: docs/design/letter-run/20261105-letter-run.md (run 2026-11-05)
+    status: tested by the author on the machines in testedOn
+  - claim: The half-and-whole rule of thumb
+    source: the author's own rule; labelled as such on the page; checked against the letter-run memory figures
+    status: opinion, labelled; not measured on an 8 GB machine, and the page says so
+  - claim: A model too big for graphics card memory spills into normal memory and runs at about processor speed
+    source: letter run with the graphics card off (8B at 8.4 tokens/s on the processor alone)
+    status: tested for the processor-only case; spill on a small card not yet measured
 
 companionRepo:
   name: awesome-local-ai
@@ -169,154 +178,163 @@ authorWork:                   # before publication
   - Decide which chat app chapter 0 names, so chapter 2 can open its model file
 ---
 
-## Chapter 1: Know your machine
+## Chapter 1: What can my computer do?
 
 ### What this chapter covers
 
-This chapter answers one question: what can my machine run? (Your laptop, or a box like Priya's. Same number, same sticky note.)
+I'm going to answer the question you'd ask if you were Priya on the day she set up her box: what local AI can I actually do with my computer?
 
-You'll find one number on your own computer, write it on a sticky note, and from then on you'll be able to look at any model on the internet and know in five seconds whether it'll fit.
-
-No benchmarks. No spec sheets. One number.
+The answer comes from two facts about your machine, which you'll find in its settings, and a table of real jobs, which I ran so you don't have to.
 
 Why I'm making you do this: in chapter 0 the app looked at Priya's box and chose her model for her, and it chose well.
 
-One day it'll choose badly, or you'll want something it didn't offer, and the sticky note is how you check.
+One day it'll choose badly, or you'll want something it didn't offer, and these two facts are how you check.
 
-You'll need a computer whose settings you can open (any Mac, Windows or Linux machine), a sticky note, a pen, and five minutes. No downloads, no account, nothing installed.
+You'll need a computer whose settings you can open (any Mac, Windows or Linux machine) and a sticky note. Nothing to download, no account, nothing installed.
 
-### Find your number
+### Fact one: how much memory
 
-One number. How much **memory** your machine has, in gigabytes (the line in your settings that says Memory, or RAM; same thing, and I'll explain what it actually is in a moment).
+How much **memory** your computer has, in gigabytes (the line in your settings that says Memory, or RAM; same thing, and I'll explain what it actually is in a moment).
 
 On a Mac: Apple menu, About This Mac, the line that says Memory.
 
-On Windows: Settings, System, About, Installed RAM. If it shows two numbers (“16.0 GB (15.7 GB usable)”), write the first one.
+On Windows: Settings, System, About, Installed RAM. If it shows two numbers ("16.0 GB (15.7 GB usable)"), write the first one.
 
 On Linux you already know, and I know you know.
 
-(Those are the click paths as I write this. If your machine has moved them, the one-line command for each operating system is on the series' companion page, awesome-local-ai on GitHub, which is where every script in this series lives, because scripts change and books do not.)
+(Those are the click paths as I write this. If your machine has moved them, the one-line command for each operating system is on the series' companion page, awesome-local-ai on GitHub, because scripts change and books don't.)
 
-🧙‍♂️ Write it on a sticky note and put it on the laptop. I mean it: pen, paper, lid.
+🧙‍♂️ Write it on a sticky note and put it on the lid. I mean it.
 
-Mine says 128… which is showing off, and I'll come clean about what that cost in Book 2.
+Mine says 128… which is really showing off, and I'll come clean about what that cost in Book 2.
 
 Yours probably says 16 or 32.
 
-Both of those should run the model Priya used. (That's arithmetic, not my stopwatch. I'll say so plainly when I've timed it.)
+#### Memory is the room
 
-If yours says 8, you're not out. You're shopping from the small end of the shelf, and the table at the end of this chapter marks those rows for you.
+Memory is the space your computer works in. Whatever it's doing right now has to be in there. The drive is where things are kept; memory is where they're used.
 
-### Why it fits or it doesn't
+A model has to be in memory before it can say a word. All of it, WHOLE, like a choir that has to be in the building before the concert starts.
 
-This whole chapter is two ideas.
-
-#### Memory is the room, not the speed
-
-Memory is the space your laptop works in. Whatever it's doing right now has to be in there. The drive is where things are kept; memory is where they're used.
-
-A model has to be loaded, in full, into memory before it can say a word.
-
-Not a page at a time. All of it, all at once, like a choir that has to be in the building before the concert starts.
-
-(Pedantic note: some chat apps pull the file in from the drive as they go rather than in one gulp, and a few will even have a go at a file that's too big. Have a go is the phrase. It still has to fit. Chapter 2 has the gory version.)
-
-So the first question about any model is “does it fit”.
-
-Clever comes second, and it's a very distant second if the answer's no. We'll get to clever in chapter 2.
-
-A 5 GB model needs about 5 GB of memory plus elbow room, because your laptop's already using some for, you know, being a laptop.
-
-My rule of thumb (mine, not a benchmark): if the file is more than about three quarters of your number, expect a squeeze.
-
-A 20 GB model on a 16 GB laptop doesn't run slowly. It doesn't run.
-
-“But I've got a 2 TB drive!” Lovely. The drive's the warehouse. The choir doesn't sing in the warehouse. 😆
+"But I've got a 2 TB drive!" Lovely. The drive's the warehouse. The choir doesn't sing in the warehouse. 😆
 
 <!-- figure: room-and-warehouse -->
 
-This is why the app Priya used had a look at her laptop before showing her a shelf.
+And the choir isn't the only thing in the room.
 
-It was measuring the room.
+Your computer needs some of it for being a computer: the system, the browser, the forty tabs you're not admitting to.
 
-#### The model file is the whole brain
-
-When Priya's app downloaded the model it downloaded one file: the **model file**, which is the whole of the clever part in one lump, and I do mean the whole of it.
-
-No account, no key, no phoning home.
-
-It is closer to a film file than to an app.
-
-Copy it to another machine with enough memory and it works there too.
+The model needs more than its file, too. The **model file** is the one file you download (the whole of the clever part in one lump, closer to a film file than to an app). Running it also takes **working space**: the program that runs it, the conversation so far, and a few helpers I'll name in Book 2.
 
 <!-- figure: one-file -->
 
-This is why her Wednesday check was possible. There was nothing outside her own network to call.
+How much? I measured it, and it moves. On my Linux box a 5 GB file used 7.5 GB once it was running, and a half-gigabyte file used 2.2 GB, four times its size. On my Mac, with a newer version of the same program, the same two used 5.2 GB and 0.8 GB. So the file size on the download page is where you start, never the whole answer.
 
-(Chapter 2 opens the file and explains the numbers on its label. For now: one file, fits or doesn't.)
+### Fact two: graphics card memory
 
-#### A complication you can ignore for now
+Some computers have a second, separate kind of memory on a **graphics card** (a board inside the computer built for drawing the screen, which happens to be very good at the sums a model does). It has its own memory, much smaller than the main one, and much faster.
 
-Some machines, mostly Windows and Linux PCs with a separate graphics card, have two rooms rather than one: a small fast one on the graphics card and the big ordinary one. A model that fits in the small fast room runs a lot quicker. It changes how fast, never whether.
+So you've got two kinds: normal memory, which every computer has, and **graphics card memory**, which only some do.
 
-If you have one of those, your sticky note gets the big number (and I'm a little jealous; more on this in Book 2).
+To find it on Windows: Task Manager, Performance, GPU, the line that says Dedicated GPU memory. On Linux with an Nvidia card, `nvidia-smi` prints it.
 
-Macs and most laptops have one room, and the sticky note really is the whole story.
+On a Mac, or an ordinary office laptop, the answer is none, and that's fine. Write "none". (A Mac's built-in graphics uses normal memory directly, which is why a Mac does better than its sticker suggests. More in Book 2.)
 
-### Have you got it?
+Your sticky note now says two things. Mine says "128, none".
 
-Here's what this station unlocks: reading any model's download page and knowing in five seconds whether it fits. (Model download pages list the file size, in GB, somewhere near the download button. That is the number you compare.)
+#### The workbench
 
-Here's how you know you've got this station: say your number without looking. Then, for each of these three, say fits or doesn't fit before reading on: a 2 GB file, a 5 GB file, a 20 GB file. On a 16 GB machine that's fits, fits, absolutely no chance. On 32, the last one fits too, which is rather the point of knowing your number. Got all three? You've got it. When the model table at the end of this chapter is in front of you, do the same for any three rows.
+If normal memory is the room, graphics card memory is a workbench in the corner. Small, and everything on it goes a lot faster.
+
+A model that fits on the workbench is quick.
+
+A model that's too big for it doesn't fail. It spills off the bench into the room, and runs at the room's pace, which is a lot slower.
+
+If you have no workbench, everything runs at the room's pace. That's Priya's box, and it actually wrote her letter at about the speed she reads.
+
+### Will it fit?
+
+Here's my rule of thumb (mine, not a benchmark), and it's deliberately wide, so the answer is almost always obvious:
+
+- the model file is under half your memory: it fits;
+- the file is bigger than your memory: it doesn't;
+- anywhere in between: it depends.
+
+On 16 GB: a 2 GB file fits, a 5 GB file fits, a 10 GB file depends, a 20 GB file doesn't.
+
+"Depends" isn't a fail. It's where you start tuning: a smaller version of the same model, a shorter conversation, fewer tabs. Chapter 2 is where we turn the dials.
+
+Got a workbench? Do it twice. Against the workbench, the rule tells you whether it'll be quick. Against the workbench plus the room, whether it'll run at all.
+
+(I haven't measured this rule on an 8 GB machine, where your computer's own share of the room is bigger. If yours says 8, treat "fits" as "depends" until I have.)
 
 <!-- figure: will-it-fit -->
 
-Here's what it looks like when it goes wrong. The symptom is a download that sits at 100% and then the app says nothing, or says “loading”… forever, or quietly picks a different model. 😱
+### What can it do, then?
 
-The cause is almost always room: the model is bigger than the memory.
+Fits is only half of it. What you really want to know is what it's good for.
 
-The fix is the sticky note.
+So we're going to do it with Priya's own jobs. I ran them on three sizes of the same model, on real machines, and wrote down what happened.
 
-Check the file size against your number.
+| Draft Priya's letter | Small (0.6B) | Medium (8B) | Large (32B) | Hosted, for comparison |
+|---|---|---|---|---|
+| File | 0.5 GB | 5.2 GB | 20 GB | not on your machine |
+| Memory in use | 2.2 GB | 7.5 GB | 23.1 GB | none |
+| With a 24 GB workbench | under 1 s | 4 to 5 s | 16 to 18 s | 10 to 12 s |
+| No workbench (desktop processor) | about 5 s | about 1 min | about 4.5 min | 10 to 12 s |
+| 16 GB Mac, built-in graphics | 8 to 9 s | 1.5 to 2 min | doesn't fit | 10 to 12 s |
+| What you get | fluent, and on the wrong side | a decent trainee | the best local draft, and it invents law | better again, and still not safe unread |
 
-If it does not fit, pick the smaller version; most models come in several sizes and the table lists them.
+| Summarise a document | to measure |
+|---|---|
+| Compare two versions of a contract (a tool a coding agent builds) | to measure |
 
-The other symptom is a model that fits and runs but takes a minute to say hello.
+(Measured in November 2026 with Qwen 3 on a Linux desktop with an RTX 4090, graphics card on and then off, on my 16 GB MacBook Air while it was busy doing other things, and with the hosted model this coach uses. The office laptop row is on the companion page once I've measured it.)
 
-Nothing's broken. The room's full and the laptop's working really hard.
+The small one wrote the letter from the landlord to the tenant. Every fact was right. It just didn't understand whose letter it was. 😱
 
-You'll decide in Book 2 whether to live with it, shrink the model, or buy more room.
+The large one wrote a truly good local letter, then told the landlord he had ten days by law, which isn't in the papers.
 
-Why is this station amber and not grey? The app found Priya's number for her, and it'll find yours. But the day it picks wrong you need to know what it was measuring, or you'll blame the model, reinstall three times, and give up.
+The hosted one was best of all, and one of its three drafts still relied on the wrong Act, which its own notes then pointed out.
 
-“Rubbish model,” says everyone who skipped this chapter. I've said it myself. 😅 Nope. Small room.
+Whatever you use, you read it before it goes out with your name on it. Chapter 2 has a lot more to say about that, and about Priya's worst Thursday.
 
-Knowing your number is two minutes of your life, once.
+### Have you got it?
+
+Here's what this station unlocks: looking at any model's download page and knowing, from your sticky note, whether it'll fit, and what kind of job it's worth trying.
+
+Here's how you know you've got it. Say your two facts without looking. Then, for a 2 GB, a 5 GB and a 20 GB file, say fits, depends or doesn't. On 16 GB with no graphics card: fits, fits, doesn't. On 32: fits, fits, depends. Then name one of Priya's jobs your computer does comfortably, and one it doesn't.
+
+Here's what it looks like when it goes wrong. A download sits at 100%, then the app says nothing, or says "loading"… forever, or quietly picks a different model.
+
+The cause is almost always room: the model is bigger than memory.
+
+The fix is the sticky note. Pick the smaller version; most models come in several sizes.
+
+The other symptom is a model that runs but takes a minute to say hello.
+
+Nothing's broken. It's really just spilled off the workbench, or there isn't one. You'll decide in Book 2 whether to live with it, shrink the model, or buy a bigger bench.
+
+Why is this station amber and not grey? The app found Priya's facts for her, and it'll find yours. But the day it picks wrong, you need to know what it was measuring, or you'll blame the model, reinstall three times, and give up.
+
+"Rubbish model," says everyone who skipped this chapter. I've said it myself. 😅 Nope. Small room.
 
 ### Your turn
 
-Take your sticky note to the table at the end of this chapter. It lists every model the series uses, with its file size and which chapter first uses it. (The live version, updated as models change, is on the companion page, awesome-local-ai on GitHub.)
+Take your sticky note to the model table at the end of this chapter. It lists every model the series uses, with its file size and which chapter first uses it. (The live version, kept current, is on awesome-local-ai on GitHub.)
 
 - Mark the ones that fit. Those are yours today.
+- Mark the ones that depend. Those are yours after chapter 2.
+- Note the first one that doesn't fit. That's the price tag on your next machine, and you know exactly what you'd be paying for: room.
 
-- Note the first one that doesn't fit at all. That's the price tag on your next machine, and you now know exactly what you would be paying for: room, not cleverness.
-
-- Two-room machine? Ignore the small fast room for now. Book 2 shows you how to read its size and which rows will feel quick.
-
-If you're on 16 GB with no graphics card, you'll find most of this series is open to you, and the table marks the rows that aren't (the table's arithmetic, not my stopwatch).
-
-Write that down too, because the forums will tell you otherwise, LOUDLY.
-
-The table of models the series uses is at the end of this chapter, and the version that's kept current lives in the awesome-local-ai repo on GitHub.
+If you're on 16 GB with no graphics card, most of this series is open to you. Write that down too, because the forums will tell you otherwise, LOUDLY.
 
 ### Where that leaves you
 
-Your machine has a room, measured in gigabytes, and a model has to fit in it, WHOLE, before it can speak.
+Your computer has a room, and maybe a workbench, and a model has to fit in them, with space to work, before it can speak.
 
-The model is one file.
-
-You now have one number that tells you what fits, the one question to ask of any model page (how big is the file?), and my rule of thumb for the answer: under about three quarters of your number, fine; over it, a squeeze; bigger than the number, no.
+You've got two facts on a sticky note, a rule of thumb that's right almost every time, and a table that says what each size of model is actually good for.
 
 That's truly more hardware knowledge than most of the people arguing on the forums have, and it cost you a sticky note.
 
-Next chapter: what's actually in that file, and what the three numbers on its label mean for your room.
+Next chapter: what's in the model file, what the numbers on its label do to your room and your results, and why Priya now reads every word before she signs.

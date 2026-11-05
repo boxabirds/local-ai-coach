@@ -3,7 +3,10 @@
   "terms": [
     {
       "term": "model",
-      "forms": ["model", "models"],
+      "forms": [
+        "model",
+        "models"
+      ],
       "definedIn": "Book 1, chapter 0",
       "firstAt": "legal-letter",
       "gloss": "The file that does the thinking. One file.",
@@ -14,40 +17,63 @@
     },
     {
       "term": "network",
-      "forms": ["network", "networks"],
+      "forms": [
+        "network",
+        "networks"
+      ],
       "definedIn": "Book 1, chapter 0",
       "firstAt": "legal-letter",
       "gloss": "A set of machines that can talk to each other without going through anyone else.",
       "analogy": "Priya's laptop, the box on the shelf and the printer.",
       "recap": "A network (Book 1, ch 0) is a set of machines that can talk to each other without going through anyone else.",
       "station": null,
-      "avoid": ["the internet (when your own network is meant)"]
+      "avoid": [
+        "the internet (when your own network is meant)"
+      ]
     },
     {
       "term": "station",
-      "forms": ["station", "stations"],
+      "forms": [
+        "station",
+        "stations"
+      ],
       "definedIn": "Book 1, chapter 0",
       "firstAt": "legal-letter",
       "gloss": "A skill on the map. Getting to one means you can do the thing it's named after.",
       "analogy": "A circle on a London Underground line.",
       "recap": "A skill on the map. Each has a colour.",
       "station": null,
-      "avoid": ["stop", "level", "module"]
+      "avoid": [
+        "stop",
+        "level",
+        "module"
+      ]
     },
     {
       "term": "colours (grey, amber, red)",
-      "forms": ["colour", "colours", "grey", "amber", "red"],
+      "forms": [
+        "colour",
+        "colours",
+        "grey",
+        "amber",
+        "red"
+      ],
       "definedIn": "Book 1, chapter 0",
       "firstAt": "legal-letter",
       "gloss": "How much of a station has to live in your head. Grey means press go. Amber means you know what it does and why it's there, but not how to fix it. Red means you understand it well enough to tell when it's wrong.",
       "analogy": "",
       "recap": "Grey, press go. Amber, know what it does but not how to fix it. Red, understand it well enough to tell when it is wrong.",
       "station": null,
-      "avoid": ["difficulty", "priority"]
+      "avoid": [
+        "difficulty",
+        "priority"
+      ]
     },
     {
       "term": "Wednesday check",
-      "forms": ["Wednesday check"],
+      "forms": [
+        "Wednesday check"
+      ],
       "definedIn": "Book 1, chapter 0",
       "firstAt": "legal-letter",
       "gloss": "Priya's check, the day after, of where her chat app was sending data.",
@@ -58,85 +84,172 @@
     },
     {
       "term": "memory",
-      "forms": ["memory"],
+      "forms": [
+        "memory"
+      ],
       "definedIn": "Book 1, chapter 1",
       "firstAt": "machine",
-      "gloss": "The space your laptop works in; whatever it is doing right now has to be in there. Measured in gigabytes; the Settings line that says Memory or RAM.",
+      "gloss": "The space your computer works in; whatever it is doing right now has to be in there. Measured in gigabytes; the Settings line that says Memory or RAM.",
       "analogy": "The room (the drive is the warehouse; the choir sings in the room, not the warehouse)",
-      "recap": "Memory (Book 1, ch 1) is the room a model has to fit in, whole, before it can speak. Your sticky-note number.",
+      "recap": "Memory (Book 1, ch 1) is the room a model has to fit in, with room to work, before it can speak. The first fact on your sticky note.",
       "station": "machine",
-      "avoid": ["RAM as a different thing from memory", "storage", "space", "disk"]
+      "avoid": [
+        "RAM as a different thing from memory",
+        "storage",
+        "space",
+        "disk"
+      ]
     },
     {
       "term": "model file",
-      "forms": ["model file", "model files"],
+      "forms": [
+        "model file",
+        "model files"
+      ],
       "definedIn": "Book 1, chapter 1",
       "firstAt": "machine",
       "gloss": "The single file a model is downloaded as; the whole of the clever part in one lump. No account, no key, no phoning home. Closer to a film file than to an app.",
       "analogy": "A film file: copy it to another machine with enough memory and it plays there too",
-      "recap": "The model file (Book 1, ch 1) is one file holding the whole model. Fits in memory or it does not run.",
+      "recap": "The model file (Book 1, ch 1) is one file holding the whole model. Where you start when asking whether it fits, never the whole answer.",
       "station": "machine",
-      "avoid": ["weights", "checkpoint", "binary", "the model (when the file is meant)"]
+      "avoid": [
+        "weights",
+        "checkpoint",
+        "binary",
+        "the model (when the file is meant)"
+      ]
     },
     {
-      "term": "rule of thumb (three quarters)",
-      "forms": ["rule of thumb", "three quarters"],
+      "term": "rule of thumb (half)",
+      "forms": [
+        "rule of thumb"
+      ],
       "definedIn": "Book 1, chapter 1",
       "firstAt": "machine",
-      "gloss": "If the file is more than about three quarters of your memory number, expect a squeeze; bigger than the number, it does not run.",
-      "analogy": "Elbow room, because the laptop is already using some memory for being a laptop",
-      "recap": "Three quarters of your number is comfortable; over it is a squeeze; over the number is no.",
+      "gloss": "Wide on purpose, so the answer is almost always obvious: a model file under half your memory fits; bigger than your memory, it doesn't; anywhere between, it depends on the settings.",
+      "analogy": "A room with a half mark on the floor: under the mark there's room to work, past the walls there's none",
+      "recap": "Under half your memory fits; bigger than your memory doesn't; between, it depends.",
       "station": "machine",
-      "avoid": ["headroom", "overhead", "VRAM budget"]
+      "avoid": [
+        "headroom",
+        "overhead",
+        "VRAM budget",
+        "three quarters"
+      ]
+    },
+    {
+      "term": "working space",
+      "forms": [
+        "working space"
+      ],
+      "definedIn": "Book 1, chapter 1",
+      "firstAt": "machine",
+      "gloss": "Everything a running model needs in memory besides its file: the program that runs it, the conversation so far, and a few helpers. It isn't a fixed amount: it changes with the program and its settings.",
+      "analogy": "The choir isn't the only thing in the room: there's the stage crew and the music stands too",
+      "recap": "Working space (Book 1, ch 1) is what a running model needs beyond its file. Chapter 2 turns its dials.",
+      "station": "machine",
+      "avoid": [
+        "overhead",
+        "KV cache (until Book 2)",
+        "context (until chapter 2)"
+      ]
+    },
+    {
+      "term": "graphics card memory",
+      "forms": [
+        "graphics card memory"
+      ],
+      "definedIn": "Book 1, chapter 1",
+      "firstAt": "machine",
+      "gloss": "Memory on a graphics card, separate from the computer's normal memory: much smaller and much faster. Only some computers have it; Macs and office laptops don't.",
+      "analogy": "A workbench in the corner of the room: small, and everything on it goes faster",
+      "recap": "Graphics card memory (Book 1, ch 1) is the small fast workbench beside the room. A model that fits on it is quick; one that spills off runs at the room's pace.",
+      "station": "machine",
+      "avoid": [
+        "VRAM",
+        "GPU memory",
+        "video memory",
+        "shared memory",
+        "unified memory"
+      ]
     },
     {
       "term": "terminal",
-      "forms": ["terminal", "terminals"],
+      "forms": [
+        "terminal",
+        "terminals"
+      ],
       "definedIn": "Coach V1, Local chat (no chapter yet)",
       "firstAt": "localchat",
       "gloss": "A window where you type a command and the machine types back.",
       "analogy": "A text message thread with your computer.",
       "recap": "A terminal is a window where you type a command and the machine types back.",
       "station": "localchat",
-      "avoid": ["console", "shell", "command line"]
+      "avoid": [
+        "console",
+        "shell",
+        "command line"
+      ]
     },
     {
       "term": "server",
-      "forms": ["server", "servers"],
+      "forms": [
+        "server",
+        "servers"
+      ],
       "definedIn": "Coach V1, Local chat (no chapter yet)",
       "firstAt": "localchat",
       "gloss": "The program on the model's machine that holds the model in memory and answers questions from your chat app.",
       "analogy": "The kitchen. Your chat app is the waiter.",
       "recap": "A server is the program that holds the model in memory and answers. Your chat app only talks to it.",
       "station": "localchat",
-      "avoid": ["backend", "endpoint", "API"]
+      "avoid": [
+        "backend",
+        "endpoint",
+        "API"
+      ]
     },
     {
       "term": "address",
-      "forms": ["address", "addresses"],
+      "forms": [
+        "address",
+        "addresses"
+      ],
       "definedIn": "Coach V1, Local chat (no chapter yet)",
       "firstAt": "localchat",
       "gloss": "The name or number a machine is found by on a network, like backroom or 192.168.1.20.",
       "analogy": "A house number on your street.",
       "recap": "An address is the name or number a machine is found by on a network.",
       "station": "localchat",
-      "avoid": ["host", "IP"]
+      "avoid": [
+        "host",
+        "IP"
+      ]
     },
     {
       "term": "destination",
-      "forms": ["destination", "destinations"],
-      "definedIn": "Coach V1, Prove it stays local (no chapter yet)",
+      "forms": [
+        "destination",
+        "destinations"
+      ],
+      "definedIn": "Coach V1, Is my chat app talking to anyone else? (no chapter yet)",
       "firstAt": "prove",
       "gloss": "The machine a program is sending data to, shown as its address.",
       "analogy": "The address on an envelope.",
       "recap": "A destination is where a program is sending data. Read the destinations, not the wifi icon.",
       "station": "prove",
-      "avoid": ["endpoint", "target"]
+      "avoid": [
+        "endpoint",
+        "target"
+      ]
     },
     {
       "term": "loopback",
-      "forms": ["loopback", "localhost"],
-      "definedIn": "Coach V1, Prove it stays local (no chapter yet)",
+      "forms": [
+        "loopback",
+        "localhost"
+      ],
+      "definedIn": "Coach V1, Is my chat app talking to anyone else? (no chapter yet)",
       "firstAt": "prove",
       "gloss": "The address a machine uses to talk to itself, 127.0.0.1. Its name is localhost.",
       "analogy": "Leaving yourself a note on the fridge.",
@@ -146,36 +259,53 @@
     },
     {
       "term": "private address",
-      "forms": ["private address", "private addresses"],
-      "definedIn": "Coach V1, Prove it stays local (no chapter yet)",
+      "forms": [
+        "private address",
+        "private addresses"
+      ],
+      "definedIn": "Coach V1, Is my chat app talking to anyone else? (no chapter yet)",
       "firstAt": "prove",
       "gloss": "An address that only works inside your own network. They start 10., 192.168., or 172.16 up to 172.31.",
       "analogy": "A room number inside your own building.",
       "recap": "A private address only works inside your own network. Yours.",
       "station": "prove",
-      "avoid": ["internal IP", "LAN IP"]
+      "avoid": [
+        "internal IP",
+        "LAN IP"
+      ]
     },
     {
       "term": "tailnet",
-      "forms": ["tailnet", "tailnets", "Tailscale"],
-      "definedIn": "Coach V1, Prove it stays local (no chapter yet)",
+      "forms": [
+        "tailnet",
+        "tailnets",
+        "Tailscale"
+      ],
+      "definedIn": "Coach V1, Is my chat app talking to anyone else? (no chapter yet)",
       "firstAt": "prove",
       "gloss": "Your own network of machines wherever they are, made with Tailscale, joining only machines you have signed in yourself. Its addresses run from 100.64 to 100.127.",
       "analogy": "A private corridor between your house and your office.",
       "recap": "Your tailnet is your own network across places. Its machines are yours.",
       "station": "prove",
-      "avoid": ["VPN"]
+      "avoid": [
+        "VPN"
+      ]
     },
     {
       "term": "public address",
-      "forms": ["public address", "public addresses"],
-      "definedIn": "Coach V1, Prove it stays local (no chapter yet)",
+      "forms": [
+        "public address",
+        "public addresses"
+      ],
+      "definedIn": "Coach V1, Is my chat app talking to anyone else? (no chapter yet)",
       "firstAt": "prove",
       "gloss": "Any address that is not loopback, private or your tailnet: somebody else's machine, on the internet.",
       "analogy": "A letter posted to a stranger.",
       "recap": "A public address is somebody else's machine. If your chat app sends to one, the draft left the building.",
       "station": "prove",
-      "avoid": ["external IP"]
+      "avoid": [
+        "external IP"
+      ]
     }
   ]
 }

@@ -77,7 +77,7 @@ describe("which bubbles can be quoted (TC-01 to TC-04)", () => {
     const figure = await screen.findByTestId("coach-figure");
     await waitFor(() => expect(within(figure).getByTestId("coach-figure-result")).not.toBeEmptyDOMElement());
     expect(quotable(figure.querySelector("svg")!, byTestId("root"))).toBe(figure);
-    expect(quoteText(figure)).toBe("Will it fit?\nDoesn't run: 20 GB is bigger than 16 GB.");
+    expect(quoteText(figure)).toBe("Will it fit?\nDoesn't fit: 20 GB is bigger than 16 GB.");
     // TC-03: the figure's choices keep their own job.
     expect(quotable(within(figure).getByRole("button", { name: "8 GB" }), byTestId("root"))).toBeNull();
   });

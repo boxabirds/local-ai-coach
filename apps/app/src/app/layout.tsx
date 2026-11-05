@@ -7,10 +7,10 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
   title: "Mastering Local AI coach",
-  description: "The coach for Mastering Local AI: run a model on a machine you own, and prove it stays local.",
+  description: "The coach for Mastering Local AI: run a model on a machine you own, and check your chat app talks to nobody else.",
   openGraph: {
     title: "Mastering Local AI coach",
-    description: "Run a model on a machine you own, and prove it stays local.",
+    description: "Run a model on a machine you own, and check your chat app talks to nobody else.",
     type: "website",
   },
   twitter: { card: "summary_large_image" },

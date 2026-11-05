@@ -8,10 +8,16 @@
     "Matching a tailnet address to a machine the learner owns with tailscale status --json is not tried.",
     "The tailnet range 100.64 to 100.127 is Tailscale's documented IPv4 range; tailnet IPv6 addresses aren't covered in the text."
   ],
-  "teaches": ["destination", "loopback", "private address", "tailnet", "public address"],
+  "teaches": [
+    "destination",
+    "loopback",
+    "private address",
+    "tailnet",
+    "public address"
+  ],
   "previews": [],
   "stands": "tailnet: Tailscale's word for your own network of machines, wherever they are.",
-  "why": "Nothing beeps when a draft leaves the building. So on Wednesday Priya went and looked: which machines was her chat app talking to? One, her own box. This is the station that has to live in your head, because when it fails, it fails quietly.",
+  "why": "Nothing beeps when a draft leaves the building. So on Wednesday Priya went and looked: which machines was her chat app talking to? One, her own box. This is the station that has to live in your head, because when it fails, it fails quietly. It checks the chat app, not the model's own server or any tool; those come later in the series.",
   "mnem": "Read the destinations, not the wifi icon.",
   "steps": [
     {
@@ -19,16 +25,28 @@
       "text": "Every program that talks to another machine has a **destination**: the address it's sending to. Three kinds are yours. **Loopback** (127.0.0.1) is the machine talking to itself. A **private address** only works inside your own network; they start 10., 192.168., or 172.16 up to 172.31. Your **tailnet** is your own network across places, made with Tailscale; its addresses run from 100.64 to 100.127. Anything else is a **public address**: somebody else's machine, on the internet.",
       "where": "read",
       "hint": "Three kinds are yours. Everything else isn't. That's the whole rule.",
-      "doIt": { "kind": "instructions", "explain": "I'll show you your own machine's addresses so you can see the three kinds." },
-      "check": { "kind": "read" }
+      "doIt": {
+        "kind": "instructions",
+        "explain": "I'll show you your own machine's addresses so you can see the three kinds."
+      },
+      "check": {
+        "kind": "read"
+      }
     },
     {
       "id": "prove.2",
       "text": "Practice run. In the practice terminal, list where a pretend chat app is sending data: `lsof -nP -iTCP -sTCP:ESTABLISHED -c chat` Then tell me which line isn't yours.",
       "where": "sandbox",
       "hint": "Look at the address after the arrow. Is it loopback, a private address, your tailnet, or none of those?",
-      "doIt": { "kind": "sim", "cmd": "lsof -nP -iTCP -sTCP:ESTABLISHED -c chat" },
-      "check": { "kind": "sim", "event": "answer", "match": "public" },
+      "doIt": {
+        "kind": "sim",
+        "cmd": "lsof -nP -iTCP -sTCP:ESTABLISHED -c chat"
+      },
+      "check": {
+        "kind": "sim",
+        "event": "answer",
+        "match": "public"
+      },
       "onFail": {
         "pattern": "owned",
         "say": "Not that one. {address} is one of yours. Look for the address that isn't loopback, private or your tailnet."
@@ -39,8 +57,21 @@
       "text": "Now for real. Ask {chat_app} for something long (“Write me three paragraphs about tea.”), and while it's answering, press Check. I'll look at where {chat_app} is sending data.",
       "where": "chat-app",
       "hint": "It has to be answering while I look, so ask for something long.",
-      "doIt": { "kind": "instructions", "explain": "I can't type into {chat_app} for you. I'll tell you when to press Check." },
-      "check": { "kind": "real", "probes": ["connections", "tailnet"], "params": { "process": "{chat_app}" }, "expect": "owned" },
+      "doIt": {
+        "kind": "instructions",
+        "explain": "I can't type into {chat_app} for you. I'll tell you when to press Check."
+      },
+      "check": {
+        "kind": "real",
+        "probes": [
+          "connections",
+          "tailnet"
+        ],
+        "params": {
+          "process": "{chat_app}"
+        },
+        "expect": "owned"
+      },
       "onFail": {
         "pattern": "public",
         "say": "Stop there. {chat_app} sent something to {address}, a public address. Don't paste anything private into it until we know why."
@@ -51,7 +82,10 @@
       "text": "Last one, and it's the red test. Tell me what this check would look like if it went wrong.",
       "where": "coach",
       "hint": "Picture the list with one extra line.",
-      "doIt": { "kind": "instructions", "explain": "I'll show you an example list with a public address in it." },
+      "doIt": {
+        "kind": "instructions",
+        "explain": "I'll show you an example list with a public address in it."
+      },
       "check": {
         "kind": "ask",
         "question": "What would it look like if your chat went somewhere it shouldn't?",

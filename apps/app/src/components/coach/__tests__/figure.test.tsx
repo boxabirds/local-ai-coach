@@ -67,8 +67,8 @@ describe("figure rules (TC-20, TC-21)", () => {
   it("TC-20 resultText reads the one result drawn, through nested conditions", () => {
     const svg = served("room-and-warehouse").svg;
     expect(resultText(svg, { file: "20", place: "drive" })).toBe("Kept in the warehouse. Nothing is running yet.");
-    expect(resultText(svg, { file: "20", place: "memory" })).toBe("Doesn't run: 20 GB is bigger than 16 GB.");
-    expect(resultText(svg, { file: "5", place: "memory" })).toBe("Fits: 5 GB is under three quarters of 16 GB.");
+    expect(resultText(svg, { file: "20", place: "memory" })).toBe("Doesn't fit: 20 GB is bigger than 16 GB.");
+    expect(resultText(svg, { file: "5", place: "memory" })).toBe("Fits: 5 GB is under half of 16 GB.");
     expect(resultText("", {})).toBe("");
   });
 
@@ -101,11 +101,11 @@ describe("Figure component (TC-23)", () => {
     const figure = await screen.findByTestId("coach-figure");
     expect(fetchMock).toHaveBeenCalledWith(FIGURE_URL("will-it-fit"));
     expect(within(figure).getByText("Will it fit?", { selector: "p" })).toBeInTheDocument();
-    expect(within(figure).getByRole("img")).toHaveAccessibleName(expect.stringContaining("three quarters"));
+    expect(within(figure).getByRole("img")).toHaveAccessibleName(expect.stringContaining("half mark"));
     expect(within(figure).getByRole("group", { name: "Your number" })).toBeInTheDocument();
     expect(within(figure).getByRole("button", { name: "16 GB" })).toHaveAttribute("aria-pressed", "true");
-    expect(shownResult()).toBe("Doesn't run: 20 GB is bigger than 16 GB.");
-    expect(screen.getByTestId("coach-figure-result")).toHaveTextContent("Doesn't run");
+    expect(shownResult()).toBe("Doesn't fit: 20 GB is bigger than 16 GB.");
+    expect(screen.getByTestId("coach-figure-result")).toHaveTextContent("Doesn't fit");
   });
 
   it("redraws for each choice: 8 GB and 5 GB fits", async () => {
@@ -116,7 +116,7 @@ describe("Figure component (TC-23)", () => {
     fireEvent.click(screen.getByRole("button", { name: "5 GB" }));
     expect(screen.getByRole("button", { name: "8 GB" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "16 GB" })).toHaveAttribute("aria-pressed", "false");
-    await waitFor(() => expect(shownResult()).toBe("Fits: 5 GB is under three quarters of 8 GB."));
+    await waitFor(() => expect(shownResult()).toBe("Depends: 5 GB is between half and all of 8 GB."));
   });
 
   it("starts with no choice where the figure asks a question", async () => {

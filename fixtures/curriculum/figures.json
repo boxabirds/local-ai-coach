@@ -58,7 +58,7 @@
       "id": "room-and-warehouse",
       "item": "machine",
       "title": "The room and the warehouse",
-      "alt": "A 2 TB drive drawn as a long warehouse, and 16 GB of memory drawn as a room with a three quarters mark. A model file sits in the warehouse, or is loaded into the room, where a 20 GB file spills out.",
+      "alt": "A 2 TB drive drawn as a long warehouse, and 16 GB of memory drawn as a room with a half mark. A model file sits in the warehouse, or is loaded into the room, where a 20 GB file spills out.",
       "caption": "A 16 GB laptop with a 2 TB drive. The file can sit in the warehouse all day; it only runs in the room.",
       "controls": [
         { "name": "file", "label": "Model file", "default": "20", "role": "file", "options": [
@@ -80,8 +80,8 @@
       "id": "will-it-fit",
       "item": "machine",
       "title": "Will it fit?",
-      "alt": "Your memory drawn as a room with a three quarters mark, and a model file drawn to the same scale inside it, spilling out past the end when it is bigger than the room.",
-      "caption": "Pick your number, then a file. Under three quarters fits; over it is a squeeze; bigger than the room doesn't run.",
+      "alt": "Your memory drawn as a room with a half mark, and a model file drawn to the same scale inside it, spilling out past the end when it is bigger than the room.",
+      "caption": "Pick your memory, then a file. Under half fits; bigger than the room doesn't; in between, it depends.",
       "controls": [
         { "name": "memory", "label": "Your number", "default": "16", "role": "room", "options": [
           { "value": "8", "label": "8 GB", "gb": 8 },
@@ -105,7 +105,7 @@
       "item": "machine",
       "title": "One file, nothing to call",
       "alt": "One 5 GB model file, copied to another machine. On a machine with enough memory it fits; on a 4 GB laptop it doesn't run. No line goes anywhere else.",
-      "caption": "The whole model is the file. Copy it, and it runs wherever the room is big enough.",
+      "caption": "The whole model is the file. Copy it to another machine, and it runs there too if the room is big enough.",
       "controls": [
         { "name": "machine", "label": "Copy it to", "default": "box", "role": "room", "options": [
           { "value": "box", "label": "Priya's box", "gb": 16 },

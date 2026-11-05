@@ -1,17 +1,19 @@
-# Front-matter for Book 1, chapter 1: Know your machine.
+# Front-matter for Book 1, chapter 1: What can my computer do?
 # Read by the build and the checker. Never rendered on the page.
 # Fields marked "author" need the author's hands or hardware before publication.
 
 book: 1
 chapter: 1
-title: Know your machine
+title: What can my computer do?
 slug: know-your-machine
 
 whatIsNew: >
-  One number (memory, in GB) decides whether a model runs at all, and the
-  reader gets it from their own settings in two minutes with nothing
-  installed. Every other hardware guide starts from specs, benchmarks or a
-  GPU; this one defers all three to Book 2 and says so.
+  Starts from the reader's goal (what local AI can I do with my computer?),
+  not from specs. Two facts from the reader's own settings (memory, and
+  graphics card memory if any), a rule of thumb wide enough that "fits" and
+  "doesn't" are almost certain, and Priya's own letter written by three sizes
+  of model and a hosted one, measured in November 2026, so size means quality
+  and speed, not only room.
 
 testedOn:                     # author: fill before publication
   status: not yet tested      # the chapter's claims are arithmetic, not stopwatch; see sources
@@ -25,18 +27,22 @@ testedOn:                     # author: fill before publication
       memory_gb: 16
       os: ""                  # author: Windows or Linux, whichever is to hand
       checked: []             # Windows "Installed RAM (usable)" wording to be confirmed
-  models: []                  # none run in this chapter
+  models:                     # the letter run, docs/design/letter-run/20261105-letter-run.md
+    - qwen3:0.6b, qwen3:8b, qwen3:32b (Q4_K_M), Ollama 0.9.6, Linux, RTX 4090, graphics card on and off
+    - qwen3:0.6b, qwen3:8b, Ollama 0.40.14, MacBook Air M2 16 GB (busy, not a quiet machine)
+    - chat-latest (OpenAI), hosted reference
 
 stations:
   - id: machine
-    name: Know your machine
+    name: What can my computer do?
     colour: amber             # inYourHead: know what it does
     zone: 1
     needs: []
     proof: >
-      Say your number without looking; then for a 2 GB, a 5 GB and a 20 GB
-      file say fits or does not fit. On 16 GB: fits, fits, no. On 32: the
-      last one fits too.
+      Say your two facts without looking; then for a 2 GB, a 5 GB and a 20 GB
+      file say fits, depends or doesn't. On 16 GB with no graphics card:
+      fits, fits, doesn't. On 32: fits, fits, depends. Then name one of
+      Priya's jobs your computer does comfortably and one it doesn't.
     whyThisColour: >
       The app finds the number for the reader and usually picks well, so
       grey is tempting. The day it picks wrong the reader must know what it
@@ -47,8 +53,8 @@ stations:
         cause: The model file is bigger than memory
         fix: Compare file size with the sticky note; pick the smaller size
       - symptom: Model fits and runs but takes a minute to say hello
-        cause: Room is nearly full; the machine is working hard
-        fix: Nothing broken; Book 2 covers living with it, shrinking the model, or buying more room
+        cause: It has spilled off the graphics card memory, or there isn't any
+        fix: Nothing broken; Book 2 covers living with it, shrinking the model, or a bigger graphics card
 
 beforeYouStart:               # resources, not knowledge
   software: []
@@ -59,7 +65,6 @@ beforeYouStart:               # resources, not knowledge
     - A sticky note and a pen
   diskFreeGb: 0
   memoryFreeGb: 0
-  timeMinutes: 5
   costsMoney: false
 
 reEntry:                      # terms defined earlier, recapped on first use here
@@ -75,36 +80,37 @@ reEntry:                      # terms defined earlier, recapped on first use her
 
 terms:                        # map.json entries this chapter defines
   - term: memory
-    gloss: >
-      The space your laptop works in; whatever it is doing right now has to
-      be in there. Measured in gigabytes; the Settings line that says
-      Memory or RAM.
-    analogy: The room (the drive is the warehouse; the choir sings in the room, not the warehouse)
-    recap: Memory (Book 1, ch 1) is the room a model has to fit in, whole, before it can speak. Your sticky-note number.
+    gloss: "The space your computer works in; whatever it is doing right now has to be in there. Measured in gigabytes; the Settings line that says Memory or RAM."
+    analogy: "The room (the drive is the warehouse; the choir sings in the room, not the warehouse)"
+    recap: "Memory (Book 1, ch 1) is the room a model has to fit in, with room to work, before it can speak. The first fact on your sticky note."
     station: machine
-    avoid: [RAM as a different thing from memory, storage, space, disk]
+    avoid: ["RAM as a different thing from memory", "storage", "space", "disk"]
   - term: model file
-    gloss: >
-      The single file a model is downloaded as; the whole of the clever part
-      in one lump. No account, no key, no phoning home. Closer to a film
-      file than to an app.
+    gloss: "The single file a model is downloaded as; the whole of the clever part in one lump. No account, no key, no phoning home. Closer to a film file than to an app."
     analogy: "A film file: copy it to another machine with enough memory and it plays there too"
-    recap: The model file (Book 1, ch 1) is one file holding the whole model. Fits in memory or it does not run.
+    recap: "The model file (Book 1, ch 1) is one file holding the whole model. Where you start when asking whether it fits, never the whole answer."
     station: machine
-    avoid: [weights, checkpoint, binary, the model (when the file is meant)]
-  - term: rule of thumb (three quarters)
-    gloss: >
-      If the file is more than about three quarters of your memory number,
-      expect a squeeze; bigger than the number, it does not run.
-    analogy: Elbow room, because the laptop is already using some memory for being a laptop
-    recap: "Three quarters of your number is comfortable; over it is a squeeze; over the number is no."
+    avoid: ["weights", "checkpoint", "binary", "the model (when the file is meant)"]
+  - term: working space
+    gloss: "Everything a running model needs in memory besides its file: the program that runs it, the conversation so far, and a few helpers. It isn't a fixed amount: it changes with the program and its settings."
+    analogy: "The choir isn't the only thing in the room: there's the stage crew and the music stands too"
+    recap: "Working space (Book 1, ch 1) is what a running model needs beyond its file. Chapter 2 turns its dials."
     station: machine
-    avoid: [headroom, overhead, VRAM budget]
+    avoid: ["overhead", "KV cache (until Book 2)", "context (until chapter 2)"]
+  - term: graphics card memory
+    gloss: "Memory on a graphics card, separate from the computer's normal memory: much smaller and much faster. Only some computers have it; Macs and office laptops don't."
+    analogy: "A workbench in the corner of the room: small, and everything on it goes faster"
+    recap: "Graphics card memory (Book 1, ch 1) is the small fast workbench beside the room. A model that fits on it is quick; one that spills off runs at the room's pace."
+    station: machine
+    avoid: ["VRAM", "GPU memory", "video memory", "shared memory", "unified memory"]
+  - term: rule of thumb (half)
+    gloss: "Wide on purpose, so the answer is almost always obvious: a model file under half your memory fits; bigger than your memory, it doesn't; anywhere between, it depends on the settings."
+    analogy: "A room with a half mark on the floor: under the mark there's room to work, past the walls there's none"
+    recap: "Under half your memory fits; bigger than your memory doesn't; between, it depends."
+    station: machine
+    avoid: ["headroom", "overhead", "VRAM budget", "three quarters"]
 
 previews:                     # mentioned on purpose before their own chapter
-  - term: two rooms (separate graphics card memory)
-    taughtIn: Book 2
-    note: Named as "a complication you can ignore for now"; changes how fast, never whether
   - term: model sizes and the numbers on the label (quantisation, parameters)
     taughtIn: Book 1, chapter 2
     note: "Chapter 2 opens the file"
@@ -113,12 +119,14 @@ previews:                     # mentioned on purpose before their own chapter
     note: The pedantic parenthesis about apps that pull the file in as they go
 
 analogies:                    # one per section, for the checker
-  - section: Find your number
-    analogy: The sticky note on the lid
-  - section: Why it fits or it doesn't
+  - section: "Fact one: how much memory"
     analogy: "Memory is the room; the drive is the warehouse; the model is a choir that must be in the building before the concert"
-  - section: The model file is the whole brain
-    analogy: A film file, not an app
+  - section: "Fact two: graphics card memory"
+    analogy: A workbench in the corner of the room
+  - section: Will it fit?
+    analogy: The half mark on the floor
+  - section: What can it do, then?
+    analogy: The small model writing the landlord's letter instead of the tenant's
   - section: Have you got it?
     analogy: '"Rubbish model," says everyone who skipped this chapter. Small room.'
   - section: Where that leaves you
@@ -126,7 +134,8 @@ analogies:                    # one per section, for the checker
 
 jokes:
   - "On Linux you already know, and I know you know."
-  - "Mine says 128… which is showing off."
+  - "Mine says 128… which is really showing off."
+  - "the forty tabs you're not admitting to"
   - "The choir doesn't sing in the warehouse."
   - "the forums will tell you otherwise, LOUDLY"
 
@@ -143,15 +152,15 @@ sources:                      # principle 3; tested/untested labelled
     source: llama.cpp documentation (mmap and --no-mmap)
     url: https://github.com/ggml-org/llama.cpp
     status: tested by the author in earlier work, not re-run for this chapter
-  - claim: 16 GB and 32 GB machines run the model Priya used
-    source: arithmetic from the model table file sizes; not timed
-    status: not tested; stated as arithmetic in the text
-  - claim: The three-quarters rule of thumb
-    source: the author's own rule; labelled as such on the page
-    status: opinion, labelled
-  - claim: Machines with a separate graphics card have GPU memory distinct from system memory; fitting there changes speed, not whether it runs
-    source: Book 2 chapter on GPU memory (forward reference)
-    status: untested in this chapter
+  - claim: Memory in use, speed and quality of the letter at three model sizes and hosted
+    source: docs/design/letter-run/20261105-letter-run.md (run 2026-11-05)
+    status: tested by the author on the machines in testedOn
+  - claim: The half-and-whole rule of thumb
+    source: the author's own rule; labelled as such on the page; checked against the letter-run memory figures
+    status: opinion, labelled; not measured on an 8 GB machine, and the page says so
+  - claim: A model too big for graphics card memory spills into normal memory and runs at about processor speed
+    source: letter run with the graphics card off (8B at 8.4 tokens/s on the processor alone)
+    status: tested for the processor-only case; spill on a small card not yet measured
 
 companionRepo:
   name: awesome-local-ai

@@ -104,3 +104,20 @@ def test_tc08_the_checker_passes_the_fixture():
     from tests.test_curriculum import validate_mod
 
     assert validate_mod.main([str(FIXTURE_CURRICULUM)]) == 0
+
+
+def test_s14_map_shows_stations_listed_as_shown_after_the_taught_ones(monkeypatch, tmp_path):
+    folder = copy_of_fixture(tmp_path / "c")
+    scope = json.loads((folder / "scope.json").read_text(encoding="utf-8"))
+    taught = [item["station"] for item in scope["readingOrder"]]
+    stations = json.loads((folder / "stations.json").read_text(encoding="utf-8"))["stations"]
+    extra = next(s["id"] for s in stations if s["id"] not in taught)
+    scope["shownOnMap"] = {extra: "shown, not taught", taught[0]: "already taught, so not repeated"}
+    (folder / "scope.json").write_text(json.dumps(scope), encoding="utf-8")
+    monkeypatch.setenv(curriculum.ENV, str(folder))
+    assert curriculum.map_stations() == [*taught, extra]
+    assert curriculum.v1_stations() == taught
+
+
+def test_s14_without_shown_stations_the_map_is_the_reading_order():
+    assert curriculum.map_stations() == curriculum.v1_stations()

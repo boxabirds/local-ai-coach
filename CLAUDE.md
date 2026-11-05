@@ -5,7 +5,7 @@ This repo is a fork of CopilotKit/OpenIntelligentUI, kept as shipped, with a coa
 ## What V1 is
 
 - The upstream stack runs unchanged: Python LangGraph agent on :8123, CopilotKit runtime route, Next.js chat, hosted OpenAI `chat-latest`, hosted Jev via TypeSafe. Both hosted providers stay in V1. Do not replace them.
-- Scope: Priya's story (chapter 0), Know your machine, Local chat, Prove it stays local. macOS and Linux. Nothing else.
+- Scope: Priya's story (chapter 0), What can my computer do? (was Know your machine), Local chat, Is my chat app talking to anyone else? (was Prove it stays local). macOS and Linux. Nothing else.
 - The local story is a model on a machine the learner owns, reached over their own network or their tailnet (Tailscale). Not "wifi off": that framing is gone from the taxonomy, the chapters and the design. The proof reads where the chat app's bytes go (`connections` probe: loopback, private or tailnet only; `tailnet` probe: `tailscale status --json` to match a tailnet address to a machine the learner owns). The PoC's reference setup is the model on a second machine over Tailscale; the check also passes with the model on the laptop itself.
 - Everything we add lives in new files: `apps/agent/src/coach/`, `apps/agent/skills/{coach-playbook,step-contract,evidence-rules}/`, `apps/app/src/hooks/use-coach-ui.tsx`, `apps/app/src/components/coach/`, `curriculum/`.
 
@@ -13,7 +13,7 @@ This repo is a fork of CopilotKit/OpenIntelligentUI, kept as shipped, with a coa
 
 1. Contract and content: `curriculum/` (stations.json, lessons JSON for the four stations, map.json, stories, chapters) and `curriculum/validate.py`. Done when the validator passes.
 2. Shell and cards: strip the demo, register the eight components as CopilotKit hooks, stub agent that walks the steps with canned prose. Done when chapter 1 runs end to end in the sandbox with no model.
-3. Evidence collector: `src/coach/probes.py`, consent, Check result card. Done when Find your number and Local chat verify on a real Mac and a real Linux laptop, and Prove it stays local verifies with the model on a second machine over Tailscale.
+3. Evidence collector: `src/coach/probes.py`, consent, Check result card. Done when the memory step and Local chat verify on a real Mac and a real Linux laptop, and Prove it stays local verifies with the model on a second machine over Tailscale.
 4. Agent, as designed: coach prompt, skills, tools, `CoachStateMiddleware`. Done when the coach teaches chapter 1 from the contract with the real model.
 5. Recap and `assisted` re-runs, `tester.sh`. Done when a second session a day later opens with a recap.
 

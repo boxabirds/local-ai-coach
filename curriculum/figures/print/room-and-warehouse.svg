@@ -9,8 +9,8 @@
   <text x="40" y="30" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold">The drive: the warehouse, 2 TB</text>
   <text x="592" y="30" font-size="13" text-anchor="end" class="fig-muted" fill="#55556a">not to scale</text>
   <rect x="40" y="166" width="440" height="48" class="fig-paper fig-ink-stroke" fill="#ffffff" stroke="#1c1c28" rx="4" stroke-width="2" />
-  <line x1="370" y1="158" x2="370" y2="222" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
-  <text x="370" y="238" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">three quarters</text>
+  <line x1="260" y1="158" x2="260" y2="222" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
+  <text x="260" y="238" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">half</text>
   <text x="40" y="154" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold">Memory: the room, 16 GB</text>
   <g>
     <rect x="330" y="58" width="130" height="34" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
@@ -26,5 +26,5 @@
     <text x="486" y="168" font-size="13" text-anchor="start" class="fig-muted" fill="#55556a">no room</text>
   </g>
   <text x="48" y="195" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff">model file, 20 GB</text>
-  <text x="40" y="284" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold">Doesn't run: 20 GB is bigger than 16 GB.</text>
+  <text x="40" y="284" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold">Doesn't fit: 20 GB is bigger than 16 GB.</text>
 </svg>

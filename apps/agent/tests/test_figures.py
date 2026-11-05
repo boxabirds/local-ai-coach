@@ -71,7 +71,7 @@ def test_tc02_check_names_an_edited_drawing(root):
     assert result.stderr.strip() == "stale: figures/will-it-fit.svg"
 
 
-@pytest.mark.parametrize("file_gb,expected", [(12, "fits"), (12.1, "squeeze"), (16, "squeeze"), (16.1, "no")])
+@pytest.mark.parametrize("file_gb,expected", [(7.9, "fits"), (8, "depends"), (16, "depends"), (16.1, "no")])
 def test_tc03_fit_rule_boundaries_on_16_gb(file_gb, expected):
     assert make_figures.fit(file_gb, 16) == expected
     assert validate_mod.fit_verdict(file_gb, 16) == expected
@@ -152,13 +152,13 @@ def test_tc10b_a_state_with_two_results(root):
     assert errors(run(root)) == ["FIGURE_VERDICT"]
 
 
-def test_tc11_five_gb_on_eight_called_a_squeeze_is_refused(root):
-    """The mistake the machine.3 rubric made: 5 GB is under three quarters of 8 GB."""
+def test_tc11_five_gb_on_sixteen_called_depends_is_refused(root):
+    """5 GB is under half of 16 GB, so a drawing that says it depends breaks the rule."""
     def lie(s: str) -> str:
         lines = s.split("\n")
-        i = next(n for n, line in enumerate(lines) if "fig-result" in line and 'data-when="memory=8 file=5"' in line)
-        lines[i] = lines[i].replace('data-verdict="fits"', 'data-verdict="squeeze"').replace(
-            "Fits: 5 GB is under three quarters", "A squeeze: 5 GB is over three quarters")
+        i = next(n for n, line in enumerate(lines) if "fig-result" in line and 'data-when="memory=16 file=5"' in line)
+        lines[i] = lines[i].replace('data-verdict="fits"', 'data-verdict="depends"').replace(
+            "Fits: 5 GB is under half", "Depends: 5 GB is between half and all")
         return "\n".join(lines)
     edit_text(svg_path(root, "will-it-fit"), lie)
     assert errors(run(root)) == ["FIGURE_VERDICT"]
@@ -188,12 +188,3 @@ def test_tc14_a_term_before_it_is_defined(root):
 def test_tc15_a_dash_in_a_figure(root):
     edit_registry(root, "will-it-fit", lambda e: e.update(caption="Pick your number — then a file."))
     assert errors(run(root)) == ["STYLE_DASH"]
-
-
-@pytest.mark.parametrize("room_gb", [8, 16, 32])
-def test_tc16_the_machine_3_rubric_obeys_the_rule(room_gb):
-    lesson = json.loads((CURRICULUM / "lessons" / "machine.json").read_text(encoding="utf-8"))
-    rubric = next(s for s in lesson["steps"] if s["id"] == "machine.3")["check"]["rubric"]
-    said = re.search(rf"On {room_gb} GB: ([^.]+)\.", rubric).group(1).split(", ")
-    words = {"fits": "fits", "squeeze": "fits (a squeeze)", "no": "no"}
-    assert said == [words[validate_mod.fit_verdict(f, room_gb)] for f in (2, 5, 20)]

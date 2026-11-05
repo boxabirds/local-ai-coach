@@ -46,18 +46,20 @@ ACCENT = "#1d4ed8"
 CODE = "#f2f2f4"
 CRIT = {"grey": "#6b7280", "amber": "#b45309", "red": "#b91c1c"}
 
-THREE_QUARTERS = 0.75
-FITS, SQUEEZE, NO = "fits", "squeeze", "no"
+# The chapter 1 rule of thumb, wide on purpose: under half fits, bigger than memory doesn't,
+# anything between depends (docs/design/20261105-pedagogical-flow-proposal.md, decision 6).
+HALF = 0.5
+FITS, DEPENDS, NO = "fits", "depends", "no"
 STORED = "stored"
-VERDICT_WORDS = {FITS: "Fits", SQUEEZE: "A squeeze", NO: "Doesn't run"}
+VERDICT_WORDS = {FITS: "Fits", DEPENDS: "Depends", NO: "Doesn't fit"}
 
 
 def fit(file_gb: float, room_gb: float) -> str:
-    """The chapter 1 rule of thumb: over the room, no; over three quarters, a squeeze."""
+    """The chapter 1 rule of thumb: bigger than the room, no; half of it or more, depends."""
     if file_gb > room_gb:
         return NO
-    if file_gb > THREE_QUARTERS * room_gb:
-        return SQUEEZE
+    if file_gb >= HALF * room_gb:
+        return DEPENDS
     return FITS
 
 
@@ -219,8 +221,22 @@ def station_glyph(svg: Svg, x: float, y: float, colour: str, station: str) -> No
         svg.text(x, y + 9, "!", size=SIZE_TEXT, anchor="middle", weight="bold", cls="fig-on-crit", fill=PAPER)
 
 
+# A station name longer than this is split over two lines, so neighbours don't overlap.
+MAX_LABEL_CHARS = 20
+LABEL_LINE = 16
+
+
+def label_lines(label: str) -> list[str]:
+    """One line, or two split at the space nearest the middle."""
+    if len(label) <= MAX_LABEL_CHARS or " " not in label:
+        return [label]
+    spaces = [i for i, ch in enumerate(label) if ch == " "]
+    cut = min(spaces, key=lambda i: abs(i - len(label) / 2))
+    return [label[:cut], label[cut + 1:]]
+
+
 def three_stations(entry: dict[str, Any]) -> Svg:
-    svg = Svg(entry["id"], 230, entry["title"])
+    svg = Svg(entry["id"], 246, entry["title"])
     options = entry["controls"][0]["options"]
     xs = [110, 320, 530]
     svg.line(xs[0], 90, xs[-1], 90, cls="fig-line-stroke", stroke=LINE, **{"stroke-width": 8, "stroke-linecap": "round"})
@@ -229,9 +245,10 @@ def three_stations(entry: dict[str, Any]) -> Svg:
         colour = entry["crit"][sid]
         svg.el("circle", {"cx": x, "cy": 90, "r": 30, "class": "fig-accent-stroke", "fill": "none", "stroke": ACCENT, "stroke-width": 3}, when=f"station={sid}")
         station_glyph(svg, x, 90, colour, sid)
-        svg.text(x, 150, option["label"], size=SIZE_SMALL, anchor="middle", weight="bold")
-        svg.text(x, 170, colour.capitalize(), size=SIZE_SMALL, anchor="middle", cls="fig-muted", fill=MUTED)
-        svg.result(WIDTH / 2, 212, STATION_TEST[colour], when=f"station={sid}", anchor="middle")
+        for n, line in enumerate(label_lines(option["label"])):
+            svg.text(x, 150 + n * LABEL_LINE, line, size=SIZE_SMALL, anchor="middle", weight="bold")
+        svg.text(x, 186, colour.capitalize(), size=SIZE_SMALL, anchor="middle", cls="fig-muted", fill=MUTED)
+        svg.result(WIDTH / 2, 228, STATION_TEST[colour], when=f"station={sid}", anchor="middle")
     svg.text(WIDTH / 2, 36, "Priya's week, on the map", anchor="middle", cls="fig-muted", fill=MUTED, size=SIZE_SMALL)
     return svg
 
@@ -259,9 +276,9 @@ def file_bar(svg: Svg, y: float, h: float, file_gb: float, room_gb: float, over:
 
 def room(svg: Svg, y: float, h: float, label_when: list[tuple[str, str]]) -> None:
     svg.rect(ROOM_X, y, ROOM_W, h, cls="fig-paper fig-ink-stroke", fill=PAPER, stroke=INK, rx=4, **{"stroke-width": 2})
-    tq = ROOM_X + THREE_QUARTERS * ROOM_W
-    svg.line(tq, y - 8, tq, y + h + 8, cls="fig-ink-stroke", stroke=INK, **{"stroke-dasharray": "3 3", "stroke-width": 1.5})
-    svg.text(tq, y + h + 24, "three quarters", size=SIZE_SMALL, anchor="middle", cls="fig-muted", fill=MUTED)
+    half = ROOM_X + HALF * ROOM_W
+    svg.line(half, y - 8, half, y + h + 8, cls="fig-ink-stroke", stroke=INK, **{"stroke-dasharray": "3 3", "stroke-width": 1.5})
+    svg.text(half, y + h + 24, "half", size=SIZE_SMALL, anchor="middle", cls="fig-muted", fill=MUTED)
     for words, when in label_when:
         svg.text(ROOM_X, y - 12, words, size=SIZE_SMALL, weight="bold", when=when)
 
@@ -269,10 +286,10 @@ def room(svg: Svg, y: float, h: float, label_when: list[tuple[str, str]]) -> Non
 def explain(file_gb: float, room_gb: float) -> str:
     verdict = fit(file_gb, room_gb)
     if verdict == NO:
-        return f"Doesn't run: {gb(file_gb)} is bigger than {gb(room_gb)}."
-    if verdict == SQUEEZE:
-        return f"A squeeze: {gb(file_gb)} is over three quarters of {gb(room_gb)}."
-    return f"Fits: {gb(file_gb)} is under three quarters of {gb(room_gb)}."
+        return f"Doesn't fit: {gb(file_gb)} is bigger than {gb(room_gb)}."
+    if verdict == DEPENDS:
+        return f"Depends: {gb(file_gb)} is between half and all of {gb(room_gb)}."
+    return f"Fits: {gb(file_gb)} is under half of {gb(room_gb)}."
 
 
 def will_it_fit(entry: dict[str, Any]) -> Svg:

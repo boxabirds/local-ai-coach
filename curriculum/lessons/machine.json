@@ -6,18 +6,27 @@
     "The macOS click path (Apple menu, About This Mac, Memory) is not confirmed on the current macOS version (chapter 1 sources).",
     "The Linux hint (free -h, the Mem line) has not been run this month and its output is not captured."
   ],
-  "teaches": ["memory", "model file", "rule of thumb (three quarters)"],
+  "teaches": [
+    "memory",
+    "model file",
+    "working space",
+    "graphics card memory",
+    "rule of thumb (half)"
+  ],
   "previews": [],
   "stands": "GB is short for gigabyte, the unit memory is counted in.",
-  "why": "One number decides whether a model runs at all. The app found Priya's number for her, and it chose well. One day it'll choose badly, and the sticky note is how you check.",
-  "mnem": "Memory is the room, not the speed.",
+  "why": "Two facts about your computer tell you what local AI it can do. The app found Priya's for her, and it chose well. One day it'll choose badly, and the sticky note is how you check.",
+  "mnem": "Memory is the room; graphics card memory is the workbench.",
   "steps": [
     {
       "id": "machine.1",
-      "text": "Find your number: how much **memory** your machine has, in GB. (Memory is the space your laptop works in. Whatever it's doing right now has to be in there.) On a Mac: Apple menu, About This Mac, the line that says Memory.",
+      "text": "Fact one: how much **memory** your computer has, in GB. (Memory is the space your computer works in. Whatever it's doing right now has to be in there.) On a Mac: Apple menu, About This Mac, the line that says Memory.",
       "where": "settings",
       "hint": "It might say RAM instead. Same thing. On Linux you already know, and I know you know (`free -h`, the Mem line).",
-      "doIt": { "kind": "instructions", "explain": "I'll give you the exact clicks for your machine, one at a time." },
+      "doIt": {
+        "kind": "instructions",
+        "explain": "I'll give you the exact clicks for your machine, one at a time."
+      },
       "check": {
         "kind": "ask",
         "question": "Found it? Write it on a sticky note and put it on the lid.",
@@ -28,11 +37,20 @@
     {
       "id": "machine.2",
       "figure": "room-and-warehouse",
-      "text": "Type the number from your sticky note. I'll check it against what the machine says.",
+      "text": "Type the memory figure from your sticky note. I'll check it against what the computer says.",
       "where": "coach",
       "hint": "Just the number, in GB. If you see two numbers, use the bigger one.",
-      "doIt": { "kind": "instructions", "explain": "I'll read the number from the machine myself and show you exactly what I ran." },
-      "check": { "kind": "real", "probe": "memory", "params": {}, "compare": "typed", "toleranceGb": 1 },
+      "doIt": {
+        "kind": "instructions",
+        "explain": "I'll read the number from the machine myself and show you exactly what I ran."
+      },
+      "check": {
+        "kind": "real",
+        "probe": "memory",
+        "params": {},
+        "compare": "typed",
+        "toleranceGb": 1
+      },
       "onFail": {
         "pattern": "mismatch",
         "say": "You typed {typed} GB and the machine says {measured} GB. Did you read the drive by mistake? The drive is the warehouse. Memory is the room."
@@ -40,34 +58,66 @@
     },
     {
       "id": "machine.3",
-      "figure": "will-it-fit",
-      "text": "Now the test. For each of these, say fits or doesn't fit: a 2 GB **model file**, a 5 GB one, a 20 GB one. (The model file is the single file a model is downloaded as: the whole of the clever part, in one lump.)",
-      "where": "coach",
-      "hint": "My **rule of thumb**: under about three quarters of your number, fine. Over it, a squeeze. Bigger than the number, no.",
-      "doIt": { "kind": "instructions", "explain": "I'll work it through with your number, one file at a time." },
+      "text": "Fact two: **graphics card memory**, if your computer has any. (Graphics card memory is separate from normal memory: much smaller and much faster. Macs and office laptops have none, and that's fine.) On Windows: Task Manager, Performance, GPU, Dedicated GPU memory.",
+      "where": "settings",
+      "hint": "On Linux with an Nvidia card, `nvidia-smi` prints it. If there's no graphics card, write \"none\".",
+      "doIt": {
+        "kind": "instructions",
+        "explain": "I'll give you the exact clicks for your computer, one at a time."
+      },
       "check": {
         "kind": "ask",
-        "question": "A 2 GB file, a 5 GB file, a 20 GB file: fits or doesn't fit?",
+        "question": "Found it, or is it none? Add it to the sticky note.",
+        "rubric": "The learner says they have found their graphics card memory, or that there is none. No number is needed.",
+        "answeredByClaim": true
+      }
+    },
+    {
+      "id": "machine.4",
+      "figure": "will-it-fit",
+      "text": "Now the test. For each of these, say fits, depends or doesn't fit, against your memory: a 2 GB **model file**, a 5 GB one, a 20 GB one. (The model file is the single file a model is downloaded as. A running model also needs **working space** beyond its file: the program that runs it, and the conversation so far.)",
+      "where": "coach",
+      "hint": "My **rule of thumb**, wide on purpose: under half your memory fits; bigger than your memory doesn't; anywhere between, it depends.",
+      "doIt": {
+        "kind": "instructions",
+        "explain": "I'll work it through with your number, one file at a time."
+      },
+      "check": {
+        "kind": "ask",
+        "question": "A 2 GB file, a 5 GB file, a 20 GB file: fits, depends or doesn't fit?",
         "choices": {
           "items": [
-            { "label": "A 2 GB file", "gb": 2 },
-            { "label": "A 5 GB file", "gb": 5 },
-            { "label": "A 20 GB file", "gb": 20 }
+            {
+              "label": "A 2 GB file",
+              "gb": 2
+            },
+            {
+              "label": "A 5 GB file",
+              "gb": 5
+            },
+            {
+              "label": "A 20 GB file",
+              "gb": 20
+            }
           ],
-          "options": ["Fits", "Doesn't fit"],
-          "grade": "fit"
+          "options": [
+            "Fits",
+            "Depends",
+            "Doesn't fit"
+          ],
+          "grade": "band"
         },
-        "rubric": "Judge against the measured number N. A file fits if it is no bigger than N, and is a squeeze if it is over three quarters of N. On 16 GB: fits, fits, no. On 32 GB: fits, fits, fits. On 8 GB: fits, fits, no."
+        "rubric": "Judge against the learner's memory N: under half of N fits; bigger than N doesn't fit; anything between depends. On 16 GB: fits, fits, doesn't fit. On 32 GB: fits, fits, depends. On 8 GB: fits, depends, doesn't fit."
       },
       "onFail": {
         "pattern": "wrong",
-        "say": "Close. A 20 GB file needs 20 GB of room, and the drive doesn't count. The choir doesn't sing in the warehouse."
+        "say": "Close. Put the file next to the half mark in your memory: under it fits, past the whole of it doesn't, and between, it depends."
       }
     }
   ],
   "recap": [
-    "Memory is the room a model has to fit in, whole, before it can speak. Your sticky-note number.",
-    "The model file is one file holding the whole model. Fits in memory or it does not run.",
-    "Three quarters of your number is comfortable; over it is a squeeze; over the number is no."
+    "Memory is the room a model has to fit in, with room to work, before it can speak. The first fact on your sticky note.",
+    "Graphics card memory is the workbench: small and fast. None is a fine answer.",
+    "Under half your memory fits; bigger than your memory doesn't; between, it depends."
   ]
 }

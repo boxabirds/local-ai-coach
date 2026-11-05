@@ -96,12 +96,12 @@ def save(folder: Path, record: dict[str, Any], name: str = PROGRESS_FILE) -> Non
 
 
 def snapshot(record: dict[str, Any]) -> list[dict[str, str]]:
-    """The V1 stations the map shows, in reading order: name, the learner's status,
-    and the station's criticality from the curriculum (omitted when unrated)."""
+    """The stations the map shows (V1's in reading order, then those shown but not yet taught):
+    name, the learner's status, and the station's criticality from the curriculum (omitted when unrated)."""
     names = curriculum.station_names()
     rated = curriculum.station_criticality()
     entries = []
-    for sid in curriculum.v1_stations():
+    for sid in curriculum.map_stations():
         entry = {"id": sid, "name": names.get(sid, sid), "status": status_of(record, "station", sid)}
         if sid in rated:
             entry["criticality"] = rated[sid]

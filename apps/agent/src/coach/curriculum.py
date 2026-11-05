@@ -114,6 +114,12 @@ def v1_stations() -> list[str]:
     return [item["station"] for item in scope()["readingOrder"]]
 
 
+def map_stations() -> list[str]:
+    """The stations the map shows: V1's, then those shown on the map but not taught in V1."""
+    taught = v1_stations()
+    return taught + [sid for sid in scope().get("shownOnMap", {}) if sid not in taught]
+
+
 def story_markdown(story_id: str) -> str | None:
     """The story text for an id listed in scope.json as a story, else None."""
     folder = root()

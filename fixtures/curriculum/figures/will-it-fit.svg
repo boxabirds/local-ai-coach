@@ -6,8 +6,8 @@
     </pattern>
   </defs>
   <rect x="40" y="36" width="440" height="56" class="fig-paper fig-ink-stroke" fill="#ffffff" stroke="#1c1c28" rx="4" stroke-width="2" />
-  <line x1="370" y1="28" x2="370" y2="100" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
-  <text x="370" y="116" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">three quarters</text>
+  <line x1="260" y1="28" x2="260" y2="100" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
+  <text x="260" y="116" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">half</text>
   <text x="40" y="24" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="memory=8">Your memory: 8 GB</text>
   <text x="40" y="24" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="memory=16">Your memory: 16 GB</text>
   <text x="40" y="24" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="memory=32">Your memory: 32 GB</text>
@@ -16,64 +16,64 @@
     <rect x="40" y="48" width="110" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="158" y="69" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" data-when="memory=8 file=2">model file, 2 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=8 file=2">Fits: 2 GB is under three quarters of 8 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=8 file=2">Fits: 2 GB is under half of 8 GB.</text>
   <g data-when="memory=8 file=5">
     <rect x="40" y="48" width="275" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="48" y="69" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff" data-when="memory=8 file=5">model file, 5 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=8 file=5">Fits: 5 GB is under three quarters of 8 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="depends" font-weight="bold" data-when="memory=8 file=5">Depends: 5 GB is between half and all of 8 GB.</text>
   <g data-when="memory=8 file=20">
     <rect x="40" y="48" width="440" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
     <rect x="480" y="48" width="110" height="32" class="fig-ink-stroke" fill="url(#will-it-fit-over)" stroke="#1c1c28" stroke-dasharray="4 3" />
     <text x="486" y="42" font-size="13" text-anchor="start" class="fig-muted" fill="#55556a">no room</text>
   </g>
   <text x="48" y="69" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff" data-when="memory=8 file=20">model file, 20 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold" data-when="memory=8 file=20">Doesn't run: 20 GB is bigger than 8 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold" data-when="memory=8 file=20">Doesn't fit: 20 GB is bigger than 8 GB.</text>
   <g data-when="memory=16 file=2">
     <rect x="40" y="48" width="55" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="103" y="69" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" data-when="memory=16 file=2">model file, 2 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=16 file=2">Fits: 2 GB is under three quarters of 16 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=16 file=2">Fits: 2 GB is under half of 16 GB.</text>
   <g data-when="memory=16 file=5">
     <rect x="40" y="48" width="137.5" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="48" y="69" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff" data-when="memory=16 file=5">model file, 5 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=16 file=5">Fits: 5 GB is under three quarters of 16 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=16 file=5">Fits: 5 GB is under half of 16 GB.</text>
   <g data-when="memory=16 file=20">
     <rect x="40" y="48" width="440" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
     <rect x="480" y="48" width="110" height="32" class="fig-ink-stroke" fill="url(#will-it-fit-over)" stroke="#1c1c28" stroke-dasharray="4 3" />
     <text x="486" y="42" font-size="13" text-anchor="start" class="fig-muted" fill="#55556a">no room</text>
   </g>
   <text x="48" y="69" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff" data-when="memory=16 file=20">model file, 20 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold" data-when="memory=16 file=20">Doesn't run: 20 GB is bigger than 16 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold" data-when="memory=16 file=20">Doesn't fit: 20 GB is bigger than 16 GB.</text>
   <g data-when="memory=32 file=2">
     <rect x="40" y="48" width="27.5" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="75.5" y="69" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" data-when="memory=32 file=2">model file, 2 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=32 file=2">Fits: 2 GB is under three quarters of 32 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=32 file=2">Fits: 2 GB is under half of 32 GB.</text>
   <g data-when="memory=32 file=5">
     <rect x="40" y="48" width="68.75" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="116.75" y="69" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" data-when="memory=32 file=5">model file, 5 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=32 file=5">Fits: 5 GB is under three quarters of 32 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=32 file=5">Fits: 5 GB is under half of 32 GB.</text>
   <g data-when="memory=32 file=20">
     <rect x="40" y="48" width="275" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="48" y="69" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff" data-when="memory=32 file=20">model file, 20 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=32 file=20">Fits: 20 GB is under three quarters of 32 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="depends" font-weight="bold" data-when="memory=32 file=20">Depends: 20 GB is between half and all of 32 GB.</text>
   <g data-when="memory=128 file=2">
     <rect x="40" y="48" width="6.875" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="54.875" y="69" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" data-when="memory=128 file=2">model file, 2 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=128 file=2">Fits: 2 GB is under three quarters of 128 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=128 file=2">Fits: 2 GB is under half of 128 GB.</text>
   <g data-when="memory=128 file=5">
     <rect x="40" y="48" width="17.1875" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="65.1875" y="69" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" data-when="memory=128 file=5">model file, 5 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=128 file=5">Fits: 5 GB is under three quarters of 128 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=128 file=5">Fits: 5 GB is under half of 128 GB.</text>
   <g data-when="memory=128 file=20">
     <rect x="40" y="48" width="68.75" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
   <text x="116.75" y="69" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" data-when="memory=128 file=20">model file, 20 GB</text>
-  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=128 file=20">Fits: 20 GB is under three quarters of 128 GB.</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="memory=128 file=20">Fits: 20 GB is under half of 128 GB.</text>
 </svg>

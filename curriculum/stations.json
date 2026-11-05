@@ -54,16 +54,16 @@
  "stations": [
   {
    "id": "machine",
-   "name": "Know your machine",
+   "name": "What can my computer do?",
    "area": "trunk",
    "needs": [],
    "betterWith": [],
    "inYourHead": "know what it does",
    "zone": 1,
-   "unlocks": "Reading which models fit.",
-   "proof": "You can state your RAM, GPU memory and disk free.",
-   "ifSkipped": "Downloads that never load; blame falls on the model.",
-   "headNote": "RAM vs GPU memory, and why model size is the gate.",
+   "unlocks": "Reading a model's download page and knowing whether it fits, and what kind of job it's worth trying.",
+   "proof": "Say how much memory your computer has and how much graphics card memory, without looking; then say fits, depends or doesn't for a 2 GB, a 5 GB and a 20 GB file, and name one job your computer does comfortably and one it doesn't.",
+   "ifSkipped": "Downloads that never load, or crawl; blame falls on the model.",
+   "headNote": "Your computer decides which jobs you can do, how well and how fast. Two facts: memory, and graphics card memory if any.",
    "destination": false
   },
   {
@@ -117,7 +117,7 @@
   },
   {
    "id": "prove",
-   "name": "Prove it stays local",
+   "name": "Is my chat app talking to anyone else?",
    "area": "trunk",
    "needs": [
     "localchat",
@@ -129,10 +129,42 @@
    ],
    "inYourHead": "must understand",
    "zone": 1,
-   "unlocks": "Knowing, not hoping, that a prompt went only to a machine you own.",
+   "unlocks": "Knowing, not hoping, that your chat app sent your words only to machines you own.",
    "proof": "While the model answers, the chat app has exactly one outbound destination, and it is a private or tailnet address of a machine you own. Nothing to the internet.",
-   "ifSkipped": "A silent failure: a draft leaves the building and nothing beeps.",
-   "headNote": "Where did the bytes go? Read the destinations, not the wifi icon. Private addresses and your tailnet are yours; anything else is not.",
+   "ifSkipped": "A silent failure: the chat app sends a draft somewhere else and nothing beeps.",
+   "headNote": "Where did the chat app's bytes go? Read its destinations, not the wifi icon. This checks the chat app only, not the server or any tool; those come later.",
+   "destination": false
+  },
+  {
+   "id": "accountable",
+   "name": "You're accountable",
+   "area": "text",
+   "needs": [
+    "localchat"
+   ],
+   "betterWith": [
+    "compare"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Sending AI-written work with your name on it, knowing you've checked it.",
+   "proof": "Given a draft with planted errors (a wrong date, an invented rule, a wrong sum), find every one against the source papers.",
+   "ifSkipped": "A confident draft goes out with a mistake in it, under your name, and nothing beeps.",
+   "headNote": "Every model gets things wrong, local or hosted, big or small. You read it, you check it against the papers, and you sign it.",
+   "destination": false
+  },
+  {
+   "id": "trust",
+   "name": "Decide what you trust",
+   "area": "trunk",
+   "needs": [],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Choosing, on purpose, which services see your work and which work stays on machines you own.",
+   "proof": "Name which services you trust with client work, and which work stays on machines you own.",
+   "ifSkipped": "Client work ends up wherever the nearest app happens to send it.",
+   "headNote": "You already trust some channels (your email, your network). Local AI is for the work you keep on machines you own.",
    "destination": false
   },
   {
@@ -2053,15 +2085,17 @@
    "needs": [
     "prove",
     "write",
-    "encrypt"
+    "encrypt",
+    "accountable",
+    "trust"
    ],
    "betterWith": [],
    "inYourHead": "must understand",
    "zone": 1,
    "unlocks": "Confidential drafts that only ever reach a machine you own.",
-   "proof": "A draft written; the chat app's only destination is a machine you own, on your own network.",
+   "proof": "A draft written and read before it's signed; the chat app's only destination is a machine you own, on your own network.",
    "ifSkipped": "A cloud fallback leaks the brief.",
-   "headNote": "Only the proof that it stays local.",
+   "headNote": "The chat app talks only to your machines, and you answer for every word you sign.",
    "destination": true
   },
   {

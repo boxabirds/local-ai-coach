@@ -39,13 +39,13 @@
       "id": "three-stations",
       "item": "legal-letter",
       "title": "Three stations, three amounts of you",
-      "alt": "Three stations on one line: Know your machine, an amber diamond; Local chat, a grey circle; Prove it stays local, a red triangle with an exclamation mark.",
+      "alt": "Three stations on one line: What can my computer do?, an amber diamond; Local chat, a grey circle; Is my chat app talking to anyone else?, a red triangle with an exclamation mark.",
       "caption": "Priya's three stations. The shape says the same as the colour, so it reads in black and white too.",
       "controls": [
         { "name": "station", "label": "Station", "default": "machine", "options": [
-          { "value": "machine", "label": "Know your machine" },
+          { "value": "machine", "label": "What can my computer do?" },
           { "value": "localchat", "label": "Local chat" },
-          { "value": "prove", "label": "Prove it stays local" }
+          { "value": "prove", "label": "Is my chat app talking to anyone else?" }
         ] }
       ],
       "crit": { "machine": "amber", "localchat": "grey", "prove": "red" },
@@ -58,7 +58,7 @@
       "id": "room-and-warehouse",
       "item": "machine",
       "title": "The room and the warehouse",
-      "alt": "A 2 TB drive drawn as a long warehouse, and 16 GB of memory drawn as a room with a three quarters mark. A model file sits in the warehouse, or is loaded into the room, where a 20 GB file spills out.",
+      "alt": "A 2 TB drive drawn as a long warehouse, and 16 GB of memory drawn as a room with a half mark. A model file sits in the warehouse, or is loaded into the room, where a 20 GB file spills out.",
       "caption": "A 16 GB laptop with a 2 TB drive. The file can sit in the warehouse all day; it only runs in the room.",
       "controls": [
         { "name": "file", "label": "Model file", "default": "20", "role": "file", "options": [
@@ -80,10 +80,10 @@
       "id": "will-it-fit",
       "item": "machine",
       "title": "Will it fit?",
-      "alt": "Your memory drawn as a room with a three quarters mark, and a model file drawn to the same scale inside it, spilling out past the end when it is bigger than the room.",
-      "caption": "Pick your number, then a file. Under three quarters fits; over it is a squeeze; bigger than the room doesn't run.",
+      "alt": "Your memory drawn as a room with a half mark, and a model file drawn to the same scale inside it, spilling out past the end when it is bigger than the room.",
+      "caption": "Pick your memory, then a file. Under half fits; bigger than the room doesn't; in between, it depends.",
       "controls": [
-        { "name": "memory", "label": "Your number", "default": "16", "role": "room", "options": [
+        { "name": "memory", "label": "Your memory", "default": "16", "role": "room", "options": [
           { "value": "8", "label": "8 GB", "gb": 8 },
           { "value": "16", "label": "16 GB", "gb": 16 },
           { "value": "32", "label": "32 GB", "gb": 32 },
@@ -97,15 +97,15 @@
       ],
       "check": "fit",
       "print": { "memory": "16", "file": "20" },
-      "coach": { "step": "machine.3" },
-      "book": { "file": "chapters/know-your-machine.md", "after": "When the model table at the end of this chapter is in front of you, do the same for any three rows." }
+      "coach": { "step": "machine.4" },
+      "book": { "file": "chapters/know-your-machine.md", "after": "(I haven't measured this rule on an 8 GB machine, where your computer's own share of the room is bigger. If yours says 8, treat \"fits\" as \"depends\" until I have.)" }
     },
     {
       "id": "one-file",
       "item": "machine",
       "title": "One file, nothing to call",
       "alt": "One 5 GB model file, copied to another machine. On a machine with enough memory it fits; on a 4 GB laptop it doesn't run. No line goes anywhere else.",
-      "caption": "The whole model is the file. Copy it, and it runs wherever the room is big enough.",
+      "caption": "The whole model is the file. Copy it to another machine, and it runs there too if the room is big enough.",
       "controls": [
         { "name": "machine", "label": "Copy it to", "default": "box", "role": "room", "options": [
           { "value": "box", "label": "Priya's box", "gb": 16 },
@@ -117,7 +117,7 @@
       "check": "fit",
       "print": { "machine": "desktop" },
       "coach": { "step": "localchat.3" },
-      "book": { "file": "chapters/know-your-machine.md", "after": "Copy it to another machine with enough memory and it works there too." }
+      "book": { "file": "chapters/know-your-machine.md", "after": "The model needs more than its file, too. The **model file** is the one file you download (the whole of the clever part in one lump, closer to a film file than to an app). Running it also takes **working space**: the program that runs it, the conversation so far, and a few helpers I'll name in Book 2." }
     }
   ]
 }

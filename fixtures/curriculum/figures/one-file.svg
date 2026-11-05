@@ -13,23 +13,23 @@
   <text x="150" y="112" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="machine=old">Copied to: An old laptop</text>
   <text x="150" y="112" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="machine=desktop">Copied to: A desktop</text>
   <rect x="40" y="176" width="440" height="40" class="fig-paper fig-ink-stroke" fill="#ffffff" stroke="#1c1c28" rx="4" stroke-width="2" />
-  <line x1="370" y1="168" x2="370" y2="224" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
-  <text x="370" y="240" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">three quarters</text>
+  <line x1="260" y1="168" x2="260" y2="224" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
+  <text x="260" y="240" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">half</text>
   <text x="40" y="164" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="machine=box">Its memory: 16 GB</text>
   <text x="40" y="164" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="machine=old">Its memory: 4 GB</text>
   <text x="40" y="164" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="machine=desktop">Its memory: 32 GB</text>
   <g data-when="machine=box">
     <rect x="40" y="182" width="137.5" height="28" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
-  <text x="40" y="276" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="machine=box">Fits: 5 GB is under three quarters of 16 GB.</text>
+  <text x="40" y="276" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="machine=box">Fits: 5 GB is under half of 16 GB.</text>
   <g data-when="machine=old">
     <rect x="40" y="182" width="440" height="28" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
     <rect x="480" y="182" width="110" height="28" class="fig-ink-stroke" fill="url(#one-file-over)" stroke="#1c1c28" stroke-dasharray="4 3" />
     <text x="486" y="176" font-size="13" text-anchor="start" class="fig-muted" fill="#55556a">no room</text>
   </g>
-  <text x="40" y="276" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold" data-when="machine=old">Doesn't run: 5 GB is bigger than 4 GB.</text>
+  <text x="40" y="276" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold" data-when="machine=old">Doesn't fit: 5 GB is bigger than 4 GB.</text>
   <g data-when="machine=desktop">
     <rect x="40" y="182" width="68.75" height="28" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
   </g>
-  <text x="40" y="276" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="machine=desktop">Fits: 5 GB is under three quarters of 32 GB.</text>
+  <text x="40" y="276" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="machine=desktop">Fits: 5 GB is under half of 32 GB.</text>
 </svg>

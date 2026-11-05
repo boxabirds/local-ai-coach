@@ -57,7 +57,7 @@ test("home: the coach, the stub badge and the three starters, no demo", async ()
     await page.goto("/");
     await expect(page).toHaveTitle("Mastering Local AI coach");
     await expect(page.getByTestId("coach-stub-banner")).toHaveText("Stub coach, no model");
-    for (const starter of ["Read Priya's story", "Find my number", "Where am I on the map?"]) {
+    for (const starter of ["Read Priya's story", "What can my computer do?", "Where am I on the map?"]) {
       await expect(page.getByRole("button", { name: starter })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: /GitHub/ })).toHaveCount(0);
@@ -186,7 +186,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
   });
 
   test("know your machine: step, number, permission, real check, map", async () => {
-    await page.getByRole("button", { name: "Find my number" }).click();
+    await page.getByRole("button", { name: "What can my computer do?" }).click();
 
     const claim = page.getByRole("button", { name: "I did it" });
     await expect(claim).toBeFocused();
@@ -348,13 +348,13 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
   });
 
   test("a card left waiting at reload does not come back dead", async () => {
-    await page.getByRole("button", { name: "Find my number" }).click();
+    await page.getByRole("button", { name: "What can my computer do?" }).click();
     await expect(page.getByRole("button", { name: "I did it" }).last()).toBeFocused();
     await page.waitForTimeout(500);
     await page.reload();
     await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toBeVisible();
     await expect(page.locator(".coach-card--active")).toHaveCount(0);
-    await page.getByRole("button", { name: "Find my number" }).click();
+    await page.getByRole("button", { name: "What can my computer do?" }).click();
     await expect(page.getByRole("button", { name: "I did it" }).last()).toBeFocused();
   });
 

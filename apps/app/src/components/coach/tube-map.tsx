@@ -20,9 +20,11 @@ export type MapStation = { id: string; name: string; status: string; criticality
 /** Shown before the coach has sent a snapshot. Names and ratings match curriculum/stations.json. */
 export const DEFAULT_STATIONS: MapStation[] = [
   { id: "d_legal", name: "Private legal drafting", status: "unseen", criticality: "red" },
-  { id: "machine", name: "Know your machine", status: "unseen", criticality: "amber" },
+  { id: "machine", name: "What can my computer do?", status: "unseen", criticality: "amber" },
   { id: "localchat", name: "Local chat", status: "unseen", criticality: "grey" },
-  { id: "prove", name: "Prove it stays local", status: "unseen", criticality: "red" },
+  { id: "prove", name: "Is my chat app talking to anyone else?", status: "unseen", criticality: "red" },
+  { id: "accountable", name: "You're accountable", status: "unseen", criticality: "red" },
+  { id: "trust", name: "Decide what you trust", status: "unseen", criticality: "amber" },
 ];
 
 const DEFAULT_CRITICALITY: Record<string, Criticality | undefined> = Object.fromEntries(
@@ -68,11 +70,22 @@ const LINE_Y = 40;
 /** Half the marker's height; every shape fits a box of this half-size. */
 const R = 15;
 const NAME_DY = 38;
-const STATUS_DY = 58;
-const KEY_Y = 132;
+/** A station name longer than this wraps onto a second line, so neighbours never overlap. */
+const MAX_NAME_CHARS = 18;
+const NAME_LINE = 16;
+const STATUS_DY = 74;
+const KEY_Y = 148;
 const KEY_GAP = 190;
 const KEY_MARK = 7;
-const HEIGHT = 152;
+const HEIGHT = 168;
+
+/** One line, or two split at the space nearest the middle. */
+export function nameLines(name: string): string[] {
+  if (name.length <= MAX_NAME_CHARS || !name.includes(" ")) return [name];
+  const spaces = [...name].flatMap((ch, i) => (ch === " " ? [i] : []));
+  const cut = spaces.reduce((best, i) => (Math.abs(i - name.length / 2) < Math.abs(best - name.length / 2) ? i : best));
+  return [name.slice(0, cut), name.slice(cut + 1)];
+}
 
 function shapePath(criticality: Criticality | undefined, x: number, y: number, r: number): string {
   if (criticality === "amber") return `M ${x} ${y - r} L ${x + r} ${y} L ${x} ${y + r} L ${x - r} ${y} Z`;
@@ -165,7 +178,11 @@ export function TubeMap({ stations = DEFAULT_STATIONS, focus }: { stations?: Map
             <g key={station.id}>
               <Marker station={station} x={x} focus={station.id === focus} />
               <text x={x} y={LINE_Y + NAME_DY} textAnchor="middle" className="coach-map__name">
-                {station.name}
+                {nameLines(station.name).map((line, n) => (
+                  <tspan key={n} x={x} dy={n === 0 ? 0 : NAME_LINE}>
+                    {line}
+                  </tspan>
+                ))}
               </text>
               <text x={x} y={LINE_Y + STATUS_DY} textAnchor="middle" className="coach-map__status">
                 {station.status === "verified" ? `✓ ${STATUS_WORD.verified}` : (STATUS_WORD[station.status] ?? station.status)}

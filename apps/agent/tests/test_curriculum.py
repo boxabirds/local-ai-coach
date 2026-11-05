@@ -384,3 +384,30 @@ def test_band_grade_with_three_options_is_valid(root: Path) -> None:
         choices["grade"], choices["options"] = "band", ["a", "b", "c"]
     edit(root, "lessons/machine.json", to_band)
     assert errors(run(root)) == []
+
+
+# ------------------------------------------------------------------ the app's station names (story 14, TC-03)
+
+def app_file(tmp_path: Path, rows: str) -> Path:
+    path = tmp_path / "tube-map.tsx"
+    path.write_text(f"export const DEFAULT_STATIONS = [\n{rows}\n];\n", encoding="utf-8")
+    return path
+
+
+def test_s14_tc03_app_names_that_match_stations_pass(root: Path, tmp_path: Path) -> None:
+    names = {s["id"]: s["name"] for s in json.loads((root / "stations.json").read_text(encoding="utf-8"))["stations"]}
+    tsx = app_file(tmp_path, f'  {{ id: "machine", name: "{names["machine"]}", status: "unseen" }},')
+    assert [i.code for i in validate_mod.validate(root, PROBES, STYLECHECK, app_stations=tsx) if i.level == "error"] == []
+
+
+@pytest.mark.parametrize("row", [
+    '  { id: "machine", name: "A stale name", status: "unseen" },',
+    '  { id: "nowhere", name: "Nowhere", status: "unseen" },',
+])
+def test_s14_tc03_a_stale_or_unknown_app_name_fails(root: Path, tmp_path: Path, row: str) -> None:
+    tsx = app_file(tmp_path, row)
+    assert [i.code for i in validate_mod.validate(root, PROBES, STYLECHECK, app_stations=tsx) if i.level == "error"] == ["APP_STATION_NAME"]
+
+
+def test_s14_tc03_a_copy_elsewhere_is_not_checked_against_the_app(root: Path) -> None:
+    assert "APP_STATION_NAME" not in [i.code for i in validate_mod.validate(root, PROBES, STYLECHECK)]

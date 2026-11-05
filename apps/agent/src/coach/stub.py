@@ -8,7 +8,7 @@ function `decide`, emits that turn's text and at most one frontend tool call, an
 returns the same message so the thread matches what was shown. The walker keeps
 no position of its own: it is derived from the thread every run.
 
-It never calls a model or a hosted service. Find your number runs the real
+It never calls a model or a hosted service. The memory step runs the real
 memory probe (Ceetrix story 9), and only after the learner has allowed it on the
 permission card. It writes `$COACH_HOME/progress.stub.json` and, once, the
 learner's answer to `$COACH_HOME/consent.json`; the real `progress.json` is never
@@ -63,7 +63,7 @@ SHOW_MAP = "show_map"
 # panel/stylecheck.py --book, as the curriculum validator does for lessons.
 HELP = (
     "I'm the stub coach. I don't use a model, so I only know three things. "
-    "Press Read Priya's story, Find my number, or Where am I on the map?"
+    "Press Read Priya's story, What can my computer do?, or Where am I on the map?"
 )
 STORY_QUESTION = "The day after, what did Priya check?"
 STORY_OPTIONS = (
@@ -73,7 +73,7 @@ STORY_OPTIONS = (
 )
 STORY_DONE = (
     "Thanks. That's Priya's story, chapter 0. "
-    "Next comes your own machine. Press Find my number when you're ready."
+    "Next comes your own computer. Press What can my computer do? when you're ready."
 )
 CHECK_INTRO = "You typed {value} GB. Here's what the check found."
 MAP_TEXT = "That's where you are. Each station shows how far you've got."
@@ -95,7 +95,8 @@ CANNED = (
 
 Run = Callable[..., dict[str, Any]]
 
-STARTER_KEYWORDS = (("story", STORY), ("number", STEP_CARD), ("map", SHOW_MAP))
+# "number" is the old starter's word, kept so a typed "Find my number" still starts the station.
+STARTER_KEYWORDS = (("story", STORY), ("computer", STEP_CARD), ("number", STEP_CARD), ("map", SHOW_MAP))
 
 
 # ------------------------------------------------------------------ the turn

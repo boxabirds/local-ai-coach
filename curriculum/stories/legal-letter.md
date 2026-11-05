@@ -34,7 +34,7 @@ The difference is where it sends things.
 
 The clever part isn't on her laptop at all. It's on a small, quiet computer on a shelf in the back office, next to the router. Second-hand, no screen, no graphics card. Nothing on it about AI, just a sticker that said 16 GB, which meant nothing to her at the time.
 
-When she set it up, the app had a look at that box, offered her a really short shelf of three or four models, and recommended one. (A **model** is the file that does the thinking. One file, and you'll open one up in chapter 2.) She took the recommendation. It downloaded once, the week before, onto the box, and that was that.
+When she set it up, the app had a look at that box, offered her a really short shelf of three or four models, picked for her box and the job she described, and recommended one. (A **model** is the file that does the thinking. One file, and you'll open one up in chapter 2.) She took the recommendation. It downloaded once, the week before, onto the box, and that was that.
 
 She pastes in the agreement and the email and types: “First draft of a letter to the landlord. Firm, not rude. Cite the deposit scheme rules.”
 
@@ -66,7 +66,7 @@ She asked the model another question and watched the chat app's line.
 
 One destination. backroom. Nothing else.
 
-A list, on her screen, that said the only place her client's letter went was a box she owns. No privacy policy involved.
+A list, on her screen, that said the only place her chat app sent her client's letter was a box she owns. No privacy policy involved.
 
 ### Why?
 
@@ -78,11 +78,13 @@ Why a box in the back room, and not the laptop itself? And what's a network, if 
 
 And why did she check on Wednesday? What could have gone wrong on Tuesday that she wouldn't have seen?
 
-That last one is the question this book is really about, and I'll give you my answer now, because it's the reason I wrote it.
+And why did she spend twenty minutes on a letter the machine had already written?
+
+The last two are the questions this book is really about, and I'll give you my answer now, because it's the reason I wrote it.
 
 Nearly everything Priya did on Tuesday, a script could do for her.
 
-The Wednesday check is the one thing that has to live in her head, because the failure it guards against is silent.
+Two things have to live in her head, because the failures they guard against are silent: where her chat app sends things, and what the letter says.
 
 Nothing beeps when a draft leaves the building. NOTHING.
 
@@ -90,7 +92,9 @@ It's an open window in a house you've just locked up: the house doesn't tell you
 
 <!-- figure: spot-the-line -->
 
-Those four questions take the next five chapters to answer, and we'll take them in order: what's in the box (chapter 1), what's in the file (chapter 2), what a network is and what the internet adds (chapter 3), how she kept the box on her own network and still reached it from home (chapter 4), and how she proved it (chapter 5).
+Nothing beeps when a confident draft gets a date wrong, either.
+
+Those five questions take the next five chapters to answer, and we'll take them in order: what her box can do (chapter 1), what's in the file and why she reads every word it writes (chapter 2), what a network is and what the internet adds (chapter 3), how she kept the box on her own network and still reached it from home (chapter 4), and how she checked her chat app talks to nobody else (chapter 5).
 
 By the end of Book 1 you'll be Priya on Wednesday, and nobody will have made you buy a graphics card on the way.
 
@@ -116,17 +120,19 @@ Why bother with colours at all? Because local AI is a different deal from a subs
 
 Priya passed through three stations that week without knowing their names:
 
-- **Know your machine.** The app worked out that the box could run this at all. Amber: she should know what it measured, because one day it'll be wrong.
+- **What can my computer do?** The app worked out that the box could run this at all, and run it well enough. Amber: she should know what it measured, because one day it'll be wrong.
 
 - **Local chat.** She ran a model on a machine she owns and talked to it. Grey: press go. A script does this forever.
 
-- **Prove it stays local.** The Wednesday check. Red: this one lives in her head, because the failure is silent.
+- **Is my chat app talking to anyone else?** The Wednesday check. Red: this one lives in her head, because the failure is silent.
 
 Those are the station colours.
 
 <!-- figure: three-stations -->
 
 Three stations. Three different amounts of you.
+
+There's a fourth on her path that she skipped that week, and it's red: **You're accountable**. Whatever wrote the letter, she signs it. Chapter 2 is where that bites.
 
 The colours run through every chapter from here on, and they're the straight answer to “how much of this do I actually have to learn?” 🤔
 
