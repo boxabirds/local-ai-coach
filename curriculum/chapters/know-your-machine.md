@@ -233,6 +233,8 @@ A 20 GB model on a 16 GB laptop doesn't run slowly. It doesn't run.
 
 “But I've got a 2 TB drive!” Lovely. The drive's the warehouse. The choir doesn't sing in the warehouse. 😆
 
+<!-- figure: room-and-warehouse -->
+
 This is why the app Priya used had a look at her laptop before showing her a shelf.
 
 It was measuring the room.
@@ -246,6 +248,8 @@ No account, no key, no phoning home.
 It is closer to a film file than to an app.
 
 Copy it to another machine with enough memory and it works there too.
+
+<!-- figure: one-file -->
 
 This is why her Wednesday check was possible. There was nothing outside her own network to call.
 
@@ -264,6 +268,8 @@ Macs and most laptops have one room, and the sticky note really is the whole sto
 Here's what this station unlocks: reading any model's download page and knowing in five seconds whether it fits. (Model download pages list the file size, in GB, somewhere near the download button. That is the number you compare.)
 
 Here's how you know you've got this station: say your number without looking. Then, for each of these three, say fits or doesn't fit before reading on: a 2 GB file, a 5 GB file, a 20 GB file. On a 16 GB machine that's fits, fits, absolutely no chance. On 32, the last one fits too, which is rather the point of knowing your number. Got all three? You've got it. When the model table at the end of this chapter is in front of you, do the same for any three rows.
+
+<!-- figure: will-it-fit -->
 
 Here's what it looks like when it goes wrong. The symptom is a download that sits at 100% and then the app says nothing, or says “loading”… forever, or quietly picks a different model. 😱
 

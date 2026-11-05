@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" width="640" height="300" font-family="system-ui, -apple-system, Segoe UI, sans-serif" class="fig" data-figure="room-and-warehouse">
+  <title>The room and the warehouse</title>
+  <defs>
+    <pattern id="room-and-warehouse-over" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="8" class="fig-ink-stroke" stroke="#1c1c28" stroke-width="3" />
+    </pattern>
+  </defs>
+  <rect x="40" y="40" width="560" height="70" class="fig-code fig-line-stroke" fill="#f2f2f4" stroke="#8b8ba3" rx="4" stroke-width="2" />
+  <text x="40" y="30" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold">The drive: the warehouse, 2 TB</text>
+  <text x="592" y="30" font-size="13" text-anchor="end" class="fig-muted" fill="#55556a">not to scale</text>
+  <rect x="40" y="166" width="440" height="48" class="fig-paper fig-ink-stroke" fill="#ffffff" stroke="#1c1c28" rx="4" stroke-width="2" />
+  <line x1="370" y1="158" x2="370" y2="222" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
+  <text x="370" y="238" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">three quarters</text>
+  <text x="40" y="154" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold">Memory: the room, 16 GB</text>
+  <g data-when="file=5">
+    <rect x="330" y="58" width="130" height="34" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
+    <text x="338" y="80" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff">model file, 5 GB</text>
+  </g>
+  <text x="40" y="284" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="stored" font-weight="bold" data-when="file=5 place=drive">Kept in the warehouse. Nothing is running yet.</text>
+  <g data-when="file=5 place=memory">
+    <line x1="395" y1="96" x2="395" y2="168" class="fig-accent-stroke" stroke="#1d4ed8" stroke-width="3" />
+    <polygon points="395,168 390,158 400,158" class="fig-accent-fill" fill="#1d4ed8" />
+  </g>
+  <g data-when="file=5 place=memory">
+    <rect x="40" y="174" width="137.5" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
+  </g>
+  <text x="48" y="195" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff" data-when="file=5 place=memory">model file, 5 GB</text>
+  <text x="40" y="284" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="fits" font-weight="bold" data-when="file=5 place=memory">Fits: 5 GB is under three quarters of 16 GB.</text>
+  <g data-when="file=20">
+    <rect x="330" y="58" width="130" height="34" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
+    <text x="338" y="80" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff">model file, 20 GB</text>
+  </g>
+  <text x="40" y="284" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="stored" font-weight="bold" data-when="file=20 place=drive">Kept in the warehouse. Nothing is running yet.</text>
+  <g data-when="file=20 place=memory">
+    <line x1="395" y1="96" x2="395" y2="168" class="fig-accent-stroke" stroke="#1d4ed8" stroke-width="3" />
+    <polygon points="395,168 390,158 400,158" class="fig-accent-fill" fill="#1d4ed8" />
+  </g>
+  <g data-when="file=20 place=memory">
+    <rect x="40" y="174" width="440" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
+    <rect x="480" y="174" width="110" height="32" class="fig-ink-stroke" fill="url(#room-and-warehouse-over)" stroke="#1c1c28" stroke-dasharray="4 3" />
+    <text x="486" y="168" font-size="13" text-anchor="start" class="fig-muted" fill="#55556a">no room</text>
+  </g>
+  <text x="48" y="195" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff" data-when="file=20 place=memory">model file, 20 GB</text>
+  <text x="40" y="284" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold" data-when="file=20 place=memory">Doesn't run: 20 GB is bigger than 16 GB.</text>
+</svg>

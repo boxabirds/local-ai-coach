@@ -573,6 +573,281 @@ def check_chapter(rel: str, root: Path, iid: str, index: dict[str, int], lesson:
             report.error("REENTRY_UNKNOWN", rel, f"re-entry term {name!r} is not defined earlier in map.json")
 
 
+# ---------------------------------------------------------------- figures (Ceetrix story 7)
+
+FIGURES_FILE = "figures.json"
+FIGURES_DIR = "figures"
+FIGURE_MARKER = re.compile(r"^<!-- figure: (\S+) -->$", re.M)
+SVG_NS = "http://www.w3.org/2000/svg"
+UNSAFE_TAGS = {"script", "foreignObject", "style", "iframe", "image", "use", "a"}
+# The book's station colours, from stations.json inYourHead (the same mapping as src/coach/curriculum.py).
+CRITICALITY = {"press go": "grey", "know what it does": "amber", "must understand": "red"}
+CRIT_CLASS = re.compile(r"\bcoach-crit--(\w+)\b")
+# The chapter 1 rule of thumb, kept here apart from the figure generator so a mistake there is caught.
+THREE_QUARTERS = 0.75
+FIT_WORDS = {"fits": "Fits", "squeeze": "A squeeze", "no": "Doesn't run"}
+STORED = "stored"
+PLACE_DRIVE = "drive"
+
+
+def fit_verdict(file_gb: float, room_gb: float) -> str:
+    if file_gb > room_gb:
+        return "no"
+    if file_gb > THREE_QUARTERS * room_gb:
+        return "squeeze"
+    return "fits"
+
+
+def _local(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def _when(node: Any) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for part in (node.get("data-when") or "").split():
+        key, _, value = part.partition("=")
+        out[key] = value
+    return out
+
+
+def _visible_tree(node: Any, state: dict[str, str]) -> Any | None:
+    """The node as drawn in this state: (tag, attributes without data-when, text, children), or None."""
+    if any(state.get(k, "") != v for k, v in _when(node).items()):
+        return None
+    attrs = tuple(sorted((k, v) for k, v in node.attrib.items() if k != "data-when"))
+    children = tuple(t for t in (_visible_tree(c, state) for c in node) if t is not None)
+    return (_local(node.tag), attrs, (node.text or "").strip(), children)
+
+
+def _drawn(root: Any, state: dict[str, str]) -> list[Any]:
+    """Every element drawn in this state (its own and its ancestors' conditions all hold)."""
+    out: list[Any] = []
+
+    def walk(node: Any) -> None:
+        if any(state.get(k, "") != v for k, v in _when(node).items()):
+            return
+        out.append(node)
+        for child in node:
+            walk(child)
+
+    walk(root)
+    return out
+
+
+def _states(controls: list[dict[str, Any]]) -> list[dict[str, str]]:
+    states: list[dict[str, str]] = [{}]
+    for control in controls:
+        values = [str(o.get("value")) for o in control.get("options") or []]
+        if control.get("default", None) == "":
+            values = ["", *values]
+        states = [{**s, control["name"]: v} for s in states for v in values]
+    return states
+
+
+def _gb(entry: dict[str, Any], state: dict[str, str], role: str) -> float | None:
+    fixed = (entry.get("fixed") or {}).get(role)
+    if fixed is not None:
+        return float(fixed)
+    for control in entry.get("controls") or []:
+        if control.get("role") == role:
+            option = next((o for o in control["options"] if str(o["value"]) == state.get(control["name"])), None)
+            return float(option["gb"]) if option and "gb" in option else None
+    return None
+
+
+def _paragraph_before(text: str, at: int) -> str:
+    before = text[:at].rstrip()
+    para = before.rsplit("\n\n", 1)[-1]
+    return " ".join(para.split())
+
+
+def figure_texts(entry: dict[str, Any], svg_root: Any | None) -> list[tuple[str, str]]:
+    fid = entry.get("id", "?")
+    texts = [(f"{fid}.{key}", entry[key]) for key in ("title", "alt", "caption") if isinstance(entry.get(key), str)]
+    for control in entry.get("controls") or []:
+        texts.append((f"{fid}.{control.get('name')}.label", str(control.get("label", ""))))
+        texts += [(f"{fid}.{control.get('name')}.{o.get('value')}", str(o.get("label", ""))) for o in control.get("options") or []]
+    if svg_root is not None:
+        seen: set[str] = set()
+        for node in svg_root.iter():
+            words = (node.text or "").strip()
+            if _local(node.tag) in ("text", "title") and words and words not in seen:
+                seen.add(words)
+                texts.append((f"{fid}.svg", words))
+    return texts
+
+
+def check_figures(
+    root: Path,
+    items: list[dict[str, Any]],
+    lessons: dict[str, dict[str, Any]],
+    stations: dict[str, dict[str, Any]] | None,
+    terms: list[dict[str, Any]],
+    report: Report,
+) -> list[tuple[str, str]]:
+    """Placement, safety, states, arithmetic, colours, print drawings and words of every figure."""
+    import xml.etree.ElementTree as ET
+
+    rel = FIGURES_FILE
+    doc = _load_json(root / rel, rel, report)
+    if not isinstance(doc, dict) or not isinstance(doc.get("figures"), list):
+        if doc is not None:
+            report.error("FIGURE_PARSE", rel, "expected an object with a figures list")
+        return []
+    entries = {e.get("id"): e for e in doc["figures"] if isinstance(e, dict)}
+    index = {item["id"]: i for i, item in enumerate(items)}
+    item_files = {item["id"]: [f for f in (item.get("file") if item.get("kind") == "story" else None, item.get("chapter")) if f] for item in items}
+
+    # Where each figure is placed: markers in the book files, figure fields on lesson steps.
+    markers: dict[str, list[tuple[str, int, str]]] = {}
+    for files in item_files.values():
+        for book_rel in files:
+            path = root / book_rel
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            for m in FIGURE_MARKER.finditer(text):
+                fid = m.group(1)
+                if fid not in entries:
+                    report.error("FIGURE_UNKNOWN", book_rel, f"marker names {fid!r}, which is not in {rel}")
+                    continue
+                markers.setdefault(fid, []).append((book_rel, m.start(), _paragraph_before(text, m.start())))
+    step_uses: dict[str, list[str]] = {}
+    for lesson in lessons.values():
+        for step in lesson.get("steps") or []:
+            fid = step.get("figure") if isinstance(step, dict) else None
+            if fid is None:
+                continue
+            if fid not in entries:
+                report.error("FIGURE_UNKNOWN", f"{lesson.get('station')}#{step.get('id')}", f"step names figure {fid!r}, which is not in {rel}")
+                continue
+            step_uses.setdefault(fid, []).append(str(step.get("id")))
+
+    texts: list[tuple[str, str]] = []
+    patterns = {t["term"]: [_form_re(f) for f in t["forms"]] for t in terms}
+    for fid, entry in entries.items():
+        where = f"{rel}#{fid}"
+        item = entry.get("item")
+        book = entry.get("book") or {}
+        coach = entry.get("coach") or {}
+        if item not in index:
+            report.error("FIGURE_PLACEMENT", where, f"item {item!r} is not in the reading order")
+            continue
+
+        # Book: exactly one marker, in the item's own file, after the named sentence.
+        found = markers.get(fid, [])
+        if len(found) != 1 or found[0][0] != book.get("file") or book.get("file") not in item_files[item]:
+            report.error("FIGURE_PLACEMENT", where, f"needs exactly one marker in {book.get('file')!r} (a file of {item!r}); found {[f for f, _, _ in found]}")
+        elif not found[0][2].endswith(" ".join(str(book.get("after", "")).split())) or not book.get("after"):
+            report.error("FIGURE_AFTER", where, f"the marker follows {found[0][2][-60:]!r}, not {book.get('after')!r}")
+
+        # Coach: the story's own marker, or exactly one lesson step at or after the item.
+        uses = step_uses.get(fid, [])
+        if "story" in coach:
+            story_item = next((i for i in items if i["id"] == coach["story"] and i.get("kind") == "story"), None)
+            if story_item is None or story_item.get("file") != book.get("file") or uses:
+                report.error("FIGURE_PLACEMENT", where, "a story figure is shown where its marker is, and on no lesson step")
+        elif "step" in coach:
+            station = str(coach["step"]).split(".")[0]
+            if uses != [coach["step"]] or index.get(station, -1) < index[item]:
+                report.error("FIGURE_PLACEMENT", where, f"needs exactly one lesson step, {coach['step']!r}, at or after {item!r}; found {uses}")
+        else:
+            report.error("FIGURE_PLACEMENT", where, "coach must name a story or a step")
+
+        # The drawing.
+        svg_path = root / FIGURES_DIR / f"{fid}.svg"
+        try:
+            svg = ET.parse(svg_path).getroot()
+        except (OSError, ET.ParseError) as exc:
+            report.error("FIGURE_PARSE", f"{FIGURES_DIR}/{fid}.svg", f"cannot read the drawing: {exc}")
+            texts += figure_texts(entry, None)
+            continue
+        for node in svg.iter():
+            tag = _local(node.tag)
+            if tag in UNSAFE_TAGS:
+                report.error("FIGURE_UNSAFE", f"{FIGURES_DIR}/{fid}.svg", f"<{tag}> is not allowed in a figure")
+            for key, value in node.attrib.items():
+                name = _local(key)
+                if name.lower().startswith("on"):
+                    report.error("FIGURE_UNSAFE", f"{FIGURES_DIR}/{fid}.svg", f"event attribute {name!r} is not allowed")
+                if name == "href" and not value.startswith("#"):
+                    report.error("FIGURE_UNSAFE", f"{FIGURES_DIR}/{fid}.svg", f"href {value!r} points outside the figure")
+                if "url(" in value and not re.fullmatch(r"url\(#[\w-]+\)", value):
+                    report.error("FIGURE_UNSAFE", f"{FIGURES_DIR}/{fid}.svg", f"{name}={value!r} points outside the figure")
+
+        # States: every condition names a choice that exists.
+        controls = entry.get("controls") or []
+        allowed = {c["name"]: {str(o["value"]) for o in c.get("options") or []} | ({""} if c.get("default") == "" else set()) for c in controls}
+        for node in svg.iter():
+            for key, value in _when(node).items():
+                if key not in allowed or value not in allowed[key]:
+                    report.error("FIGURE_WHEN", f"{FIGURES_DIR}/{fid}.svg", f"data-when {key}={value} is not a choice of this figure")
+        for control in controls:
+            if control.get("default") not in allowed[control["name"]]:
+                report.error("FIGURE_WHEN", where, f"default {control.get('default')!r} of {control['name']!r} is not one of its choices")
+        print_state = {c["name"]: c.get("default", "") for c in controls} | {k: str(v) for k, v in (entry.get("print") or {}).items()}
+        if any(k not in allowed or v not in allowed[k] for k, v in print_state.items()):
+            report.error("FIGURE_WHEN", where, f"print state {entry.get('print')} is not a combination of choices")
+
+        # Each combination of choices draws exactly one result, and a fit result obeys the rule.
+        check = entry.get("check")
+        for state in _states(controls):
+            results = [n for n in _drawn(svg, state) if "fig-result" in (n.get("class") or "").split()]
+            label = " ".join(f"{k}={v}" for k, v in state.items())
+            if len(results) != 1:
+                report.error("FIGURE_VERDICT", where, f"{label or 'the drawing'} shows {len(results)} results, not one")
+                continue
+            if check != "fit":
+                continue
+            place = next((state[c["name"]] for c in controls if c.get("role") == "place"), None)
+            file_gb, room_gb = _gb(entry, state, "file"), _gb(entry, state, "room")
+            if place == PLACE_DRIVE:
+                expected = STORED
+            elif file_gb is None or room_gb is None:
+                report.error("FIGURE_VERDICT", where, f"{label}: cannot tell the file and room sizes")
+                continue
+            else:
+                expected = fit_verdict(file_gb, room_gb)
+            got, words = results[0].get("data-verdict"), (results[0].text or "").strip()
+            if got != expected or (expected in FIT_WORDS and not words.startswith(FIT_WORDS[expected])):
+                report.error("FIGURE_VERDICT", where, f"{label}: shows {words!r}, but the rule says {FIT_WORDS.get(expected, expected)!r}")
+
+        # Station colours match the station graph.
+        if stations is not None:
+            for node in svg.iter():
+                sid = node.get("data-station")
+                if not sid:
+                    continue
+                m = CRIT_CLASS.search(node.get("class") or "")
+                want = CRITICALITY.get((stations.get(sid) or {}).get("inYourHead", ""))
+                if m is None or m.group(1) != want:
+                    report.error("FIGURE_CRIT", where, f"station {sid!r} is drawn {m.group(1) if m else 'without a colour'}; stations.json says {want}")
+
+        # The print drawing is the source in its print state.
+        print_rel = f"{FIGURES_DIR}/print/{fid}.svg"
+        try:
+            printed = ET.parse(root / print_rel).getroot()
+        except (OSError, ET.ParseError) as exc:
+            report.error("FIGURE_PARSE", print_rel, f"cannot read the print drawing: {exc}")
+        else:
+            if _visible_tree(printed, {}) != _visible_tree(svg, print_state):
+                report.error("FIGURE_PRINT", print_rel, f"differs from {fid}.svg in its print state; run curriculum/figures/make_figures.py")
+
+        # Words: defined before use at the figure's place in the reading order.
+        own = figure_texts(entry, svg)
+        texts += own
+        for text_where, words in own:
+            for t in terms:
+                first = index.get(t["firstAt"]) if t["firstAt"] is not None else None
+                if any(p.search(words) for p in patterns[t["term"]]) and (first is None or first > index[item]):
+                    report.error("TERM_EARLY", f"{rel}#{text_where}", f"uses {t['term']!r} before it is defined ({t['definedIn']})")
+
+    for fid in entries:
+        if not isinstance(fid, str) or not re.fullmatch(r"[a-z0-9-]{1,64}", fid):
+            report.error("FIGURE_PARSE", rel, f"figure id {fid!r} must be lower-case letters, digits and hyphens")
+    return texts
+
+
 # ---------------------------------------------------------------- voice
 
 
@@ -645,8 +920,11 @@ def validate(root: Path = DEFAULT_ROOT, probes_path: Path = DEFAULT_PROBES, styl
     if items:
         check_terms(items, lessons, terms, root, report)
 
+    figure_words = check_figures(root, items, lessons, stations, terms, report) if items else []
+
     blocks = [(item["file"], lesson_texts(lessons[item["id"]])) for item in items if item["id"] in lessons]
     blocks.append(("map.json", map_texts(terms)))
+    blocks.append((FIGURES_FILE, figure_words))
     check_voice(blocks, Path(stylecheck_path), report)
     return report.issues
 

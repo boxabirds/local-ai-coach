@@ -26,6 +26,7 @@
     },
     {
       "id": "machine.2",
+      "figure": "room-and-warehouse",
       "text": "Type the number from your sticky note. I'll check it against what the machine says.",
       "where": "coach",
       "hint": "Just the number, in GB. If you see two numbers, use the bigger one.",
@@ -38,6 +39,7 @@
     },
     {
       "id": "machine.3",
+      "figure": "will-it-fit",
       "text": "Now the test. For each of these, say fits or doesn't fit: a 2 GB **model file**, a 5 GB one, a 20 GB one. (The model file is the single file a model is downloaded as: the whole of the clever part, in one lump.)",
       "where": "coach",
       "hint": "My **rule of thumb**: under about three quarters of your number, fine. Over it, a squeeze. Bigger than the number, no.",
@@ -45,7 +47,7 @@
       "check": {
         "kind": "ask",
         "question": "A 2 GB file, a 5 GB file, a 20 GB file: fits or doesn't fit?",
-        "rubric": "Judge against the measured number N. A file fits if it is no bigger than N, and is a squeeze if it is over three quarters of N. On 16 GB: fits, fits, no. On 32 GB: fits, fits, fits. On 8 GB: fits, fits (a squeeze), no."
+        "rubric": "Judge against the measured number N. A file fits if it is no bigger than N, and is a squeeze if it is over three quarters of N. On 16 GB: fits, fits, no. On 32 GB: fits, fits, fits. On 8 GB: fits, fits, no."
       },
       "onFail": {
         "pattern": "wrong",

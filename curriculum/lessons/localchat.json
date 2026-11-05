@@ -48,6 +48,7 @@
     },
     {
       "id": "localchat.3",
+      "figure": "one-file",
       "text": "Open {chat_app}, choose {server_name} as the machine to talk to, and ask it anything you like.",
       "where": "chat-app",
       "hint": "If {chat_app} asks for a key or an account, it's pointed at a company, not at your machine. Go back and choose {server_name}.",

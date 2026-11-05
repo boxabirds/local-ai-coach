@@ -53,6 +53,19 @@ def edit(root: Path, rel: str, fn: Callable[[Any], None]) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def without_figures(root: Path, station: str) -> None:
+    """Take the figures shown on this lesson's steps out of the tree, for cases about steps alone."""
+    reg_path = root / "figures.json"
+    doc = json.loads(reg_path.read_text(encoding="utf-8"))
+    gone = [f for f in doc["figures"] if str(f.get("coach", {}).get("step", "")).startswith(f"{station}.")]
+    doc["figures"] = [f for f in doc["figures"] if f not in gone]
+    reg_path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+    for f in gone:
+        book = root / f["book"]["file"]
+        book.write_text(book.read_text(encoding="utf-8").replace(f"\n<!-- figure: {f['id']} -->\n", "\n"), encoding="utf-8")
+    edit(root, f"lessons/{station}.json", lambda d: [s.pop("figure", None) for s in d["steps"]])
+
+
 def station(data: dict[str, Any], sid: str) -> dict[str, Any]:
     return next(s for s in data["stations"] if s["id"] == sid)
 
@@ -138,6 +151,7 @@ def test_tc12_bad_and_duplicate_step_ids(root: Path) -> None:
         d["steps"][1]["id"] = "mach.2"
         d["steps"][2]["id"] = "machine.1"
 
+    without_figures(root, "machine")
     edit(root, "lessons/machine.json", mutate)
     assert errors(run(root)) == ["STEP_ID", "STEP_ID"]
 
@@ -167,11 +181,13 @@ def test_tc16_draft_without_untested(root: Path) -> None:
 
 
 def test_tc36_empty_steps(root: Path) -> None:
+    without_figures(root, "machine")
     edit(root, "lessons/machine.json", lambda d: d.__setitem__("steps", []))
     assert errors(run(root)) == ["LESSON_FIELD"]
 
 
 def test_tc37_single_step_lesson_is_valid(root: Path) -> None:
+    without_figures(root, "machine")
     edit(root, "lessons/machine.json", lambda d: d.__setitem__("steps", d["steps"][:1]))
     assert errors(run(root)) == []
 

@@ -56,6 +56,8 @@ Her laptop is talking to the box on the shelf, the same way it talks to the prin
 
 Not a server in Virginia. Not the bakery's wifi. A box on a shelf, talking to a laptop on a desk, above a bakery.
 
+<!-- figure: where-words-go -->
+
 And on Wednesday, because Priya is the sort of person who checks, she did it again from her kitchen table.
 
 Her laptop still found backroom from home, through a private link she set up once (chapter 4). Beside the chat she opened a little window that lists where each program is sending data (Macs and Windows laptops have one built in; chapter 5 is where you open yours).
@@ -85,6 +87,8 @@ The Wednesday check is the one thing that has to live in her head, because the f
 Nothing beeps when a draft leaves the building. NOTHING.
 
 It's an open window in a house you've just locked up: the house doesn't tell you, you go and look.
+
+<!-- figure: spot-the-line -->
 
 Those four questions take the next five chapters to answer, and we'll take them in order: what's in the box (chapter 1), what's in the file (chapter 2), what a network is and what the internet adds (chapter 3), how she kept the box on her own network and still reached it from home (chapter 4), and how she proved it (chapter 5).
 
@@ -119,6 +123,8 @@ Priya passed through three stations that week without knowing their names:
 - **Prove it stays local.** The Wednesday check. Red: this one lives in her head, because the failure is silent.
 
 Those are the station colours.
+
+<!-- figure: three-stations -->
 
 Three stations. Three different amounts of you.
 
