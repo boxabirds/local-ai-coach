@@ -229,3 +229,11 @@ Reach:
 - **It conflicts with chapter 5's proof.** `prove` and `d_legal` pass only when the chat app talks to loopback, private or tailnet addresses. A redact-then-hosted job talks to a public address by design, so the same check fails it. It needs its own proof: what left the machine contained only placeholders. That is much harder to show than "where the bytes went", and the `connections` probe can't see contents. Candidate: the learner's own pipeline logs exactly what it sent, and the check reads that log for any name from the original. This is a design question for the author and a new probe.
 - The thesis line in section 10 ("Priya drafts with an AI that is local and trusted") widens to: local where it must be, hosted where it's safe, and she decides which.
 - Redaction is best effort (research note): "You're accountable" applies to what the redactor missed.
+
+## 12. Is "Prove it stays local" worth its place? (open)
+
+Julian, 2026-11-05: "prove it's local" is "a bit off anyway because it's not particularly useful, easy or relevant."
+
+Reach, if it goes or shrinks: `prove` is one of V1's four stations (CLAUDE.md "What V1 is", `scope.json`, `lessons/prove.json`); it is `d_legal`'s proof and chapter 5; the `connections` and `tailnet` probes and build step 3's done-criteria exist for it; section 11 and the Apple Intelligence comparison (section 10) lean on it as the book's answer to "trust us".
+
+My challenge, for the author's decision: the *idea* (you can see where your words go, so control is checkable, not a claim) is the book's main difference from Copilot and Apple Intelligence. The *form* (reading a list of network connections) may be what's off: fiddly, technical, and a pass looks like nothing happened. Options: (a) keep it as a chapter; (b) shrink it to a one-press coach check inside Local chat, with the chapter cut; (c) drop it and let control rest on model choice and accountability alone.
