@@ -21,7 +21,8 @@
       "check": {
         "kind": "ask",
         "question": "Found it? Write it on a sticky note and put it on the lid.",
-        "rubric": "The learner says they have found the Memory or RAM line. No number is needed yet."
+        "rubric": "The learner says they have found the Memory or RAM line. No number is needed yet.",
+        "answeredByClaim": true
       }
     },
     {

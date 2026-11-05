@@ -392,6 +392,8 @@ def check_step(step: Any, station: str, seen: set[str], rel: str, probes: dict[s
                     report.error("CHECK_FIELD", where, f"check {kind} needs {key}")
             if kind == "real":
                 _check_real(check, where, probes, report)
+            if "answeredByClaim" in check and (kind != "ask" or not isinstance(check["answeredByClaim"], bool)):
+                report.error("CHECK_FIELD", where, "answeredByClaim is a true or false on an ask check only")
     elif "check" in step:
         report.error("CHECK_KIND", where, "check must be an object")
 

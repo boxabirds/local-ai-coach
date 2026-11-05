@@ -33,6 +33,7 @@ NEEDS_CONSENT = {
     "items": list(consent_store.ITEMS),
     "history_item": consent_store.HISTORY_ITEM,
 }
+CLAIM_ANSWERS = "The learner's I did it answers this check. Record reported for this step and show the next step's card. Don't ask the question again."
 STEP_FIVE = "This kind of check arrives in build step 5; judge the learner's answer yourself for now."
 
 
@@ -101,6 +102,9 @@ def run_check(station_id: str, step_id: str, runtime: ToolRuntime) -> str:
         return f"No step {step_id!r} in {station_id!r}."
     kind = (step.get("check") or {}).get("kind")
     if kind == "ask":
+        claimed = (thread.last_answer(runtime.state.get("messages", []), "step_card", step_id) or {}).get("action") == "claim"
+        if step["check"].get("answeredByClaim") and claimed:
+            return _json({"answered": "claim", "say": CLAIM_ANSWERS})
         return _json({"judge": step["check"]["rubric"], "question": step["check"]["question"]})
     if kind != "real":
         return STEP_FIVE

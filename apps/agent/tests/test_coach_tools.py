@@ -176,3 +176,16 @@ def test_tc17_probe_needs_consent(machine):
 def test_tc18_end_session_appends(tmp_path):
     assert tools.end_session.func("Found the number; fits test next.") == "Saved."
     assert progress.load(progress.home())["sessions"][0]["summary"] == "Found the number; fits test next."
+
+
+def test_tc12b_a_claim_answers_a_check_marked_answered_by_claim(machine):
+    claimed = card("step_card", {"station_id": "machine", "step_id": "machine.1"}, '{"action": "claim"}', "sc1")
+    out = json.loads(tools.run_check.func("machine", "machine.1", runtime=runtime(claimed)))
+    assert out == {"answered": "claim", "say": tools.CLAIM_ANSWERS}
+    skipped = card("step_card", {"station_id": "machine", "step_id": "machine.1"}, '{"action": "skip"}', "sc1")
+    assert "judge" in json.loads(tools.run_check.func("machine", "machine.1", runtime=runtime(skipped)))
+    assert "judge" in json.loads(tools.run_check.func("machine", "machine.1", runtime=runtime()))
+    # machine.3 needs a worked answer, so a claim never answers it.
+    claimed3 = card("step_card", {"station_id": "machine", "step_id": "machine.3"}, '{"action": "claim"}', "sc3")
+    assert "judge" in json.loads(tools.run_check.func("machine", "machine.3", runtime=runtime(claimed3)))
+    assert machine.calls == []

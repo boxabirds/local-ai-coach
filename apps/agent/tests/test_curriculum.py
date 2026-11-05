@@ -348,3 +348,12 @@ def test_tc35_cli_exit_codes(root: Path, capsys: pytest.CaptureFixture[str]) -> 
     edit(root, "lessons/machine.json", lambda d: step(d, "machine.2")["check"].__setitem__("probe", "disk_usage"))
     assert validate_mod.main([str(root)]) == 1
     assert "PROBE_UNKNOWN" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda d: step(d, "machine.2")["check"].__setitem__("answeredByClaim", True),
+    lambda d: step(d, "machine.1")["check"].__setitem__("answeredByClaim", "yes"),
+])
+def test_answered_by_claim_only_as_a_boolean_on_an_ask_check(root: Path, mutate) -> None:
+    edit(root, "lessons/machine.json", mutate)
+    assert errors(run(root)) == ["CHECK_FIELD"]

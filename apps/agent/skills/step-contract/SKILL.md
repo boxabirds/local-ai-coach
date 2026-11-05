@@ -13,7 +13,7 @@ A lesson (get_station) has station, why, mnem, recap and steps. Each step has:
 - where: where the learner does it. settings, coach (on a card here), real-terminal, chat-app, sandbox (practice terminal, build step 5), read.
 - hint: shown behind the card's ? button. Use it when they're stuck.
 - doIt: what Do it for me means. instructions: explain in words. shell and sim run commands; they arrive in build step 5, so explain instead for now.
-- check: how you know it's done. real: run_check looks at this computer. ask: run_check gives you a rubric to judge their answer. sim and read: no check yet.
+- check: how you know it's done. real: run_check looks at this computer. ask: run_check gives you a rubric to judge their answer, unless the check has answeredByClaim and the learner pressed I did it, in which case run_check says the claim is the answer. sim and read: no check yet.
 - onFail: say is the hint for a wrong answer, with {typed} and {measured} filled from the check.
 - figure: a picture drawn on the card. You don't need to describe it.
 
