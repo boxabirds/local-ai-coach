@@ -204,3 +204,10 @@ Consequences:
 - The summarising row is about documents that live with her, not her email: a bundle, file notes, the tenancy agreement on her disk.
 - Open question the book must answer, or a reader with Copilot asks "why bother?": if she trusts 365 to hold the client's facts, why not trust Copilot to draft with them? Candidate answers, to be checked before any goes in the book: work she wouldn't give any AI vendor (strategy, privileged notes); client terms of engagement or a regulator that forbid AI processing by third parties; control over the model, its behaviour and its cost; working with no connection. I haven't verified what Microsoft currently commits to for Copilot's handling of data.
 - Taxonomy gap: no station teaches "decide what you trust": which channels you accept (365, your network, the tailnet) and which work stays on machines you own. The nearest stations (`download`, `outputs`, `browseragent`) are about untrusted input, not about choosing trusted channels. Candidate: a station early on Priya's path, possibly taught in chapter 0's "Why?" questions.
+
+Decided (Julian, 2026-11-05): **the book is for people who choose not to use Copilot.** It doesn't argue them out of it or into it; it starts from their choice.
+
+Consequences, to settle:
+- Chapter 0 has to show Priya making that choice, with a reason a reader recognises, or the reader can't place themselves. The story doesn't say yet why she doesn't use Copilot.
+- Inbox sorting comes back into question: someone who keeps mail on 365 but won't use Copilot has nobody sorting it for them. That's exactly a gap local AI fills, but it brings `d_triage`'s eleven stations (injection, read-only access, retention and the rest), so it can't be a chapter 1 job beyond a measured row on invented emails.
+- The book says who it's for early (chapter 0 or the series introduction), so a Copilot user knows it isn't aimed at them.
