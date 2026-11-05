@@ -113,3 +113,18 @@ describe("run_check drawn as the check card (story 10, TC-28)", () => {
     expect(within(container).getByText("Passed")).toBeInTheDocument();
   });
 });
+
+describe("the coach's own tools in plain words (story 10)", () => {
+  afterEach(() => cleanup());
+
+  it("housekeeping is silent and saving is one sentence", async () => {
+    const { coachNoteText, QUIET_TOOLS } = await import("@/components/coach/coach-note");
+    expect(QUIET_TOOLS.has("get_station") && QUIET_TOOLS.has("start_step") && QUIET_TOOLS.has("run_check")).toBe(true);
+    expect(coachNoteText("set_progress", { station_id: "machine", step_id: "machine.2", status: "verified" })).toBe("Saved: Know your machine, step 2, checked.");
+    expect(coachNoteText("set_progress", { station_id: "machine", status: "skipped" })).toBe("Saved: Know your machine, skipped.");
+    expect(coachNoteText("set_progress", { station_id: "machine", step_id: "machine.1", status: "reported" })).toBe("Saved: Know your machine, step 1, done, on your word.");
+    expect(coachNoteText("probe", { name: "listening" })).toBe("Looked at what is listening on a port.");
+    expect(coachNoteText("end_session", {})).toBe("Saved a note of today's session.");
+    expect(coachNoteText("generateSandboxedUi", {})).toBeNull();
+  });
+});

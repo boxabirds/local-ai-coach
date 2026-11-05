@@ -11,6 +11,7 @@ import {
   useRenderTool,
 } from "@copilotkit/react-core/v2";
 import { ToolReasoning } from "@/components/tool-rendering";
+import { CoachNote, QUIET_TOOLS, coachNoteText } from "@/components/coach/coach-note";
 import type { CardStatus } from "@/components/coach/card";
 import { StoryCard } from "@/components/coach/story";
 import { StepCard } from "@/components/coach/step-card";
@@ -278,7 +279,9 @@ export const useCoachUI = () => {
 
   useDefaultRenderTool({
     render: ({ name, status, parameters }) => {
-      if (SILENT_TOOLS.has(name)) return <></>;
+      if (SILENT_TOOLS.has(name) || QUIET_TOOLS.has(name)) return <></>;
+      const note = coachNoteText(name, (parameters ?? {}) as Record<string, unknown>);
+      if (note) return <CoachNote text={note} status={status} />;
       return <ToolReasoning name={name} status={status} args={parameters} />;
     },
   });

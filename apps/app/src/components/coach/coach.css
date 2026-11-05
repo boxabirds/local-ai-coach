@@ -642,3 +642,10 @@
   flex-direction: column;
   gap: 6px;
 }
+
+/* One plain line when the coach saves progress or looks at something (story 10). */
+.coach-note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
