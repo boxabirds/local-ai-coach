@@ -3,7 +3,7 @@
   "status": "draft",
   "untested": [
     "The practice command mirrors the macOS probe (lsof). The Linux equivalent (ss) isn't in the practice terminal yet.",
-    "Catching the chat app's connection while it answers depends on the answer being long enough. Not timed.",
+    "Catching the chat app's connection while it answers depends on the answer being long enough. Measured 2026-11-05 with curl as the chat app and the model on an RTX 4090 over Tailscale: a 300-word answer finished in under 2 seconds and the check saw nothing; a 3000-word answer was caught. A real chat app is not tried yet.",
     "Chapter 0 says Macs and Windows laptops have a built-in window listing where each program sends data. Which window isn't confirmed; as far as I know Activity Monitor shows amounts, not destinations.",
     "Matching a tailnet address to a machine the learner owns with tailscale status --json is not tried.",
     "The tailnet range 100.64 to 100.127 is Tailscale's documented IPv4 range; tailnet IPv6 addresses aren't covered in the text."

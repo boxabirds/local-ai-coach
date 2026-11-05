@@ -9,6 +9,7 @@ import importlib.util
 import json
 import os
 import socket
+import subprocess
 import sys
 from pathlib import Path
 
@@ -17,7 +18,7 @@ import pytest
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from src.coach import curriculum, stub
+from src.coach import checks, curriculum, probes, stub
 
 REPO = Path(__file__).resolve().parents[3]
 LESSON = curriculum.lesson("machine")
@@ -105,15 +106,83 @@ def test_tc09_do_it_explains_then_repeats_the_card():
     assert turn.record == ()
 
 
-def test_tc10_number_gives_sample_check_and_reported():
-    turn = stub.decide(thread_for("number_card", step_args("machine.2"), '{"value":16}'), LESSON)
-    assert turn.tool == "check_result"
-    assert turn.args["passed"] is True
+ALLOWED = {"probes": True, "history": False, "doIt": False}
+DECLINED = {"probes": False, "history": False, "doIt": False}
+
+
+class FakeMachine:
+    """The subprocess runner, answering sysctl with this many bytes (story 9)."""
+
+    def __init__(self, memsize: str = SAMPLE_BYTES):
+        self.memsize = memsize
+        self.calls: list[list[str]] = []
+
+    def __call__(self, argv, **kwargs):
+        self.calls.append(list(argv))
+        assert kwargs.get("shell") is False
+        return subprocess.CompletedProcess(argv, 0, stdout=self.memsize + "\n", stderr="")
+
+
+def probe_with(machine: FakeMachine):
+    return lambda name, params=None, **kw: probes.run(name, params, platform="macos", runner=machine, **kw)
+
+
+def test_s9_tc27_number_before_consent_asks_and_records_nothing():
+    machine = FakeMachine()
+    turn = stub.decide(thread_for("number_card", step_args("machine.2"), '{"value":16}'), LESSON, consent=None, run=probe_with(machine))
+    assert turn.tool == "consent_card" and turn.text == stub.CONSENT_ASK
+    assert turn.args["typed"] == 16 and turn.args["items"] == list(stub.CONSENT_ITEMS)
+    assert turn.record == () and turn.consent is None
+    assert machine.calls == []
+
+
+def test_s9_tc28_allow_runs_the_probe_and_records_verified():
+    machine = FakeMachine()
+    args = {**step_args("machine.2"), "typed": 16}
+    turn = stub.decide(thread_for("consent_card", args, '{"allow":true,"history":false}'), LESSON, consent=None, run=probe_with(machine))
+    assert turn.consent == (True, False)
+    assert turn.tool == "check_result" and turn.args["passed"] is True and turn.args["checked"] is True
     assert turn.args["evidence"] == [{"probe": "memory", "cmd": "sysctl -n hw.memsize", "matched": [SAMPLE_BYTES]}]
-    assert turn.args["note"] == "Sample result. The real probe arrives in step 3."
-    assert turn.text == "You typed 16 GB. Here's what the check found."
-    assert ("station", "machine", "reported") in turn.record
-    assert all(status != "verified" for _, _, status in turn.record)
+    assert turn.args["note"] == "You typed 16 GB and the machine says 16 GB."
+    assert turn.record == (("step", "machine.2", "verified"), ("station", "machine", "verified"))
+    assert machine.calls == [["sysctl", "-n", "hw.memsize"]]
+
+
+def test_s9_tc29_not_now_runs_nothing_and_records_reported():
+    machine = FakeMachine()
+    args = {**step_args("machine.2"), "typed": 16}
+    turn = stub.decide(thread_for("consent_card", args, '{"allow":false,"history":true}'), LESSON, consent=None, run=probe_with(machine))
+    assert turn.consent == (False, True)
+    assert turn.args["checked"] is False and turn.args["passed"] is False and turn.args["evidence"] == []
+    assert turn.args["note"] == checks.NOT_ASKED
+    assert turn.record == (("step", "machine.2", "reported"), ("station", "machine", "reported"))
+    assert machine.calls == []
+
+
+def test_s9_tc29b_consent_already_given_goes_straight_to_the_check():
+    machine = FakeMachine()
+    turn = stub.decide(thread_for("number_card", step_args("machine.2"), '{"value":16}'), LESSON, consent=ALLOWED, run=probe_with(machine))
+    assert turn.tool == "check_result" and turn.args["passed"] is True and turn.consent is None
+    declined = stub.decide(thread_for("number_card", step_args("machine.2"), '{"value":16}'), LESSON, consent=DECLINED, run=probe_with(machine))
+    assert declined.tool == "check_result" and declined.args["checked"] is False
+    assert len(machine.calls) == 1
+
+
+def test_s9_tc30_a_mismatch_records_nothing_and_asks_again():
+    machine = FakeMachine()
+    turn = stub.decide(thread_for("number_card", step_args("machine.2"), '{"value":512}'), LESSON, consent=ALLOWED, run=probe_with(machine))
+    assert turn.args["passed"] is False and turn.args["checked"] is True
+    assert turn.args["note"].startswith("You typed 512 and the machine says 16.")
+    assert turn.record == ()
+    again = stub.decide(thread_for("check_result", {**step_args("machine.2"), "passed": False, "checked": True}, "rendered"), LESSON)
+    assert again.tool == "number_card" and again.args["step_id"] == "machine.2"
+
+
+@pytest.mark.parametrize("bad", ['{"allow":"yes","history":false}', '{"history":false}', '{"allow":true,"history":1}'])
+def test_s9_consent_answers_that_are_not_choices_are_refused(bad):
+    args = {**step_args("machine.2"), "typed": 16}
+    turn = stub.decide(thread_for("consent_card", args, bad), LESSON, consent=None, run=probe_with(FakeMachine()))
+    assert turn.text == stub.BAD_RESULT and turn.record == () and turn.consent is None
 
 
 @pytest.mark.parametrize("bad", ['{"value":0}', '{"value":-2}', '{"value":"16"}', '{"value":true}', "{}"])
@@ -444,3 +513,71 @@ def test_s7_tc18_step_cards_carry_their_figure():
     assert turns["machine.1"].args["figure"] == ""
     assert turns["machine.2"].tool == "number_card" and turns["machine.2"].args["figure"] == "room-and-warehouse"
     assert turns["machine.3"].tool == "step_card" and turns["machine.3"].args["figure"] == "will-it-fit"
+
+
+# ------------------------------------------------------------------ the real check through the request handler (story 9)
+
+
+def _card_answer(name: str, args: dict, answer: dict) -> list[dict]:
+    return [
+        {"id": "m1", "role": "user", "content": "Find my number"},
+        {"id": "a1", "role": "assistant", "content": "", "toolCalls": [{"id": "c1", "type": "function", "function": {"name": name, "arguments": json.dumps(args)}}]},
+        {"id": "t1", "role": "tool", "toolCallId": "c1", "content": json.dumps(answer)},
+    ]
+
+
+def _calls(events: list[dict]) -> list[tuple[str, dict]]:
+    names = {e["toolCallId"]: e["toolCallName"] for e in events if e["type"] == "TOOL_CALL_START"}
+    args: dict[str, str] = {}
+    for e in events:
+        if e["type"] == "TOOL_CALL_ARGS":
+            args[e["toolCallId"]] = args.get(e["toolCallId"], "") + e["delta"]
+    return [(names[i], json.loads(args.get(i, "{}"))) for i in names]
+
+
+def _this_machine_gb() -> int:
+    return probes.run("memory", consent={"probes": True})["value"]
+
+
+def test_s9_tc28_allow_through_the_handler_saves_consent_and_verifies(client, tmp_path):
+    typed = _this_machine_gb()
+    events = _events(client.post("/stub", json=_run_input(_card_answer("consent_card", {**step_args("machine.2"), "typed": typed}, {"allow": True, "history": False}))))
+    [(name, args)] = _calls(events)
+    assert name == "check_result" and args["passed"] is True and args["measured"] == typed
+    assert args["evidence"][0]["probe"] == "memory" and args["evidence"][0]["matched"]
+    saved = json.loads((tmp_path / "consent.json").read_text())
+    assert saved["probes"] is True and saved["history"] is False and saved["doIt"] is False and saved["granted_at"]
+    record = stub.load(tmp_path)
+    assert record["steps"]["machine.2"]["status"] == "verified" and record["stations"]["machine"]["status"] == "verified"
+
+
+def test_s9_tc29_not_now_through_the_handler_runs_nothing(client, tmp_path, monkeypatch):
+    def refuse(*_args, **_kwargs):
+        raise AssertionError("a probe ran without consent")
+
+    monkeypatch.setattr(probes.subprocess, "run", refuse)
+    events = _events(client.post("/stub", json=_run_input(_card_answer("consent_card", {**step_args("machine.2"), "typed": 16}, {"allow": False, "history": False}))))
+    [(name, args)] = _calls(events)
+    assert name == "check_result" and args["checked"] is False and args["evidence"] == []
+    assert json.loads((tmp_path / "consent.json").read_text())["probes"] is False
+    assert stub.load(tmp_path)["stations"]["machine"]["status"] == "reported"
+
+
+def test_s9_tc31_the_permission_card_is_asked_once(client, tmp_path):
+    first = _calls(_events(client.post("/stub", json=_run_input(_card_answer("number_card", step_args("machine.2"), {"value": 16})))))
+    assert [n for n, _ in first] == ["consent_card"]
+    assert not (tmp_path / "consent.json").exists()
+    client.post("/stub", json=_run_input(_card_answer("consent_card", {**step_args("machine.2"), "typed": 16}, {"allow": False, "history": False})))
+    second = _calls(_events(client.post("/stub", json=_run_input(_card_answer("number_card", step_args("machine.2"), {"value": 16})))))
+    assert [n for n, _ in second] == ["check_result"]
+
+
+def test_s9_a_consent_file_that_cannot_be_written_says_so(client, tmp_path, monkeypatch):
+    def boom(*_args, **_kwargs):
+        raise OSError("read-only")
+
+    monkeypatch.setattr(stub.consent_store, "save", boom)
+    events = _events(client.post("/stub", json=_run_input(_card_answer("consent_card", {**step_args("machine.2"), "typed": 16}, {"allow": True, "history": False}))))
+    assert _calls(events) == []
+    assert "".join(e["delta"] for e in events if e["type"] == "TEXT_MESSAGE_CONTENT") == stub.SAVE_FAILED
+    assert stub.load(tmp_path)["stations"] == {}

@@ -8,12 +8,16 @@ function `decide`, emits that turn's text and at most one frontend tool call, an
 returns the same message so the thread matches what was shown. The walker keeps
 no position of its own: it is derived from the thread every run.
 
-It never calls a model, a hosted service or a probe. The only thing it writes is
-`$COACH_HOME/progress.stub.json`; the real `progress.json` is never opened.
+It never calls a model or a hosted service. Find your number runs the real
+memory probe (Ceetrix story 9), and only after the learner has allowed it on the
+permission card. It writes `$COACH_HOME/progress.stub.json` and, once, the
+learner's answer to `$COACH_HOME/consent.json`; the real `progress.json` is never
+opened.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import tempfile
@@ -21,7 +25,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
@@ -29,7 +33,8 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.bounded_memory_saver import BoundedMemorySaver
-from src.coach import curriculum
+from src.coach import checks, curriculum, probes
+from src.coach import consent as consent_store
 
 # ------------------------------------------------------------------ constants
 
@@ -47,12 +52,14 @@ MAX_THREADS = 200  # as upstream main.py: threads die on restart and are bounded
 STATUS_ORDER = ("unseen", "read", "rehearsed", "reported", "assisted", "verified")
 SKIPPED = "skipped"
 VERIFIED = "verified"
+REPORTED = "reported"
 
 # Frontend tool names (apps/app/src/hooks/use-coach-ui.tsx).
 STORY = "story"
 STEP_CARD = "step_card"
 NUMBER_CARD = "number_card"
 CHECK_RESULT = "check_result"
+CONSENT_CARD = "consent_card"
 SHOW_MAP = "show_map"
 
 # Learner-facing wording. tests/test_coach_stub.py runs every string through
@@ -76,11 +83,23 @@ MAP_TEXT = "That's where you are. Each station shows how far you've got."
 BAD_RESULT = "I couldn't read that answer. Try the card again."
 SAVE_FAILED = "I couldn't save your progress just now, so I haven't moved you on. Try the card again."
 
-# The sample check result for machine.2 (no probes until build step 3).
-SAMPLE_EVIDENCE = ({"probe": "memory", "cmd": "sysctl -n hw.memsize", "matched": ["17179869184"]},)
-SAMPLE_NOTE = "Sample result. The real probe arrives in step 3."
+# The permission card (Ceetrix story 9): asked once, before the first look at the machine.
+CONSENT_ASK = "Before I check, may I look at this computer? Here's exactly what I'd read."
+CONSENT_ITEMS = (
+    "How much memory this computer has.",
+    "Which programs are running and listening, by name only.",
+    "The model files in the usual folders, by name and size.",
+    "Where the chat app is connected, while it answers.",
+    "The machines on your private link, by name.",
+)
+CONSENT_HISTORY = "Also read the last 200 lines of my shell history, to see the commands I typed."
 
-CANNED = (HELP, STORY_QUESTION, *STORY_OPTIONS, STORY_DONE, CHECK_INTRO.format(value=16), MAP_TEXT, BAD_RESULT, SAVE_FAILED, SAMPLE_NOTE)
+CANNED = (
+    HELP, STORY_QUESTION, *STORY_OPTIONS, STORY_DONE, CHECK_INTRO.format(value=16), MAP_TEXT, BAD_RESULT, SAVE_FAILED,
+    CONSENT_ASK, *CONSENT_ITEMS, CONSENT_HISTORY,
+)
+
+Run = Callable[..., dict[str, Any]]
 
 STARTER_KEYWORDS = (("story", STORY), ("number", STEP_CARD), ("map", SHOW_MAP))
 
@@ -97,10 +116,16 @@ class Turn:
     args: dict[str, Any] | None = None
     # (kind, key, status) with kind "station" or "step"
     record: tuple[tuple[str, str, str], ...] = field(default_factory=tuple)
+    # The permission card's answer, (allow, history), for walk() to save first.
+    consent: tuple[bool, bool] | None = None
 
 
 def _steps(lesson: dict[str, Any]) -> list[dict[str, Any]]:
     return list(lesson["steps"])
+
+
+def _is_number(value: Any) -> bool:
+    return not isinstance(value, bool) and isinstance(value, (int, float)) and value > 0
 
 
 def _step_turn(step: dict[str, Any], station: str, text: str | None = None, record: tuple = ()) -> Turn:
@@ -146,8 +171,30 @@ def _starter(text: str) -> str | None:
     return None
 
 
-def decide(messages: list[BaseMessage], lesson: dict[str, Any]) -> Turn:
-    """The next turn, from the thread alone. Pure: no I/O, no clock."""
+def _check_turn(step: dict[str, Any], station: str, typed: float, consent: dict[str, Any] | None, run: Run, given: tuple[bool, bool] | None = None) -> Turn:
+    """The check card for a typed number: verified when the machine agrees, reported when not looked at."""
+    verdict = checks.evaluate(step, typed=typed, consent=consent, run=run)
+    shown = int(typed) if float(typed).is_integer() else typed
+    args = {"station_id": station, "step_id": step["id"], **verdict}
+    if verdict["passed"]:
+        record = (("step", step["id"], VERIFIED), ("station", station, VERIFIED))
+    elif not verdict["checked"]:
+        record = (("step", step["id"], REPORTED), ("station", station, REPORTED))
+    else:
+        record = ()  # the machine disagrees: nothing recorded, the number card comes back
+    return Turn(text=CHECK_INTRO.format(value=shown), tool=CHECK_RESULT, args=args, record=record, consent=given)
+
+
+def decide(
+    messages: list[BaseMessage],
+    lesson: dict[str, Any],
+    *,
+    consent: dict[str, Any] | None = None,
+    run: Run = probes.run,
+) -> Turn:
+    """The next turn, from the thread, the learner's consent and the probes it may run.
+    No clock and no file I/O; the probes are the only contact with the machine, and
+    only with consent."""
     station = lesson["station"]
     if not messages:
         return Turn(text=HELP)
@@ -172,10 +219,15 @@ def decide(messages: list[BaseMessage], lesson: dict[str, Any]) -> Turn:
 
     # Render-only cards: CopilotKit returns their result at once.
     if name == CHECK_RESULT:
-        return _after(args.get("step_id", NUMBER_STEP), lesson, station)
+        step_id = args.get("step_id", NUMBER_STEP)
+        if args.get("checked") and not args.get("passed"):
+            retry = next((s for s in _steps(lesson) if s["id"] == step_id), None)
+            if retry is not None:
+                return _step_turn(retry, station)
+        return _after(step_id, lesson, station)
     if name == SHOW_MAP:
         return Turn(text=MAP_TEXT)
-    if name not in (STORY, STEP_CARD, NUMBER_CARD):
+    if name not in (STORY, STEP_CARD, NUMBER_CARD, CONSENT_CARD):
         return Turn(text=HELP)
 
     try:
@@ -197,18 +249,25 @@ def decide(messages: list[BaseMessage], lesson: dict[str, Any]) -> Turn:
 
     if name == NUMBER_CARD:
         value = answer.get("value")
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+        if not _is_number(value):
             return Turn(text=BAD_RESULT)
-        shown = int(value) if float(value).is_integer() else value
-        check = {
-            "station_id": station,
-            "step_id": step_id,
-            "passed": True,
-            "evidence": [dict(item, matched=list(item["matched"])) for item in SAMPLE_EVIDENCE],
-            "note": SAMPLE_NOTE,
-        }
-        record = (("step", step_id, "reported"), ("station", station, "reported"))
-        return Turn(text=CHECK_INTRO.format(value=shown), tool=CHECK_RESULT, args=check, record=record)
+        if consent is None:
+            ask = {
+                "station_id": station,
+                "step_id": step_id,
+                "typed": value,
+                "items": list(CONSENT_ITEMS),
+                "history_item": CONSENT_HISTORY,
+            }
+            return Turn(text=CONSENT_ASK, tool=CONSENT_CARD, args=ask)
+        return _check_turn(step, station, value, consent, run)
+
+    if name == CONSENT_CARD:
+        allow, history, typed = answer.get("allow"), answer.get("history", False), args.get("typed")
+        if not isinstance(allow, bool) or not isinstance(history, bool) or not _is_number(typed):
+            return Turn(text=BAD_RESULT)
+        given = {"probes": allow, "history": allow and history}
+        return _check_turn(step, station, typed, given, run, given=(allow, history))
 
     action = answer.get("action")
     if action == "claim":
@@ -314,8 +373,16 @@ async def _emit_tool_call(config: RunnableConfig, call_id: str, name: str, args:
 
 
 async def walk(state: StubState, config: RunnableConfig) -> dict[str, Any]:
-    turn = decide(list(state["messages"]), curriculum.lesson(LESSON_STATION))
     folder = home()
+    given = consent_store.load(folder)
+    # Probes block for up to 5 s each: keep them off the event loop.
+    turn = await asyncio.to_thread(decide, list(state["messages"]), curriculum.lesson(LESSON_STATION), consent=given)
+    if turn.consent is not None:
+        allow, history = turn.consent
+        try:
+            consent_store.save(folder, probes=allow, history=history, at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+        except OSError:
+            turn = Turn(text=SAVE_FAILED)
     record = load(folder)
     if turn.record:
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")

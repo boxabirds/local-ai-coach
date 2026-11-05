@@ -6,7 +6,7 @@
     "None of the curl commands has been run against the reference server this month, so the practice terminal has no captured output to copy.",
     "That an OpenAI-compatible server answers /v1/models and /v1/chat/completions comes from llama-server's documentation, not from a run.",
     "Opening Terminal with Command and Space on a Mac is from memory, not checked on the current macOS version.",
-    "Whether the connections probe sees the chat app's connection during one short answer is not tried on macOS or Linux."
+    "The connections probe saw curl's connection to a model on another machine over Tailscale, on macOS (lsof) and on Linux (ss), during a long answer (2026-11-05). A short answer from a fast machine can finish before the check looks. A real chat app is not tried yet."
   ],
   "teaches": ["terminal", "server", "address"],
   "previews": [],
