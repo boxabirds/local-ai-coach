@@ -106,7 +106,7 @@ def _steps(lesson: dict[str, Any]) -> list[dict[str, Any]]:
 def _step_turn(step: dict[str, Any], station: str, text: str | None = None, record: tuple = ()) -> Turn:
     """The card for a lesson step: the number card for machine.2, else a step card."""
     if step["id"] == NUMBER_STEP:
-        args = {"station_id": station, "step_id": step["id"], "prompt": step["text"], "unit": UNIT, "hint": step.get("hint", "")}
+        args = {"station_id": station, "step_id": step["id"], "prompt": step["text"], "unit": UNIT, "hint": step.get("hint", ""), "figure": step.get("figure", "")}
         return Turn(text=text, tool=NUMBER_CARD, args=args, record=record)
     args = {
         "station_id": station,
@@ -115,6 +115,7 @@ def _step_turn(step: dict[str, Any], station: str, text: str | None = None, reco
         "where": step["where"],
         "hint": step.get("hint", ""),
         "has_do_it": "doIt" in step,
+        "figure": step.get("figure", ""),
     }
     return Turn(text=text, tool=STEP_CARD, args=args, record=record)
 

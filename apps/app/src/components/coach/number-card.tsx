@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
+import { Figure } from "./figure";
 import { inline } from "./markdown";
 
 export type Platform = "mac" | "linux" | "other";
@@ -23,13 +24,14 @@ export type NumberCardProps = {
   prompt?: string;
   unit?: string;
   hint?: string;
+  figure?: string;
   platform: Platform;
   status: CardStatus;
   respond?: Respond;
   result?: string;
 };
 
-export function NumberCard({ prompt = "", unit = "GB", hint, platform, status, respond, result }: NumberCardProps) {
+export function NumberCard({ prompt = "", unit = "GB", hint, figure, platform, status, respond, result }: NumberCardProps) {
   const [draft, setDraft] = useState("");
   const [sent, setSent] = useState<number | null>(null);
   const answered = parseResult<{ value?: number }>(result)?.value ?? sent;
@@ -54,6 +56,7 @@ export function NumberCard({ prompt = "", unit = "GB", hint, platform, status, r
 
   return (
     <CoachCard label="Your number" testId="coach-number" state={active ? "active" : "plain"} cardRef={cardRef}>
+      {figure && <Figure id={figure} />}
       <p className="coach-step__text">{inline(prompt)}</p>
       <p className="coach-muted" data-testid="coach-where-to-look">
         {inline(WHERE_TO_LOOK[platform])}

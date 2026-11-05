@@ -12,8 +12,9 @@ const para = (n: number, word = "word") => Array.from({ length: n }, () => word)
 describe("storyBeats on the real chapter 0", () => {
   const beats = storyBeats(STORY);
 
-  it("TC-01 gives 25 short beats that add back up to the whole story", () => {
-    expect(beats).toHaveLength(25);
+  it("TC-01 gives 26 short beats that add back up to the whole story", () => {
+    // 25 before story 7; the three figure markers are short blocks and one starts a beat of its own.
+    expect(beats).toHaveLength(26);
     for (const beat of beats) {
       const single = beat.split("\n\n").filter((b) => !HEADING.test(b)).length === 1;
       expect(proseWords(beat) <= BEAT_WORDS || single).toBe(true);
@@ -69,8 +70,9 @@ describe("storyBeats boundaries", () => {
 describe("storySentences: one bubble per sentence", () => {
   const units = storySentences(STORY);
 
-  it("TC-30 chapter 0 gives 102 bubbles, the first with the chapter title and one sentence", () => {
-    expect(units).toHaveLength(102);
+  it("TC-30 chapter 0 gives 102 bubbles and 3 figures, the first with the chapter title and one sentence", () => {
+    expect(units).toHaveLength(105);
+    expect(units.filter((u) => u.startsWith("<!-- figure:"))).toHaveLength(3);
     expect(units[0]).toBe(
       "## Chapter 0: The whole game\n\n### What this chapter covers\n\nI'm going to tell you a story about a solicitor called Priya, a laptop, and a letter that never left the room.",
     );
@@ -106,5 +108,27 @@ describe("storySentences: one bubble per sentence", () => {
 
   it("TC-34 each list item is its own bubble and a trailing heading is kept", () => {
     expect(storySentences("Intro.\n\n- one\n- two\n\n## End")).toEqual(["Intro.", "- one", "- two", "## End"]);
+  });
+});
+
+describe("figures in the story (Ceetrix story 7)", () => {
+  const units = storySentences(STORY);
+  const figures = JSON.parse(readFileSync(resolve(__dirname, "../../../../../../curriculum/figures.json"), "utf8")).figures as {
+    id: string;
+    coach: { story?: string };
+    book: { after: string };
+  }[];
+
+  it("TC-22 each story figure is its own unit, right after the sentence it follows", () => {
+    for (const figure of figures.filter((f) => f.coach.story === "legal-letter")) {
+      const at = units.indexOf(`<!-- figure: ${figure.id} -->`);
+      expect(at).toBeGreaterThan(0);
+      expect(units[at - 1].endsWith(figure.book.after)).toBe(true);
+      expect(units[at + 1].startsWith("<!--")).toBe(false);
+    }
+  });
+
+  it("TC-22b a marker is never merged with the sentences around it", () => {
+    expect(storySentences("One.\n\n<!-- figure: will-it-fit -->\n\nTwo.")).toEqual(["One.", "<!-- figure: will-it-fit -->", "Two."]);
   });
 });

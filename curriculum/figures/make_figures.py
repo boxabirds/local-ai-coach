@@ -276,20 +276,20 @@ def explain(file_gb: float, room_gb: float) -> str:
 
 
 def will_it_fit(entry: dict[str, Any]) -> Svg:
-    svg = Svg(entry["id"], 210, entry["title"])
+    svg = Svg(entry["id"], 172, entry["title"])
     over = hatch(svg)
     rooms = options_of(entry, "memory")
     files = options_of(entry, "file")
-    room(svg, 70, 56, [(f"Your memory: {gb(r['gb'])}", f"memory={r['value']}") for r in rooms])
+    room(svg, 36, 56, [(f"Your memory: {gb(r['gb'])}", f"memory={r['value']}") for r in rooms])
     for r in rooms:
         for f in files:
             when = f"memory={r['value']} file={f['value']}"
-            file_bar(svg, 82, 32, f["gb"], r["gb"], over, when)
+            file_bar(svg, 48, 32, f["gb"], r["gb"], over, when)
             if f["gb"] / r["gb"] >= LABEL_INSIDE:
-                svg.text(ROOM_X + 8, 103, f"model file, {gb(f['gb'])}", size=SIZE_SMALL, cls="fig-on-accent", fill=PAPER, when=when)
+                svg.text(ROOM_X + 8, 69, f"model file, {gb(f['gb'])}", size=SIZE_SMALL, cls="fig-on-accent", fill=PAPER, when=when)
             else:
-                svg.text(ROOM_X + 8 + max(f["gb"] / r["gb"] * ROOM_W, 4), 103, f"model file, {gb(f['gb'])}", size=SIZE_SMALL, when=when)
-            svg.result(ROOM_X, 186, explain(f["gb"], r["gb"]), when=when, verdict=fit(f["gb"], r["gb"]))
+                svg.text(ROOM_X + 8 + max(f["gb"] / r["gb"] * ROOM_W, 4), 69, f"model file, {gb(f['gb'])}", size=SIZE_SMALL, when=when)
+            svg.result(ROOM_X, 152, explain(f["gb"], r["gb"]), when=when, verdict=fit(f["gb"], r["gb"]))
     return svg
 
 

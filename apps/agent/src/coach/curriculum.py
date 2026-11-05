@@ -86,3 +86,20 @@ def story_markdown(story_id: str) -> str | None:
         if item["kind"] == STORY_KIND and item["id"] == story_id:
             return (CURRICULUM / item["file"]).read_text(encoding="utf-8")
     return None
+
+
+FIGURE_FIELDS = ("id", "title", "alt", "caption", "controls")
+
+
+@lru_cache(maxsize=1)
+def _figures() -> dict[str, dict[str, Any]]:
+    return {entry["id"]: entry for entry in _read_json(CURRICULUM / "figures.json")["figures"]}
+
+
+def figure(figure_id: str) -> dict[str, Any] | None:
+    """A figure listed in figures.json, as the coach draws it: its words, choices and SVG; else None."""
+    entry = _figures().get(figure_id)
+    if entry is None:
+        return None
+    svg = (CURRICULUM / "figures" / f"{entry['id']}.svg").read_text(encoding="utf-8")
+    return {**{key: entry[key] for key in FIGURE_FIELDS}, "svg": svg}

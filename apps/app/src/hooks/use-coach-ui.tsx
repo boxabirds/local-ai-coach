@@ -41,6 +41,7 @@ const StepParams = z.object({
   where: z.string(),
   hint: z.string().optional(),
   has_do_it: z.boolean(),
+  figure: z.string().optional(),
 });
 
 const NumberParams = z.object({
@@ -49,6 +50,7 @@ const NumberParams = z.object({
   prompt: z.string(),
   unit: z.literal("GB"),
   hint: z.string().optional(),
+  figure: z.string().optional(),
 });
 
 const RunConfirmParams = z.object({ cmd: z.string(), explain: z.string() });
@@ -126,6 +128,7 @@ export const useCoachUI = () => {
         where={args.where}
         hint={args.hint}
         hasDoIt={args.has_do_it}
+        figure={args.figure || undefined}
         status={status as CardStatus}
         respond={respond ? (value) => void respond(value) : undefined}
         result={result}
@@ -142,6 +145,7 @@ export const useCoachUI = () => {
         prompt={args.prompt}
         unit={args.unit}
         hint={args.hint}
+        figure={args.figure || undefined}
         platform={platform()}
         status={status as CardStatus}
         respond={respond ? (value) => void respond(value) : undefined}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { inline } from "./markdown";
+import { Figure } from "./figure";
 
 export type StepAction = "claim" | "do_it" | "skip";
 
@@ -28,12 +29,13 @@ export type StepCardProps = {
   where?: string;
   hint?: string;
   hasDoIt?: boolean;
+  figure?: string;
   status: CardStatus;
   respond?: Respond;
   result?: string;
 };
 
-export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false, status, respond, result }: StepCardProps) {
+export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false, figure, status, respond, result }: StepCardProps) {
   const [hintOpen, setHintOpen] = useState(false);
   const [chosen, setChosen] = useState<StepAction | null>(null);
   const answered = parseResult<{ action?: StepAction }>(result)?.action ?? chosen;
@@ -61,6 +63,7 @@ export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false,
 
   return (
     <CoachCard label={label} testId="coach-step" state={active ? "active" : "plain"} cardRef={cardRef}>
+      {figure && <Figure id={figure} />}
       <p className="coach-step__text" data-step-id={stepId}>
         {inline(text)}
       </p>

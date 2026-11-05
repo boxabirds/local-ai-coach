@@ -410,3 +410,37 @@ def test_s5_tc03_snapshot_carries_criticality():
     entries = {e["id"]: e for e in stub.snapshot(stub.empty_record())}
     assert {sid: e["criticality"] for sid, e in entries.items()} == {"d_legal": "red", "machine": "amber", "localchat": "grey", "prove": "red"}
     assert all(e["status"] == "unseen" for e in entries.values())
+
+
+# ---------------------------------------------------------------- figures (Ceetrix story 7)
+
+FIGURE_IDS = [e["id"] for e in json.loads((REPO / "curriculum" / "figures.json").read_text(encoding="utf-8"))["figures"]]
+
+
+@pytest.mark.parametrize("figure_id", FIGURE_IDS)
+def test_s7_tc17_figure_endpoint_serves_words_choices_and_svg(client, figure_id):
+    response = client.get(f"/curriculum/figure/{figure_id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"id", "title", "alt", "caption", "controls", "svg"}
+    assert body["id"] == figure_id and body["controls"]
+    assert body["svg"] == (REPO / "curriculum" / "figures" / f"{figure_id}.svg").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("figure_id", ["nope", "legal-letter", "..%2Ffigures", "print"])
+def test_s7_tc17_unknown_figure_is_404_with_no_content(client, figure_id):
+    response = client.get(f"/curriculum/figure/{figure_id}")
+    assert response.status_code == 404
+    assert response.text in ("{}", '{"detail":"Not Found"}')
+
+
+def test_s7_tc18_step_cards_carry_their_figure():
+    # machine.2 (number card) and machine.3 (step card) name figures; machine.1 does not.
+    turns = {
+        "machine.1": stub._step_turn(LESSON["steps"][0], "machine"),
+        "machine.2": stub._step_turn(LESSON["steps"][1], "machine"),
+        "machine.3": stub._step_turn(LESSON["steps"][2], "machine"),
+    }
+    assert turns["machine.1"].args["figure"] == ""
+    assert turns["machine.2"].tool == "number_card" and turns["machine.2"].args["figure"] == "room-and-warehouse"
+    assert turns["machine.3"].tool == "step_card" and turns["machine.3"].args["figure"] == "will-it-fit"

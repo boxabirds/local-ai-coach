@@ -25,7 +25,7 @@ from src.credentials import (
 from src.visualization_router import JevVisualizationMiddleware
 from src.skill_backend import SKILL_SOURCES, build_agent_backend
 from src.prompt import SYSTEM_PROMPT
-from src.coach.curriculum import story_markdown
+from src.coach.curriculum import figure, story_markdown
 from src.coach.stub import stub_graph
 
 load_dotenv()
@@ -70,6 +70,15 @@ def curriculum_story(story_id: str):
     if text is None:
         return PlainTextResponse("", status_code=404)
     return PlainTextResponse(text, media_type="text/markdown; charset=utf-8")
+
+
+@app.get("/curriculum/figure/{figure_id}")
+def curriculum_figure(figure_id: str):
+    """A figure listed in curriculum/figures.json, read-only. Anything else is 404."""
+    found = figure(figure_id)
+    if found is None:
+        return JSONResponse({}, status_code=404)
+    return JSONResponse(found)
 
 
 # The stub coach (build step 2): no model, no keys, walks chapter 0 and 1.

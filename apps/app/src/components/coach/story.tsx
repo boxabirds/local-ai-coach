@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { Markdown } from "./markdown";
+import { Figure } from "./figure";
+import { figureId } from "./figure-logic";
 import { storySentences } from "./story-beats";
 
 const CONTINUE_KEYS = new Set([" ", "Enter"]);
@@ -53,16 +55,20 @@ function StoryBubbles({
 }) {
   return (
     <div className="coach-story__text" aria-live="polite">
-      {units.slice(0, shown).map((unit, i) => (
-        <div
-          key={i}
-          ref={i === shown - 1 ? newestRef : undefined}
-          className={animateNewest && i === shown - 1 ? "coach-bubble coach-beat coach-beat--new" : "coach-bubble coach-beat"}
-          data-testid="coach-beat"
-        >
-          <Markdown text={unit} />
-        </div>
-      ))}
+      {units.slice(0, shown).map((unit, i) => {
+        const figure = figureId(unit);
+        const base = figure ? "coach-beat coach-beat--figure" : "coach-bubble coach-beat";
+        return (
+          <div
+            key={i}
+            ref={i === shown - 1 ? newestRef : undefined}
+            className={animateNewest && i === shown - 1 ? `${base} coach-beat--new` : base}
+            data-testid="coach-beat"
+          >
+            {figure ? <Figure id={figure} /> : <Markdown text={unit} />}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -144,6 +150,21 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
     const target = footer.current ?? newestBeat.current?.parentElement?.nextElementSibling ?? newestBeat.current;
     target?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [active, shown]);
+  // A beat can grow after it arrives (a figure's drawing loads after its beat):
+  // bring the Go on row back into view each time the newest beat changes size.
+  useEffect(() => {
+    const beat = newestBeat.current;
+    if (!active || asking || shown <= 1 || !beat || typeof ResizeObserver === "undefined") return;
+    let lastHeight = beat.getBoundingClientRect().height;
+    const observer = new ResizeObserver(() => {
+      const height = beat.getBoundingClientRect().height;
+      if (height <= lastHeight) return;
+      lastHeight = height;
+      footer.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    });
+    observer.observe(beat);
+    return () => observer.disconnect();
+  }, [active, asking, shown]);
   useEffect(() => {
     if (active && asking && shown > 1) firstAnswer.current?.focus({ preventScroll: true });
   }, [active, asking, shown]);

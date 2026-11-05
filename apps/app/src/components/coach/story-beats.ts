@@ -106,9 +106,13 @@ export function sentences(paragraph: string): string[] {
   return out;
 }
 
+/** A figure marker on a line of its own (Ceetrix story 7); invisible when the Markdown is read as the book. */
+const FIGURE_LINE = /^<!-- figure: [a-z0-9-]{1,64} -->$/;
+
 /**
  * The story as one unit per bubble: each sentence of each paragraph, each list
- * item, and each heading joined to the sentence that follows it.
+ * item, and each heading joined to the sentence that follows it. A figure
+ * marker is a unit of its own, drawn as the figure.
  */
 export function storySentences(markdown: string): string[] {
   const units: string[] = [];
@@ -119,6 +123,7 @@ export function storySentences(markdown: string): string[] {
   };
   for (const block of storyBlocks(markdown)) {
     if (HEADING.test(block)) headings.push(block);
+    else if (FIGURE_LINE.test(block)) units.push(block.trim());
     else if (LIST_ITEM.test(block)) block.split("\n").forEach(push);
     else sentences(block).forEach(push);
   }

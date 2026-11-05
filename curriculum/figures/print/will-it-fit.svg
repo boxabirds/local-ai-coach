@@ -1,19 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 210" width="640" height="210" font-family="system-ui, -apple-system, Segoe UI, sans-serif" class="fig" data-figure="will-it-fit">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 172" width="640" height="172" font-family="system-ui, -apple-system, Segoe UI, sans-serif" class="fig" data-figure="will-it-fit">
   <title>Will it fit?</title>
   <defs>
     <pattern id="will-it-fit-over" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
       <line x1="0" y1="0" x2="0" y2="8" class="fig-ink-stroke" stroke="#1c1c28" stroke-width="3" />
     </pattern>
   </defs>
-  <rect x="40" y="70" width="440" height="56" class="fig-paper fig-ink-stroke" fill="#ffffff" stroke="#1c1c28" rx="4" stroke-width="2" />
-  <line x1="370" y1="62" x2="370" y2="134" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
-  <text x="370" y="150" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">three quarters</text>
-  <text x="40" y="58" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold">Your memory: 16 GB</text>
+  <rect x="40" y="36" width="440" height="56" class="fig-paper fig-ink-stroke" fill="#ffffff" stroke="#1c1c28" rx="4" stroke-width="2" />
+  <line x1="370" y1="28" x2="370" y2="100" class="fig-ink-stroke" stroke="#1c1c28" stroke-dasharray="3 3" stroke-width="1.5" />
+  <text x="370" y="116" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">three quarters</text>
+  <text x="40" y="24" font-size="13" text-anchor="start" class="fig-ink" fill="#1c1c28" font-weight="bold">Your memory: 16 GB</text>
   <g>
-    <rect x="40" y="82" width="440" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
-    <rect x="480" y="82" width="110" height="32" class="fig-ink-stroke" fill="url(#will-it-fit-over)" stroke="#1c1c28" stroke-dasharray="4 3" />
-    <text x="486" y="76" font-size="13" text-anchor="start" class="fig-muted" fill="#55556a">no room</text>
+    <rect x="40" y="48" width="440" height="32" class="fig-accent-fill" fill="#1d4ed8" stroke="none" rx="3" />
+    <rect x="480" y="48" width="110" height="32" class="fig-ink-stroke" fill="url(#will-it-fit-over)" stroke="#1c1c28" stroke-dasharray="4 3" />
+    <text x="486" y="42" font-size="13" text-anchor="start" class="fig-muted" fill="#55556a">no room</text>
   </g>
-  <text x="48" y="103" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff">model file, 20 GB</text>
-  <text x="40" y="186" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold">Doesn't run: 20 GB is bigger than 16 GB.</text>
+  <text x="48" y="69" font-size="13" text-anchor="start" class="fig-on-accent" fill="#ffffff">model file, 20 GB</text>
+  <text x="40" y="152" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" data-verdict="no" font-weight="bold">Doesn't run: 20 GB is bigger than 16 GB.</text>
 </svg>

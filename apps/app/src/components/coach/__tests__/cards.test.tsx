@@ -37,8 +37,8 @@ function stubFetch(response: Promise<Response>) {
   return fetchMock;
 }
 
-/** One bubble per sentence: chapter 0 has 102 (headings ride with the next sentence). */
-const TOTAL_BEATS = 102;
+/** One bubble per sentence: chapter 0 has 102 (headings ride with the next sentence), plus its 3 figures. */
+const TOTAL_BEATS = 105;
 
 /** Renders an active story card on the real chapter 0 and waits for the first beat. */
 async function openStory(respond = vi.fn()) {
@@ -224,7 +224,9 @@ describe("story card", () => {
     // Read again uses the same bubbles as reading: one per sentence, all shown.
     const bubbles = screen.getAllByTestId("coach-beat");
     expect(bubbles).toHaveLength(TOTAL_BEATS);
-    for (const bubble of bubbles) expect(bubble).toHaveClass("coach-bubble");
+    // Sentences are bubbles; the story's three figures are drawn in place (Ceetrix story 7).
+    expect(bubbles.filter((b) => b.classList.contains("coach-bubble"))).toHaveLength(TOTAL_BEATS - 3);
+    expect(bubbles.filter((b) => b.classList.contains("coach-beat--figure"))).toHaveLength(3);
   });
 
   it("TC-42 a failed fetch shows an error and never responds", async () => {
