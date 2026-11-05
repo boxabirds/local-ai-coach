@@ -24,7 +24,7 @@ const DRIVE_GB = 512;
 const QUESTION = "The day after, what did Priya check?";
 const ANSWER = "Where her words went.";
 /** The coach under test: our own servers by default, or an installed release (E2E_BASE_URL). */
-const BASE = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3100";
+const BASE = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3110";
 const VIEWPORT = { width: 1280, height: 860 };
 const PAPER = "rgb(255, 255, 255)";
 /** The reserved criticality colours (coach.css --crit-*), light theme. */

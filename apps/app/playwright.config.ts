@@ -10,7 +10,8 @@ import { join } from "node:path";
  * builds the stub app first.
  */
 const AGENT_PORT = 8125;
-const APP_PORT = 3100;
+// Not 3100: `make dev` runs the MCP server there, so the suite and a dev session clashed.
+const APP_PORT = 3110;
 const AGENT_URL = `http://127.0.0.1:${AGENT_PORT}`;
 
 // Browsers live in a folder the agent's sandbox can write (see e2e/README.md).

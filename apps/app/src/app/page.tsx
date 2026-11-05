@@ -98,7 +98,7 @@ export default function HomePage() {
       await copilotkit.runAgent({ agent });
     } catch {
       setError(
-        "The agent is unavailable. Check your connection or local agent configuration, then retry.",
+        "I can't reach my agent. Check the coach is still running, then try again.",
       );
     } finally {
       retryingRef.current = false;
@@ -135,7 +135,7 @@ export default function HomePage() {
               onClick={retry}
               disabled={retrying || agent.isRunning}
             >
-              Retry answer
+              Try again
             </button>
             <button type="button" className="provider-keys-recover" disabled={retrying || agent.isRunning} onClick={() => setKeysOpen(true)}>API keys</button>
           </div>
@@ -151,7 +151,7 @@ export default function HomePage() {
             input={QuotedInput}
             onError={() =>
               setError(
-                "Something interrupted the answer. Try again or send another message.",
+                "Something cut my answer off. Try again, or ask me something else.",
               )
             }
             labels={{
@@ -160,8 +160,8 @@ export default function HomePage() {
               chatDisclaimerText: COACH_STUB
                 ? "Stub coach: no model and no keys."
                 : hasKeys
-                  ? "The coach uses two hosted services for now. Your own model stays local."
-                  : "Connect the coach: add your OpenAI and Jev API keys. Keys clear when you refresh.",
+                  ? "I use two hosted services for now. Your own model stays on your machine."
+                  : "To start, I need two keys: OpenAI and Jev. I forget them when you refresh.",
             }}
           />
           </QuoteContext.Provider>

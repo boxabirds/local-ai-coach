@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from src.prompt import AVOID_END, AVOID_START, SYSTEM_PROMPT
+from src.prompt import AVOID_END, AVOID_START, EXAMPLES_END, EXAMPLES_START, SYSTEM_PROMPT
 
 STYLECHECK = Path(__file__).resolve().parents[3] / "panel" / "stylecheck.py"
 SKILLS = Path(__file__).resolve().parents[1] / "skills"
@@ -25,7 +25,9 @@ UPSTREAM_CONTRACT_SHA256 = "03d24c5211fda04ecf75af54c93bae344e29b379fb907ad5c903
 def ours() -> str:
     """Our part of the prompt: before upstream's sections, without the quoted avoid list."""
     head = SYSTEM_PROMPT[: SYSTEM_PROMPT.index("## Truthful data and capabilities")]
-    return re.sub(re.escape(AVOID_START) + r".*?" + re.escape(AVOID_END), "", head, flags=re.S)
+    for start, end in ((AVOID_START, AVOID_END), (EXAMPLES_START, EXAMPLES_END)):
+        head = re.sub(re.escape(start) + r".*?" + re.escape(end), "", head, flags=re.S)
+    return head
 
 
 def avoid_hits(text: str) -> str:
@@ -60,3 +62,16 @@ def test_the_prompt_names_every_coach_tool_and_card():
 
 def test_s8_tc17_the_prompt_names_the_quote_rule():
     assert "A message that starts with lines beginning > quotes something" in SYSTEM_PROMPT
+
+
+
+MIN_EXAMPLES = 4
+
+
+def test_s12_tc03_the_voice_comes_with_whole_passages_as_examples():
+    block = SYSTEM_PROMPT[SYSTEM_PROMPT.index(EXAMPLES_START):SYSTEM_PROMPT.index(EXAMPLES_END)]
+    assert len(re.findall(r"^Example \d+:$", block, flags=re.M)) >= MIN_EXAMPLES
+
+
+def test_s12_tc01_no_dashes_in_our_prompt_text():
+    assert not re.search("[\u2013\u2014]", ours())

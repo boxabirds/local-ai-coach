@@ -30,7 +30,7 @@ Start step 1 in plan mode and show the plan before writing code.
 - Probes are `subprocess.run(argv, shell=False, timeout=5)`. Never a shell string. Never write anything. Return matched lines only, never raw output. Every probe name is in the allowlist in `probes.py`; a lesson that names another fails validation.
 - `progress.json` (`~/.local-ai-coach/`) is written only by `set_progress`, `end_session` and the review scheduler, by atomic rename. Status moves up only: unseen, read, rehearsed, reported, assisted, verified; `skipped` from anything below verified.
 - `run_do_it` runs only after a `run_confirm` result in the thread, in the agent's PTY, and records `assisted`.
-- Learner-facing text (prompt, skills, card copy, lesson JSON) follows `panel/style-guide.md` and `panel/authoring-policy.md`: no em or en dashes, nothing from the avoid list, UK spelling, define a term before using it. Check prose with `python3 panel/stylecheck.py --book <file>`.
+- Everything the coach says follows `assets/tone-of-voice-guide.md` (the same guide as `panel/style-guide.md`): canned text (stub replies, check notes, card labels, buttons, error lines), the system prompt's Voice section (a chat subset of the guide with book passages as examples), skills and lesson JSON. Also `panel/authoring-policy.md` for lessons: no em or en dashes, nothing from the avoid list, UK spelling, define a term before using it. Check prose with `python3 panel/stylecheck.py --book <file>`; `apps/agent/tests/test_voice.py` scans the coach's frontend text.
 - Keep upstream's streaming tool contract text in `src/prompt.py` verbatim; `test_canonical_contract.py` and `test_skills_contract.py` must stay green.
 - Pin every dependency at the versions in the lockfiles. No upgrades during V1.
 
