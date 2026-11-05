@@ -29,6 +29,7 @@ from src.coach.curriculum import figure, story_markdown
 from src.coach.middleware import CoachStateMiddleware
 from src.coach.tools import COACH_TOOLS
 from src.coach.stub import stub_graph
+from src.coach.stored_keys import StoredKeys, router as keys_router
 
 load_dotenv()
 
@@ -51,6 +52,10 @@ agent = create_deep_agent(
 
 app = FastAPI()
 app.add_middleware(CredentialsMiddleware)
+# Added after, so it runs first: saved keys reach CredentialsMiddleware as the usual headers
+# on requests from the app's own server (Ceetrix story 16).
+app.add_middleware(StoredKeys)
+app.include_router(keys_router)
 
 
 @app.post("/credentials/validate")

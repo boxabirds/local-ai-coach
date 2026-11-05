@@ -21,3 +21,8 @@ os.environ["COACH_CURRICULUM"] = str(FIXTURE_CURRICULUM)
 def _coach_home(tmp_path_factory, monkeypatch):
     monkeypatch.setenv("COACH_HOME", str(tmp_path_factory.mktemp("coach-home")))
     monkeypatch.setenv("COACH_CURRICULUM", str(FIXTURE_CURRICULUM))
+    # Never the learner's real Keychain entry (story 16): an empty service of the tests' own.
+    from src.coach import keystore
+
+    monkeypatch.setenv(keystore.SERVICE_ENV, "local-ai-coach-tests-empty")
+    keystore.reset_cache()
