@@ -13,6 +13,9 @@ from __future__ import annotations
 
 import hashlib
 import os
+import pty
+import select
+import signal
 import shutil
 import socket
 import subprocess
@@ -256,6 +259,76 @@ def test_tc09_a_coach_that_never_starts_is_stopped_at_the_timeout(tmp_path, home
     assert result.returncode != 0
     assert "did not start within 2s" in result.stderr
     assert 2 <= took < 20
+    time.sleep(0.5)
+    assert not fake_processes_running(), "a fake server was left running"
+
+
+CTRL_C = b"\x03"
+STOP_TIMEOUT = 10
+SETTLE = 2.5  # seconds: long enough that the stop lands inside the launcher's wait loop
+# Apple's bash 3.2 is what testers have; a newer bash may come first on a developer's PATH.
+BASHES = [b for b in ("/bin/bash", shutil.which("bash")) if b and Path(b).exists()]
+BASHES = sorted(set(BASHES), key=BASHES.index)
+
+
+def start_in_terminal(argv: list[str], env: dict[str, str], ready: bytes, timeout: int = RUN_TIMEOUT) -> tuple[int, int, bytes]:
+    """Start argv on a pseudo-terminal, as a tester's Terminal window does, and read until ready."""
+    pid, fd = pty.fork()
+    if pid == 0:  # pragma: no cover - the child process
+        os.execve(argv[0], argv, env)
+    out, end = b"", time.monotonic() + timeout
+    while ready not in out and time.monotonic() < end:
+        try:
+            if select.select([fd], [], [], 1)[0]:
+                out += os.read(fd, 4096)
+        except OSError:
+            break
+    return pid, fd, out
+
+
+def wait_for_exit(pid: int, fd: int) -> tuple[int | None, bytes]:
+    out, end = b"", time.monotonic() + STOP_TIMEOUT
+    while time.monotonic() < end:
+        done, status = os.waitpid(pid, os.WNOHANG)
+        if done:
+            return os.waitstatus_to_exitcode(status), out
+        try:
+            if select.select([fd], [], [], 0.2)[0]:
+                out += os.read(fd, 4096)
+        except OSError:
+            pass
+    os.kill(pid, signal.SIGKILL)
+    os.waitpid(pid, 0)
+    subprocess.run(["pkill", "-f", f"sleep {FAKE_SLEEP}"], check=False)  # so one failure does not fail the next case
+    return None, out
+
+
+def healthy_env(fakes: Fakes, home: Path) -> dict[str, str]:
+    """The launcher's environment with a curl that reports both parts healthy."""
+    env = launcher_env(fakes, home)
+    write_exe(fakes.root / "shim" / "curl", "exit 0")
+    return env
+
+
+@pytest.mark.parametrize("bash", BASHES)
+@pytest.mark.parametrize("stop", ["ctrl-c", "close-window"])
+def test_tc15_stopping_from_the_terminal_is_clean(tmp_path, home, stop, bash):
+    """Ctrl-C (SIGINT to the terminal's foreground group) and closing the window (SIGHUP) stop everything, with no error."""
+    fakes = Fakes(tmp_path)
+    assert install(fakes, home).returncode == 0
+    pid, fd, out = start_in_terminal([bash, command(home), "--no-open"], healthy_env(fakes, home), b"Press Ctrl-C")
+    assert b"The coach is running at" in out, out
+    time.sleep(SETTLE)
+    if stop == "ctrl-c":
+        os.write(fd, CTRL_C)
+    else:
+        os.kill(pid, signal.SIGHUP)
+    code, rest = wait_for_exit(pid, fd)
+    os.close(fd)
+    assert code is not None, "the launcher was still running after the stop"
+    assert b"stopped unexpectedly" not in rest, rest
+    if stop == "ctrl-c":
+        assert code == 0, rest
     time.sleep(0.5)
     assert not fake_processes_running(), "a fake server was left running"
 

@@ -16,6 +16,10 @@
 set -uo pipefail
 # Each part runs in its own process group, so stopping it also stops anything it
 # started (uv starts Python; stopping uv alone could leave Python running).
+# Job control (set -m) is on only while the two parts start: left on, every
+# foreground sleep in the wait loop gets its own group and the terminal, so
+# Ctrl-C reaches only that sleep. Bash 3.2 then ignores it; bash 5 leaves the
+# loop without running the trap.
 set -m
 
 # Resolve the install folder through the ~/.local/bin symlink.
@@ -86,7 +90,7 @@ say "Starting the coach (version $(cat "$RELEASE/VERSION"))"
   cd "$RELEASE/apps/agent" || exit 1
   export COACH_HOME
   exec "$UV" run --frozen --no-dev --quiet uvicorn main:app --host "$HOST" --port "$AGENT_PORT"
-) >"$LOGS/agent.log" 2>&1 &
+) </dev/null >"$LOGS/agent.log" 2>&1 &
 AGENT_PID=$!
 
 (
@@ -94,8 +98,9 @@ AGENT_PID=$!
   export HOSTNAME="$HOST" PORT="$APP_PORT" NODE_ENV=production DO_NOT_TRACK=1
   export LANGGRAPH_DEPLOYMENT_URL="http://$HOST:$AGENT_PORT/stub" COACH_AGENT_URL="http://$HOST:$AGENT_PORT"
   exec "$NODE" server.js
-) >"$LOGS/app.log" 2>&1 &
+) </dev/null >"$LOGS/app.log" 2>&1 &
 SERVER_PID=$!
+set +m
 
 healthy() {
   curl -fs -m 2 -o /dev/null "http://$HOST:$AGENT_PORT/health" &&
