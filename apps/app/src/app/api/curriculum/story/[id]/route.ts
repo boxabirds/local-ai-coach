@@ -5,7 +5,8 @@
  */
 
 const AGENT_URL = process.env.COACH_AGENT_URL ?? "http://127.0.0.1:8123";
-const STORY_ID = /^[a-z0-9-]{1,64}$/;
+// Story ids (legal-letter) and the station ids a model may use for them (d_legal).
+const STORY_ID = /^[a-z0-9_-]{1,64}$/;
 const TIMEOUT_MS = 5000;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
