@@ -1,0 +1,132 @@
+{
+ "id": "D-05",
+ "kind": "steering",
+ "note": "permission given: run the check",
+ "history": [
+  {
+   "type": "human",
+   "content": "Read Priya's story"
+  },
+  {
+   "type": "ai",
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "s1",
+     "name": "story_card",
+     "args": {
+      "story_id": "legal-letter",
+      "question": "The day after, what did Priya check?",
+      "options": [
+       "Where her chat app was sending things",
+       "Whether the letter was any good",
+       "Whether the box was switched on"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "type": "tool",
+   "tool_call_id": "s1",
+   "name": "story_card",
+   "content": {
+    "read": true,
+    "answer": "Where her chat app was sending things"
+   }
+  },
+  {
+   "type": "ai",
+   "content": "That's the one: on Wednesday she checked where her chat app was sending things.",
+   "tool_calls": []
+  },
+  {
+   "type": "ai",
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "n1",
+     "name": "show_next_step",
+     "args": {
+      "station": "machine",
+      "step": "machine.1"
+     }
+    }
+   ]
+  },
+  {
+   "type": "tool",
+   "tool_call_id": "n1",
+   "name": "show_next_step",
+   "content": {
+    "action": "claim"
+   }
+  },
+  {
+   "type": "ai",
+   "content": "Good. Now let's check that number.",
+   "tool_calls": []
+  },
+  {
+   "type": "ai",
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "n2",
+     "name": "show_next_step",
+     "args": {
+      "station": "machine",
+      "step": "machine.2"
+     }
+    }
+   ]
+  },
+  {
+   "type": "tool",
+   "tool_call_id": "n2",
+   "name": "show_next_step",
+   "content": {
+    "value": 16
+   }
+  },
+  {
+   "type": "ai",
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "c1",
+     "name": "consent_card",
+     "args": {
+      "items": [
+       "How much memory this computer has"
+      ],
+      "station_id": "machine",
+      "step_id": "machine.2"
+     }
+    }
+   ]
+  },
+  {
+   "type": "tool",
+   "tool_call_id": "c1",
+   "name": "consent_card",
+   "content": {
+    "allow": true,
+    "history": false
+   }
+  }
+ ],
+ "expect_tool": "run_check",
+ "expect_args": {
+  "station_id": "machine",
+  "step_id": "machine.2"
+ },
+ "must_not": [
+  {
+   "tool": "set_progress",
+   "args": {
+    "status": "verified"
+   }
+  }
+ ]
+}

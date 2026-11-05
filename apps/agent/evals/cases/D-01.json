@@ -1,0 +1,15 @@
+{
+ "id": "D-01",
+ "kind": "steering",
+ "note": "fresh thread, the story starter",
+ "history": [
+  {
+   "type": "human",
+   "content": "Read Priya's story"
+  }
+ ],
+ "expect_tool": "story_card",
+ "expect_args": {
+  "story_id": "legal-letter"
+ }
+}

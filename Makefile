@@ -1,4 +1,4 @@
-.PHONY: help install setup dev dev-stub dev-app dev-agent dev-mcp build lint check tail release release-test clean
+.PHONY: help install setup dev dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke release release-test clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -45,6 +45,12 @@ release: ## Build the tester release: make release VERSION=0.1.0 (writes dist/)
 
 release-test: ## Build, install from scratch and run the browser suite against the install (downloads ~100 MB)
 	COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_release.py
+
+evals: ## Dispatch cases against the real model, 5 runs each (needs apps/agent/.env.test; costs tokens)
+	cd apps/agent && COACH_EVALS=1 uv run pytest evals -q -s -p no:cacheprovider
+
+evals-smoke: ## D-01 to D-06 on the real curriculum (before a release)
+	cd apps/agent && COACH_EVALS=1 COACH_EVALS_SMOKE=1 COACH_EVALS_REAL_CURRICULUM=1 uv run pytest evals -q -s -p no:cacheprovider
 
 tail: ## Follow the coach's turn log: model inputs, outputs and tool calls (FULL=1 for raw JSON)
 	@python3 scripts/tail-log.py
