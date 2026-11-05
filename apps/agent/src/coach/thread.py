@@ -36,11 +36,34 @@ def results(messages: list[BaseMessage], name: str) -> Iterator[tuple[dict[str, 
             yield calls[message.tool_call_id], _parse(message.content)
 
 
+# show_next_step (story 19) draws whichever card a step calls for, so its answer is that card's answer.
+SHOW_NEXT_STEP = "show_next_step"
+STEP_CARDS = {"step_card", "number_card", "choice_card"}
+
+
+def _answers(messages: list[BaseMessage], name: str) -> Iterator[tuple[str | None, Any]]:
+    """(step id, parsed answer) for every completed call of this card, or of show_next_step
+    when the card is a step's card, oldest first."""
+    calls: dict[str, str | None] = {}
+    for message in messages:
+        if isinstance(message, AIMessage):
+            for call in message.tool_calls:
+                args = call.get("args") or {}
+                if not call.get("id"):
+                    continue
+                if call.get("name") == name:
+                    calls[call["id"]] = args.get("step_id")
+                elif name in STEP_CARDS and call.get("name") == SHOW_NEXT_STEP:
+                    calls[call["id"]] = args.get("step")
+        elif isinstance(message, ToolMessage) and message.tool_call_id in calls:
+            yield calls[message.tool_call_id], _parse(message.content)
+
+
 def last_answer(messages: list[BaseMessage], name: str, step_id: str | None = None) -> dict[str, Any] | None:
-    """The newest JSON answer from a card, optionally for one step."""
+    """The newest JSON answer from a card (or from show_next_step for that step), optionally for one step."""
     found = None
-    for args, answer in results(messages, name):
-        if isinstance(answer, dict) and (step_id is None or args.get("step_id") == step_id):
+    for step, answer in _answers(messages, name):
+        if isinstance(answer, dict) and (step_id is None or step == step_id):
             found = answer
     return found
 

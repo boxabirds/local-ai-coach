@@ -89,7 +89,6 @@ def test_tc23_number_permission_check_and_verified_through_the_real_graph(monkey
     agent, model = agent_with([
         call("run_check", {"station_id": "machine", "step_id": "machine.2"}, "rc1"),
         call("set_progress", {"station_id": "machine", "status": "verified", "step_id": "machine.2"}, "sp1"),
-        call("start_step", {"station_id": "machine", "step_id": "machine.3"}, "ss1"),
         AIMessage(content="Your number checks out. Now the test."),
     ])
     config = {"configurable": {"thread_id": "tc23"}}
@@ -102,7 +101,6 @@ def test_tc23_number_permission_check_and_verified_through_the_real_graph(monkey
     assert json.loads(check.content)["passed"] is True
     record = progress.load(progress.home())
     assert record["steps"]["machine.2"]["status"] == "verified" and record["stations"]["machine"]["status"] == "verified"
-    assert state["step_id"] == "machine.3" and state["station_id"] == "machine"
     assert {s["id"]: s["status"] for s in state["progress_snapshot"]}["machine"] == "verified"
     # The model saw the coach's context on its first call.
     first_system = model.seen[0][0].content

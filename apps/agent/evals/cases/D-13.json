@@ -13,7 +13,7 @@
    "tool_calls": [
     {
      "id": "s1",
-     "name": "story_card",
+     "name": "story",
      "args": {
       "story_id": "legal-letter",
       "question": "The day after, what did Priya check?",
@@ -29,7 +29,7 @@
   {
    "type": "tool",
    "tool_call_id": "s1",
-   "name": "story_card",
+   "name": "story",
    "content": {
     "read": true,
     "answer": "Where her chat app was sending things"

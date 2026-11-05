@@ -83,6 +83,19 @@ def curriculum_story(story_id: str):
     return PlainTextResponse(text, media_type="text/markdown; charset=utf-8")
 
 
+@app.get("/curriculum/step/{station}/{step_id}")
+def curriculum_step(station: str, step_id: str):
+    """One lesson step, for the show_next_step card to draw (story 19). Records that it was
+    shown, so a detour can say where the learner was. Unknown station or step: 404."""
+    from src.coach.tools import _record_event, _step
+
+    step = _step(station, step_id)
+    if step is None:
+        return JSONResponse({}, status_code=404)
+    _record_event("step_shown", station=station, step=step_id)
+    return JSONResponse({"station": station, "step": step})
+
+
 @app.get("/curriculum/figure/{figure_id}")
 def curriculum_figure(figure_id: str):
     """A figure listed in curriculum/figures.json, read-only. Anything else is 404."""

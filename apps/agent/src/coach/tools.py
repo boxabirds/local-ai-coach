@@ -76,25 +76,6 @@ def _terms(station_id: str) -> list[dict[str, Any]]:
 
 
 @tool
-def get_station(station_id: str) -> str:
-    """Read a V1 station's lesson: its steps in order, why it matters, its recap, the chapter body and the terms it defines."""
-    item = _item(station_id)
-    if not item or item["kind"] != "lesson":
-        stations = ", ".join(i["station"] for i in curriculum.scope()["readingOrder"] if i["kind"] == "lesson")
-        return f"No lesson for {station_id!r}. Lessons: {stations}."
-    return _json({"lesson": curriculum.lesson(station_id), "chapter": chapter_body(station_id), "terms": _terms(station_id)})
-
-
-@tool
-def start_step(station_id: str, step_id: str, runtime: ToolRuntime) -> Command | str:
-    """Mark which lesson step is open, before showing its card. Questions in between keep this place."""
-    if _step(station_id, step_id) is None:
-        return f"No step {step_id!r} in {station_id!r}."
-    note = f"Step {step_id} is open. Show its card now."
-    return Command(update={"station_id": station_id, "step_id": step_id, "messages": [ToolMessage(note, tool_call_id=runtime.tool_call_id)]})
-
-
-@tool
 def run_check(station_id: str, step_id: str, runtime: ToolRuntime) -> str:
     """Run a step's check. For a real check it looks at this computer (after permission) and the result is shown to the learner as it is. For an ask check it returns the rubric for you to judge."""
     step = _step(station_id, step_id)
@@ -187,4 +168,49 @@ def end_session(summary: str) -> str:
     return "Saved."
 
 
-COACH_TOOLS = [get_station, start_step, run_check, set_progress, probe, end_session]
+# ------------------------------------------------------------------ the agentic flow (story 19)
+# These record decisions the model has made; none of them decides or checks the order of steps.
+
+MAX_EVENTS = 200  # the newest kept in progress.json, enough to pick up where a learner left off
+EVENTS = "events"
+
+
+def _record_event(kind: str, **fields: Any) -> bool:
+    """Append an event to progress.json (atomic rename). Returns whether it was saved."""
+    folder = progress.home()
+    record = progress.load(folder)
+    events = record.setdefault(EVENTS, [])
+    events.append({"event": kind, "at": _now(), **fields})
+    del events[:-MAX_EVENTS]
+    try:
+        progress.save(folder, record)
+    except OSError:
+        return False
+    return True
+
+
+@tool
+def chapter_ended(station: str, summary: str, runtime: ToolRuntime) -> Command | str:
+    """Use when you judge the learner has finished a station's steps: closes the chapter and shows them their map.
+    summary: one sentence on what they did. Returns the map's statuses."""
+    if _item(station) is None:
+        return f"No station {station!r} in the curriculum the learner is doing."
+    saved = _record_event("chapter_ended", station=station, summary=summary)
+    record = progress.load(progress.home())
+    snapshot = progress.snapshot(record)
+    note = _json({"recorded": saved, "map": snapshot})
+    return Command(update={"progress_snapshot": snapshot, "messages": [ToolMessage(note, tool_call_id=runtime.tool_call_id)]})
+
+
+@tool
+def user_navigated(topic: str, details: str, station: str | None = None) -> str:
+    """Use when the learner goes to another topic: a question about anything in the book, or a wish to look at another station.
+    topic: a few words; details: what they asked or wanted; station: the station it belongs to, if any.
+    Returns the last step shown to them, so you can bring them back to it."""
+    saved = _record_event("user_navigated", topic=topic, details=details, station=station)
+    events = progress.load(progress.home()).get(EVENTS, [])
+    shown = next((e for e in reversed(events) if e.get("event") == "step_shown"), None)
+    return _json({"recorded": saved, "was_at": shown})
+
+
+COACH_TOOLS = [run_check, set_progress, probe, end_session, chapter_ended, user_navigated]

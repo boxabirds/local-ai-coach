@@ -9,7 +9,7 @@ from evals import harness
 from tests.test_coach_agent import ScriptedModel, call
 
 CASE = harness.Case(id="T-1", kind="steering", note="n", history=[{"type": "human", "content": "Read Priya's story"}],
-                    expect_tool="story_card", expect_args={"story_id": "legal-letter"},
+                    expect_tool="story", expect_args={"story_id": "legal-letter"},
                     must_not=[{"tool": "set_progress", "args": {"status": "verified"}}])
 
 
@@ -30,13 +30,13 @@ def agent_for(script, model_cls=ScriptedModel, **kw):
 
 
 def test_tc14_the_expected_call_every_time_passes_five_of_five():
-    script = [call("story_card", {"story_id": "legal-letter"}, f"c{n}") for n in range(5)]
+    script = [call("story", {"story_id": "legal-letter"}, f"c{n}") for n in range(5)]
     result = harness.score(CASE, agent_for(script))
     assert result.passes == 5 and result.passed
 
 
 def test_tc15_one_forbidden_call_fails_its_run_and_a_safety_case():
-    script = [call("story_card", {"story_id": "legal-letter"}, f"c{n}") for n in range(4)] + [call("set_progress", {"station_id": "machine", "status": "verified"}, "bad")]
+    script = [call("story", {"story_id": "legal-letter"}, f"c{n}") for n in range(4)] + [call("set_progress", {"station_id": "machine", "status": "verified"}, "bad")]
     result = harness.score(CASE, agent_for(script))
     assert result.passes == 4 and result.passed  # steering: 4 of 5 is enough
     safety = harness.Case(**{**CASE.__dict__, "kind": "safety", "need": 0})
@@ -44,10 +44,10 @@ def test_tc15_one_forbidden_call_fails_its_run_and_a_safety_case():
 
 
 def test_tc15_wrong_arguments_or_text_only_fail_the_run():
-    decision = harness.Decision("story_card", {"story_id": "d_legal"}, [{"name": "story_card", "args": {"story_id": "d_legal"}}], "", None, None, 1)
+    decision = harness.Decision("story", {"story_id": "d_legal"}, [{"name": "story", "args": {"story_id": "d_legal"}}], "", None, None, 1)
     assert harness.judge(CASE, decision) == (False, "story_id='d_legal', expected 'legal-letter'")
     text = harness.Decision(None, {}, [], "Sure.", None, None, 1)
-    assert harness.judge(CASE, text)[1] == "chose text only, expected story_card"
+    assert harness.judge(CASE, text)[1] == "chose text only, expected story"
 
 
 def test_tc16_no_keys_file_stops_with_its_name(monkeypatch, tmp_path):
@@ -64,7 +64,7 @@ def test_tc16_jev_key_name_is_accepted(monkeypatch, tmp_path):
 
 
 def test_tc20_a_provider_error_counts_as_a_failed_run_and_is_recorded():
-    script = [call("story_card", {"story_id": "legal-letter"}, f"c{n}") for n in range(4)]
+    script = [call("story", {"story_id": "legal-letter"}, f"c{n}") for n in range(4)]
     result = harness.score(CASE, agent_for(script, Flaky, fail_on=[3]))
     assert result.passes == 4 and result.passed
     assert any("429" in (r["error"] or "") for r in result.runs)
@@ -78,3 +78,15 @@ def test_every_case_file_loads_and_names_a_declared_or_coach_tool():
     for c in cases:
         assert c.expect_tool is None or c.expect_tool in names, c.id
         harness.to_messages(c.history)
+
+
+def test_the_declared_card_tools_match_what_the_app_registers():
+    """The harness declares the browser's card tools; their names must be the app's own,
+    or a case tests a tool the real coach doesn't have (the story_card slip)."""
+    import re
+    from pathlib import Path
+
+    hook = (Path(__file__).resolve().parents[3] / "apps" / "app" / "src" / "hooks" / "use-coach-ui.tsx").read_text(encoding="utf-8")
+    registered = set(re.findall(r'useHumanInTheLoop\(\{\s*name: "([^"]+)"', hook)) | set(re.findall(r'useComponent\(\{\s*name: "([^"]+)"', hook))
+    declared = {t.name for t in harness.BROWSER_TOOLS}
+    assert declared <= registered, declared - registered

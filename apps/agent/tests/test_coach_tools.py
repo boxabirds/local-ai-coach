@@ -57,22 +57,6 @@ def allow():
 PASSED = {"passed": True, "checked": True, "note": "ok", "evidence": [{"probe": "memory", "cmd": "sysctl -n hw.memsize", "matched": ["17179869184"]}], "measured": 16}
 
 
-def test_tc06_get_station_gives_the_lesson_chapter_and_terms():
-    out = json.loads(tools.get_station.func("machine"))
-    assert [s["id"] for s in out["lesson"]["steps"]] == ["machine.1", "machine.2", "machine.3"]
-    assert out["chapter"].startswith("## Chapter 1: Know your machine") and "terms:" not in out["chapter"][:200]
-    assert {t["term"] for t in out["terms"]} == {"memory", "model file", "rule of thumb (three quarters)"}
-    assert tools.get_station.func("nope").startswith("No lesson for 'nope'")
-
-
-def test_tc07_start_step_marks_the_open_step():
-    result = tools.start_step.func("machine", "machine.2", runtime=runtime(call_id="s1"))
-    assert isinstance(result, Command)
-    assert result.update["station_id"] == "machine" and result.update["step_id"] == "machine.2"
-    assert result.update["messages"][0].tool_call_id == "s1"
-    assert tools.start_step.func("machine", "machine.9", runtime=runtime()) == "No step 'machine.9' in 'machine'."
-
-
 def test_tc08_run_check_reads_the_typed_number_from_the_thread(machine):
     allow()
     out = json.loads(tools.run_check.func("machine", "machine.2", runtime=runtime(number(16))))

@@ -21,6 +21,7 @@ import { TubeMap, type MapStation } from "@/components/coach/tube-map";
 import { RunConfirm } from "@/components/coach/run-confirm";
 import { ConsentCard } from "@/components/coach/consent-card";
 import { ChoiceCard } from "@/components/coach/choice-card";
+import { NextStepCard } from "@/components/coach/next-step";
 import { RecapCard } from "@/components/coach/recap-card";
 import { TerminalTranscript } from "@/components/coach/terminal-transcript";
 import "@/components/coach/coach.css";
@@ -35,6 +36,11 @@ const StoryParams = z.object({
   story_id: z.string().describe("The story's id from the curriculum, for example legal-letter (not its station id)"),
   question: z.string().optional(),
   options: z.array(z.string()).optional(),
+});
+
+const NextStepParams = z.object({
+  station: z.string().describe("The station's id, for example machine"),
+  step: z.string().describe("The step's id, for example machine.2"),
 });
 
 const StepParams = z.object({
@@ -156,6 +162,22 @@ export const useCoachUI = () => {
         storyId={args.story_id}
         question={args.question}
         options={args.options}
+        status={status as CardStatus}
+        respond={respond ? (value) => void respond(value) : undefined}
+        result={result}
+      />
+    ),
+  });
+
+  // Story 19: the model names the step; the card draws whatever that step calls for.
+  useHumanInTheLoop({
+    name: "show_next_step",
+    description: "Show the learner the card for one lesson step, chosen by you from the conversation. Returns the learner's answer to the card.",
+    parameters: NextStepParams,
+    render: ({ args, status, respond, result }) => (
+      <NextStepCard
+        station={args.station}
+        step={args.step}
         status={status as CardStatus}
         respond={respond ? (value) => void respond(value) : undefined}
         result={result}

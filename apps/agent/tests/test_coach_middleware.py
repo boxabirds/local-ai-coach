@@ -82,7 +82,6 @@ def test_tc22_the_model_sees_the_map_the_open_lesson_and_permission():
     assert text.index("## The curriculum, all of it") < text.index("## The learner, now")
     assert "Permission to look at this computer: allowed." in text
     assert "- machine: Know your machine [unseen] (amber)" in text
-    assert "Open station: machine; open step: machine.2." in text
     assert '"id": "machine.2"' in text and "## Chapter 1: Know your machine" in text
 
 
@@ -90,7 +89,7 @@ def test_tc22_with_nothing_open_and_nothing_asked():
     capture = _Capture()
     CoachStateMiddleware().wrap_model_call(_request({"messages": []}), capture)
     text = capture.request.system_message.content
-    assert "Permission to look at this computer: unasked." in text and "No station is open yet." in text
+    assert "Permission to look at this computer: unasked." in text
     # The curriculum is there whether or not a station is open.
     assert '"id": "machine.1"' in text
 

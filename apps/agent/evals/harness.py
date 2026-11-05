@@ -60,7 +60,7 @@ def load_env() -> dict[str, str]:
 
 # ------------------------------------------------------------------ the browser's card tools, as declared
 
-@tool
+@tool("story")
 def story_card(story_id: str, question: str = "", options: list[str] | None = None) -> str:
     """Show a story from the curriculum, with one closing question. Returns {read, answer}."""
     raise AssertionError("never executed")

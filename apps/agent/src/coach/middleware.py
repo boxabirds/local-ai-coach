@@ -114,8 +114,6 @@ def coach_context(state: dict[str, Any]) -> str:
         "Map (the learner's status per station):",
         compressed_map(record),
     ]
-    station, step = state.get("station_id"), state.get("step_id")
-    parts.append(f"Open station: {station}; open step: {step or 'none'}." if station else "No station is open yet.")
     return "\n\n".join(parts)
 
 

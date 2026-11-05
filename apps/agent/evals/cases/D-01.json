@@ -8,7 +8,7 @@
    "content": "Read Priya's story"
   }
  ],
- "expect_tool": "story_card",
+ "expect_tool": "story",
  "expect_args": {
   "story_id": "legal-letter"
  }
