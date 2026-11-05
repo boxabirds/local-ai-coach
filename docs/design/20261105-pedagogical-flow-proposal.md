@@ -194,3 +194,13 @@ Julian's idea: the legal tool becomes the backbone of many chapters. Reach in th
 - A running case study gives the series continuity, but most destinations in the graph are not legal (photos, podcasts, CCTV, finance). Risk: non-legal readers feel it isn't their book. Mitigation to consider: Priya's practice as "a small office" whose jobs (letters, summaries, sorting, a small tool) are everyone's, with the legal detail as colour.
 
 Open (author): the fourth row; which tool; a new destination or an extension of `d_bundle`; how far the backbone runs.
+
+## 10. Scope and trusted channels (Julian, 2026-11-05)
+
+Decided: be explicit about what the book handles and which channels the reader already trusts. Most people in Priya's position use and trust Microsoft 365, Copilot included, for mail. The book doesn't try to replace that. What's left for local AI: **Priya drafts documents with an AI that is local and trusted, and sends them over a channel she already trusts.**
+
+Consequences:
+- Inbox sorting leaves the job table: Copilot does it in a channel she trusts. Its stations (`classify`, `d_triage`) stay in the graph for readers who don't use 365.
+- The summarising row is about documents that live with her, not her email: a bundle, file notes, the tenancy agreement on her disk.
+- Open question the book must answer, or a reader with Copilot asks "why bother?": if she trusts 365 to hold the client's facts, why not trust Copilot to draft with them? Candidate answers, to be checked before any goes in the book: work she wouldn't give any AI vendor (strategy, privileged notes); client terms of engagement or a regulator that forbid AI processing by third parties; control over the model, its behaviour and its cost; working with no connection. I haven't verified what Microsoft currently commits to for Copilot's handling of data.
+- Taxonomy gap: no station teaches "decide what you trust": which channels you accept (365, your network, the tailnet) and which work stays on machines you own. The nearest stations (`download`, `outputs`, `browseragent`) are about untrusted input, not about choosing trusted channels. Candidate: a station early on Priya's path, possibly taught in chapter 0's "Why?" questions.
