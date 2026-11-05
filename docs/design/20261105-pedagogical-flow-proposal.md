@@ -179,3 +179,18 @@ Places that change:
 Decided: the chapter makes no promises about how long anything takes the reader. The "two minutes", "five minutes" and "five seconds" lines go from the book text (`panel/final-narrative.md`, `curriculum/chapters/know-your-machine.md`) and the front-matter's "in two minutes". The "five-minute promise" I used as a design limit in sections 3 and in `20261105-what-fits-proposal.md` goes with them. The job table's model speeds stay: they are measurements of the machine, not promises to the reader.
 
 Decided (Julian, 2026-11-05): the station and chapter are renamed "What can my computer do?". The station id `machine` stays, so progress files and links keep working; the name changes in `stations.json`, the chapter, the lesson, `scope.json` and wherever the coach shows it.
+
+## 9. The jobs are Priya's work (Julian, 2026-11-05)
+
+Decided: the job table's rows are Priya's own tasks, not generic ones. Proposed rows:
+1. **Draft a letter** (the deposit letter; measured, `letter-run/`).
+2. **Summarise a document** (for example the tenancy agreement or a client's long email; station `summarise`, already in the graph, needs `localchat`).
+3. **A coding agent builds a legal tool** (station `codingagent`, zone 2, needs sandbox, context, codechat, git, toolcall). Hinted in chapter 1, built in later chapters.
+4. Proposed by me, not yet agreed: **sort her inbox by client matter** (stations `classify` and `d_triage`). It's the cheapest job, and the one an office laptop does well at small sizes.
+
+Julian's idea: the legal tool becomes the backbone of many chapters. Reach in the taxonomy:
+- `d_legal` (Private legal drafting) is Priya's chapter 0 destination; `d_bundle` (Legal bundle review, zone 3) is the nearest later one. No destination yet says "build a tool a lawyer uses every week".
+- Candidate tools, each something small practices do by hand all the time: a bundle index and page-numberer, a chronology from a pile of documents, a deadline calculator from court rules, a clause comparison between two versions of a contract. Each needs checking with a practising lawyer before it's chosen.
+- A running case study gives the series continuity, but most destinations in the graph are not legal (photos, podcasts, CCTV, finance). Risk: non-legal readers feel it isn't their book. Mitigation to consider: Priya's practice as "a small office" whose jobs (letters, summaries, sorting, a small tool) are everyone's, with the legal detail as colour.
+
+Open (author): the fourth row; which tool; a new destination or an extension of `d_bundle`; how far the backbone runs.
