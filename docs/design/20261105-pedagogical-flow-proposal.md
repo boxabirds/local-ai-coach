@@ -159,3 +159,19 @@ Decided 2026-11-05 (Julian), decisions 2 and 3:
 - **Book text changes with the coach.** Coach changes go back into the book; CLAUDE.md now makes this a policy for every artefact and medium. Chapters 0 and 1 change as described; I draft, Julian edits.
 - **Accountability is taught, through Priya getting it wrong.** Let Priya burn her reputation, not the learner's. Proposed scene for chapter 2 (draft for Julian): on a rushed day Priya sends a letter from the big model with only a skim. It reads well. The landlord's reply is confused: his deposit is with the DPS, so what is "the TDS", and which law gives him ten days from the end of the tenancy? Her client forwards it asking the same questions. Every one of those errors is real, from the 32B letters in `letter-run/20261105-letter-run.md`. She spends the afternoon on an apology letter and a phone call she didn't need. The chapter then names the skill: read it, check every fact against the papers, and sign it only when it's yours. The station is `accountable`, "You're accountable" (Julian; sentence case, like every other station name).
 - **Decision 5 (Julian, 2026-11-05):** chapter 2's letter comparison stays out of V1. Chapter 1's job table carries the letter row.
+
+## 7. "Your number" goes (Julian, 2026-11-05)
+
+Feedback: "knowing your number" reads as ominous ("your number is up"). It's also out of date: chapter 1 now has two facts, not one number.
+
+Proposed: name the thing itself. "How much memory your computer has", and with the second fact, "how much graphics card memory". Avoid "find your memory" and "check your memory", which read as the reader's own memory.
+
+Places that change:
+- book text: `panel/final-narrative.md` and `curriculum/chapters/know-your-machine.md` (the "Find your number" heading, "Knowing your number is two minutes of your life, once.", the proof, the recap, and every "your number" in between, 9 in the chapter);
+- `curriculum/lessons/machine.json`: step 1's text, the hint and the recap; `curriculum/map.json`: the rule-of-thumb recap;
+- the coach: the number card's label "Your number" (`apps/app/src/components/coach/number-card.tsx`) and the figure's "Your number" control;
+- docs: CLAUDE.md and `docs/design.md` call the step "Find your number".
+
+## 8. The time promises
+
+The chapter promises two minutes (finding the memory number), five minutes (the chapter's hands-on part) and five seconds (judging a model page afterwards). They tell a nervous beginner the step is small, which is what gets them to start. None has been timed with a reader, and the two new facts make the first longer on Windows and Linux. For a book about proof, an untimed promise is a liability. Proposed: time the new chapter 1 on one real person before publishing, and print only the times that held.
