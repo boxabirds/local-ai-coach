@@ -12,7 +12,7 @@ import {
 } from "@copilotkit/react-core/v2";
 import { ToolReasoning } from "@/components/tool-rendering";
 import { CoachNote, QUIET_TOOLS, coachNoteText } from "@/components/coach/coach-note";
-import type { CardStatus } from "@/components/coach/card";
+import { parseResult, type CardStatus } from "@/components/coach/card";
 import { StoryCard } from "@/components/coach/story";
 import { StepCard } from "@/components/coach/step-card";
 import { NumberCard, detectPlatform } from "@/components/coach/number-card";
@@ -42,6 +42,14 @@ const NextStepParams = z.object({
   station: z.string().describe("The station's id, for example machine"),
   step: z.string().describe("The step's id, for example machine.2"),
 });
+
+const ChapterEndedParams = z.object({ station: z.string().optional(), summary: z.string().optional() });
+
+/** The map chapter_ended returns ({recorded, map}); nothing until the result arrives. */
+function ChapterMap({ result }: { result?: string }) {
+  const parsed = parseResult<{ map?: MapStation[] }>(result);
+  return parsed?.map ? <TubeMap stations={parsed.map} /> : null;
+}
 
 const StepParams = z.object({
   station_id: z.string(),
@@ -310,6 +318,13 @@ export const useCoachUI = () => {
     name: "run_check",
     parameters: RunCheckParams,
     render: ({ result }) => <RunCheckResult result={result} />,
+  });
+
+  // Story 19: when the coach closes a chapter, the learner sees their map from the tool's result.
+  useRenderTool({
+    name: "chapter_ended",
+    parameters: ChapterEndedParams,
+    render: ({ result }) => <ChapterMap result={result} />,
   });
 
   useRenderTool({

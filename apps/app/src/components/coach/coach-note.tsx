@@ -9,7 +9,8 @@ import { DEFAULT_STATIONS } from "./tube-map";
  */
 
 /** Housekeeping: the learner already sees the result (the card, the check card). */
-export const QUIET_TOOLS = new Set(["get_station", "start_step", "run_check"]);
+// user_navigated records a detour the learner can already see in the chat (story 19).
+export const QUIET_TOOLS = new Set(["run_check", "user_navigated"]);
 
 const STATUS_WORDS: Record<string, string> = {
   read: "read",

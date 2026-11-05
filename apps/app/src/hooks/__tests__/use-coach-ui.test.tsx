@@ -51,7 +51,7 @@ describe("useCoachUI (TC-57)", () => {
     render(<Probe />);
     expect(captured.useHumanInTheLoop.map((c) => c.name)).toEqual(["story", "show_next_step", "step_card", "number_card", "choice_card", "consent_card", "run_confirm", "recap_card"]);
     expect(captured.useComponent.map((c) => c.name)).toEqual(["check_result", "show_map"]);
-    expect(captured.useRenderTool.map((c) => c.name)).toEqual(["run_check", "run_do_it"]);
+    expect(captured.useRenderTool.map((c) => c.name)).toEqual(["run_check", "chapter_ended", "run_do_it"]);
     expect(captured.useFrontendTool.map((c) => c.name)).toEqual(["sandbox_event"]);
     expect(captured.useDefaultRenderTool).toBe(1);
   });
@@ -123,7 +123,7 @@ describe("the coach's own tools in plain words (story 10)", () => {
 
   it("housekeeping is silent and saving is one sentence", async () => {
     const { coachNoteText, QUIET_TOOLS } = await import("@/components/coach/coach-note");
-    expect(QUIET_TOOLS.has("get_station") && QUIET_TOOLS.has("start_step") && QUIET_TOOLS.has("run_check")).toBe(true);
+    expect(QUIET_TOOLS.has("run_check") && QUIET_TOOLS.has("user_navigated")).toBe(true);
     expect(coachNoteText("set_progress", { station_id: "machine", step_id: "machine.2", status: "verified" })).toBe(`Saved: ${MACHINE}, step 2, checked.`);
     expect(coachNoteText("set_progress", { station_id: "machine", status: "skipped" })).toBe(`Saved: ${MACHINE}, skipped.`);
     expect(coachNoteText("set_progress", { station_id: "machine", step_id: "machine.1", status: "reported" })).toBe(`Saved: ${MACHINE}, step 1, done, on your word.`);
