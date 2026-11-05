@@ -425,7 +425,9 @@ def test_tc12_to_tc14_install_run_browse_reinstall(built_release, tmp_path):
     assert first.returncode == 0, first.stderr[-2000:]
 
     app_port, agent_port = free_port(), free_port()
-    env = {**os.environ, "HOME": str(home), "COACH_APP_PORT": str(app_port), "COACH_AGENT_PORT": str(agent_port)}
+    # The installed coach keeps progress in its default place, ~/.local-ai-coach under this HOME,
+    # which is where the browser suite looks; the test-wide COACH_HOME must not leak in.
+    env = {**os.environ, "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach"), "COACH_APP_PORT": str(app_port), "COACH_AGENT_PORT": str(agent_port)}
     coach = subprocess.Popen([command(home), "--no-open"], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     try:
         deadline = time.monotonic() + START_WAIT
