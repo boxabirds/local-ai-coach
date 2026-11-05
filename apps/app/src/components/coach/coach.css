@@ -669,3 +669,52 @@
   padding: 0;
   list-style: none;
 }
+
+/* The map opens full screen (story 15): the card's drawing is clickable, and a lightbox shows it large. */
+.coach-map__open {
+  cursor: zoom-in;
+}
+
+.coach-map__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+dialog.coach-map-lightbox {
+  /* Centred in the viewport: the page's resets drop the browser's own margin: auto. */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  width: min(96vw, 1400px);
+  max-width: none;
+  max-height: 92vh;
+  padding: 0;
+  border: 1px solid var(--coach-line);
+  border-radius: 12px;
+  background: var(--coach-paper);
+  color: var(--coach-ink);
+}
+
+dialog.coach-map-lightbox::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+
+.coach-map-lightbox__frame {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.coach-map-lightbox__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+dialog .coach-map-lightbox__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}

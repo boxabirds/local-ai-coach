@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { CoachCard, useArrivalScroll } from "./card";
 
 /**
@@ -160,42 +161,111 @@ function KeyItem({ criticality, x }: { criticality: Criticality; x: number }) {
   );
 }
 
+/** The map itself, drawn once and used both in the card and full screen. */
+function MapDrawing({ list, focus, label }: { list: MapStation[]; focus?: string; label: string }) {
+  const width = PAD_X * 2 + STEP_X * (list.length - 1);
+  const keyStart = width / 2 - KEY_GAP * 1.25;
+  return (
+    <svg className="coach-map" viewBox={`0 0 ${width} ${HEIGHT}`} role="group" aria-label={label}>
+      <line x1={PAD_X} y1={LINE_Y} x2={width - PAD_X} y2={LINE_Y} className="coach-map__line" />
+      {list.map((station, i) => {
+        const x = PAD_X + STEP_X * i;
+        return (
+          <g key={station.id}>
+            <Marker station={station} x={x} focus={station.id === focus} />
+            <text x={x} y={LINE_Y + NAME_DY} textAnchor="middle" className="coach-map__name">
+              {nameLines(station.name).map((line, n) => (
+                <tspan key={n} x={x} dy={n === 0 ? 0 : NAME_LINE}>
+                  {line}
+                </tspan>
+              ))}
+            </text>
+            <text x={x} y={LINE_Y + STATUS_DY} textAnchor="middle" className="coach-map__status">
+              {station.status === "verified" ? `✓ ${STATUS_WORD.verified}` : (STATUS_WORD[station.status] ?? station.status)}
+            </text>
+          </g>
+        );
+      })}
+      <g data-testid="coach-map-key" aria-label="Key: circle, press go. Diamond, know what it does. Triangle, must understand.">
+        {(["grey", "amber", "red"] as const).map((criticality, i) => (
+          <KeyItem key={criticality} criticality={criticality} x={keyStart + KEY_GAP * i} />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * The same map, as large as the screen allows (Ceetrix story 15). A native modal dialog:
+ * Close, Escape or a click outside the map closes it; a click on the map itself doesn't.
+ */
+function MapLightbox({ list, focus, onClose }: { list: MapStation[]; focus?: string; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const el = dialog.current;
+    if (!el) return;
+    // Browsers without modal dialogs still show it, just without dimming the page.
+    if (typeof el.showModal === "function") el.showModal();
+    else el.setAttribute("open", "");
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      className="coach-map-lightbox"
+      aria-labelledby="coach-map-lightbox-title"
+      data-testid="coach-map-lightbox"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="coach-map-lightbox__frame">
+        <div className="coach-map-lightbox__head">
+          <h2 id="coach-map-lightbox-title" className="coach-map-lightbox__title">
+            Your map
+          </h2>
+          <button type="button" className="coach-button" onClick={onClose} autoFocus>
+            Close
+          </button>
+        </div>
+        <MapDrawing list={list} focus={focus} label="Your map, full screen" />
+      </div>
+    </dialog>
+  );
+}
+
 export function TubeMap({ stations = DEFAULT_STATIONS, focus }: { stations?: MapStation[]; focus?: string }) {
   // Snapshots saved before criticality was added lack it; the V1 stations' ratings are known.
   const list = (stations.length ? stations : DEFAULT_STATIONS).map((station) =>
     station.criticality ? station : { ...station, criticality: DEFAULT_CRITICALITY[station.id] },
   );
-  const width = PAD_X * 2 + STEP_X * (list.length - 1);
-  const keyStart = width / 2 - KEY_GAP * 1.25;
   const { cardRef } = useArrivalScroll();
+  const [open, setOpen] = useState(false);
+  const opener = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+  // Focus goes back to Full screen once the lightbox has gone: focusing earlier loses out to
+  // the browser, which moves focus when an open modal dialog is removed.
+  useEffect(() => {
+    if (wasOpen.current && !open) opener.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
+  const close = () => setOpen(false);
   return (
     <CoachCard label="Your map" testId="coach-map" cardRef={cardRef}>
-      <svg className="coach-map" viewBox={`0 0 ${width} ${HEIGHT}`} role="group" aria-label="Your map">
-        <line x1={PAD_X} y1={LINE_Y} x2={width - PAD_X} y2={LINE_Y} className="coach-map__line" />
-        {list.map((station, i) => {
-          const x = PAD_X + STEP_X * i;
-          return (
-            <g key={station.id}>
-              <Marker station={station} x={x} focus={station.id === focus} />
-              <text x={x} y={LINE_Y + NAME_DY} textAnchor="middle" className="coach-map__name">
-                {nameLines(station.name).map((line, n) => (
-                  <tspan key={n} x={x} dy={n === 0 ? 0 : NAME_LINE}>
-                    {line}
-                  </tspan>
-                ))}
-              </text>
-              <text x={x} y={LINE_Y + STATUS_DY} textAnchor="middle" className="coach-map__status">
-                {station.status === "verified" ? `✓ ${STATUS_WORD.verified}` : (STATUS_WORD[station.status] ?? station.status)}
-              </text>
-            </g>
-          );
-        })}
-        <g data-testid="coach-map-key" aria-label="Key: circle, press go. Diamond, know what it does. Triangle, must understand.">
-          {(["grey", "amber", "red"] as const).map((criticality, i) => (
-            <KeyItem key={criticality} criticality={criticality} x={keyStart + KEY_GAP * i} />
-          ))}
-        </g>
-      </svg>
+      {/* Clicking the map opens it large; keyboard users have the button. The wrapper is a
+          control, so a click here never starts an Ask about this quote. */}
+      <div className="coach-map__open" data-ask-control onClick={() => setOpen(true)} data-testid="coach-map-drawing">
+        <MapDrawing list={list} focus={focus} label="Your map" />
+      </div>
+      <div className="coach-map__actions">
+        <button ref={opener} type="button" className="coach-link" onClick={() => setOpen(true)}>
+          Full screen
+        </button>
+      </div>
+      {open ? <MapLightbox list={list} focus={focus} onClose={close} /> : null}
     </CoachCard>
   );
 }

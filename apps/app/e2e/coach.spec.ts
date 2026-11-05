@@ -318,6 +318,27 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     expect(mapBox.y + mapBox.height).toBeLessThanOrEqual(inputBox.y + 1);
     await shot(page, "05-map");
     expect(progress().stations.machine.status).toBe("verified");
+
+    // Story 15, TC-10: the map opens full screen, larger than the card, and closes with
+    // Escape and with a click outside it, changing nothing in the chat.
+    const messages = await page.getByTestId("copilot-assistant-message").count();
+    const progressBefore = JSON.stringify(progress());
+    await map.getByTestId("coach-map-drawing").click();
+    const lightbox = page.getByTestId("coach-map-lightbox");
+    await expect(lightbox).toBeVisible();
+    expect((await lightbox.locator("svg").boundingBox())!.width).toBeGreaterThan(svg.width);
+    await expect(lightbox.locator("[data-station='machine']")).toHaveAttribute("data-status", "verified");
+    await shot(page, "05b-map-full-screen");
+    await page.keyboard.press("Escape");
+    await expect(lightbox).toHaveCount(0);
+    await map.getByRole("button", { name: "Full screen" }).click();
+    await expect(lightbox).toBeVisible();
+    const frame = (await lightbox.boundingBox())!;
+    await page.mouse.click(frame.x + frame.width / 2, frame.y + frame.height + 20);
+    await expect(lightbox).toHaveCount(0);
+    await expect(map.getByRole("button", { name: "Full screen" })).toBeFocused();
+    expect(await page.getByTestId("copilot-assistant-message").count()).toBe(messages);
+    expect(JSON.stringify(progress())).toBe(progressBefore);
   });
 
   test("the conversation survives a reload", async () => {

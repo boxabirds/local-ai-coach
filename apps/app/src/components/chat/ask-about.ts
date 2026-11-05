@@ -10,7 +10,7 @@ export const QUOTABLE = [".coach-bubble", ".coach-step__text", ".coach-figure", 
 /** Marks a quotable element so keyboard handlers elsewhere can leave Enter to the quote. */
 export const QUOTABLE_ATTR = "data-ask-quotable";
 export const SELECTED_ATTR = "data-ask-selected";
-const CONTROLS = "button, a, input, textarea, select, label, [role='button'], .coach-figure__choices";
+const CONTROLS = "button, a, input, textarea, select, label, [role='button'], .coach-figure__choices, [data-ask-control]";
 const USER_MESSAGE = '[data-testid="copilot-user-message"]';
 const CARD = ".coach-card";
 const QUOTE_LINE = /^> ?/;
