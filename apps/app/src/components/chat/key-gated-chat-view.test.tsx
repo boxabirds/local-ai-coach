@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import type { ComponentProps } from "react";
 import type { CopilotChatView } from "@copilotkit/react-core/v2";
@@ -28,7 +28,7 @@ function Harness() {
 }
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
-it("opens setup before sending and preserves the message across cancel and the key-save remount", () => {
+it("opens setup before sending and preserves the message across cancel and the key-save remount", async () => {
   render(<ProviderKeysProvider><Harness /></ProviderKeysProvider>);
   fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Show a map" } });
   fireEvent.click(screen.getByText("Send"));
@@ -38,7 +38,7 @@ it("opens setup before sending and preserves the message across cancel and the k
   expect(screen.getByLabelText("Message")).toHaveValue("Show a map");
   fireEvent.click(screen.getByText("Send"));
   fireEvent.click(screen.getByText("Save tested keys"));
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   expect(screen.getByLabelText("Message")).toHaveValue("Show a map");
   expect(submit).not.toHaveBeenCalled();
   fireEvent.click(screen.getByText("Send"));
@@ -46,12 +46,13 @@ it("opens setup before sending and preserves the message across cancel and the k
   expect(screen.getByLabelText("Message")).toHaveValue("");
 });
 
-it("gates example prompts and clears the preserved draft when starting a new chat", () => {
+it("gates example prompts and clears the preserved draft when starting a new chat", async () => {
   render(<ProviderKeysProvider><Harness /></ProviderKeysProvider>);
   fireEvent.click(screen.getByText("Example"));
   expect(select).not.toHaveBeenCalled();
   expect(screen.getByLabelText("Message")).toHaveValue("Explain flight");
   fireEvent.click(screen.getByText("Save tested keys"));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   fireEvent.click(screen.getByText("New chat"));
   expect(screen.getByLabelText("Message")).toHaveValue("");
   fireEvent.click(screen.getByText("Example"));
