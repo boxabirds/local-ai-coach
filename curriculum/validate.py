@@ -202,6 +202,10 @@ def lesson_texts(lesson: dict[str, Any]) -> list[tuple[str, str]]:
         check = step.get("check")
         if isinstance(check, dict) and isinstance(check.get("question"), str):
             out.append((f"{sid}.check.question", check["question"]))
+        choices = check.get("choices") if isinstance(check, dict) else None
+        if isinstance(choices, dict):
+            out += [(f"{sid}.choices.item", i["label"]) for i in choices.get("items") or [] if isinstance(i, dict) and isinstance(i.get("label"), str)]
+            out += [(f"{sid}.choices.option", o) for o in choices.get("options") or [] if isinstance(o, str)]
     return out
 
 
@@ -348,6 +352,28 @@ def _check_real(check: dict[str, Any], where: str, probes: dict[str, Any] | None
                 report.error("PROBE_PARAM", where, f"probe {name!r} needs param {needed!r}")
 
 
+CHOICE_GRADES = {"fit"}
+MIN_OPTIONS = 2
+
+
+def _check_choices(check: dict[str, Any], kind: str, where: str, report: Report) -> None:
+    """A check's choices (story 11): rows the learner answers with buttons, marked in code."""
+    choices = check["choices"]
+    ok = (
+        kind == "ask"
+        and isinstance(choices, dict)
+        and isinstance(choices.get("items"), list) and choices["items"]
+        and all(isinstance(i, dict) and isinstance(i.get("label"), str) and i["label"]
+                and isinstance(i.get("gb"), (int, float)) and not isinstance(i["gb"], bool) and i["gb"] > 0
+                for i in choices["items"])
+        and isinstance(choices.get("options"), list) and len(choices["options"]) >= MIN_OPTIONS
+        and all(isinstance(o, str) and o for o in choices["options"])
+        and choices.get("grade") in CHOICE_GRADES
+    )
+    if not ok:
+        report.error("CHECK_FIELD", where, "choices need an ask check, items with a label and a positive gb, at least two options, and grade fit")
+
+
 def check_step(step: Any, station: str, seen: set[str], rel: str, probes: dict[str, Any] | None, report: Report) -> None:
     if not isinstance(step, dict):
         report.error("STEP_FIELD", rel, "a step must be an object")
@@ -394,6 +420,8 @@ def check_step(step: Any, station: str, seen: set[str], rel: str, probes: dict[s
                 _check_real(check, where, probes, report)
             if "answeredByClaim" in check and (kind != "ask" or not isinstance(check["answeredByClaim"], bool)):
                 report.error("CHECK_FIELD", where, "answeredByClaim is a true or false on an ask check only")
+            if "choices" in check:
+                _check_choices(check, kind, where, report)
     elif "check" in step:
         report.error("CHECK_KIND", where, "check must be an object")
 

@@ -134,3 +134,66 @@ def test_every_learner_facing_check_string_passes_the_voice_rules():
     Path(tmp.name).unlink()
     assert "avoid-list hits: none" in out
     assert not any(ch in s for s in strings for ch in "–—")
+
+
+
+# ------------------------------------------------------------------ choices (story 11, TC-03 to TC-08)
+# A made-up step, so these test the marking rule, not the lesson's wording (content is checked by validate.py).
+
+FITS_STEP = {
+    "id": "x.1",
+    "check": {"kind": "ask", "question": "?", "rubric": "r", "choices": {
+        "items": [{"label": "Small", "gb": 2}, {"label": "Medium", "gb": 5}, {"label": "Large", "gb": 20}],
+        "options": ["Yes", "No"], "grade": "fit"}},
+}
+RIGHT_16 = ["Yes", "Yes", "No"]
+
+
+@pytest.mark.parametrize("room, answers, passed", [
+    (16, RIGHT_16, True),
+    (8, RIGHT_16, True),  # 5 is under three quarters of 8: a squeeze still fits
+    (32, RIGHT_16, False),  # on 32 the 20 fits
+    (32, ["Yes", "Yes", "Yes"], True),
+    (4, ["Yes", "No", "No"], True),
+])
+def test_s11_tc03_to_tc05_marked_against_the_learners_number(room, answers, passed):
+    verdict = checks.grade_choices(FITS_STEP, answers, room)
+    assert verdict["passed"] is passed and verdict["checked"] is True and verdict["measured"] == room
+    assert [r["label"] for r in verdict["results"]] == ["Small", "Medium", "Large"]
+
+
+def test_s11_tc03_the_pass_note_lists_each_result_on_the_number():
+    assert checks.grade_choices(FITS_STEP, RIGHT_16, 16)["note"] == "On your 16 GB: 2 GB fits, 5 GB fits, 20 GB doesn't fit."
+
+
+def test_s11_tc05_a_wrong_answer_names_the_file_and_gives_the_rule():
+    verdict = checks.grade_choices(FITS_STEP, RIGHT_16, 32)
+    assert verdict["note"] == "Have another look at Large. " + checks.CHOICES_HINT
+    assert [r["right"] for r in verdict["results"]] == [True, True, False]
+
+
+def test_s11_tc06_a_file_the_size_of_the_room_fits_one_over_does_not():
+    assert checks.grade_choices(FITS_STEP, ["Yes", "Yes", "Yes"], 20)["passed"] is True
+    assert checks.grade_choices(FITS_STEP, ["Yes", "Yes", "No"], 19)["passed"] is True
+
+
+@pytest.mark.parametrize("answers", [["Yes", "Yes"], ["Yes", "Yes", "Maybe"], []])
+def test_s11_tc07_answers_that_dont_match_the_card_are_refused(answers):
+    with pytest.raises(ValueError):
+        checks.grade_choices(FITS_STEP, answers, 16)
+
+
+def test_s11_tc08_room_prefers_the_measured_number():
+    from langchain_core.messages import AIMessage, ToolMessage
+    from src.coach import thread
+
+    def call(name, args, answer, cid):
+        return [AIMessage(content="", tool_calls=[{"id": cid, "name": name, "args": args, "type": "tool_call"}]), ToolMessage(content=answer, tool_call_id=cid)]
+
+    typed = call("number_card", {"step_id": "machine.2"}, '{"value": 512}', "n1")
+    measured = call("run_check", {"step_id": "machine.2"}, '{"passed": false, "checked": true, "measured": 16}', "r1")
+    stub_card = call("check_result", {"step_id": "machine.2", "checked": True, "measured": 32}, "rendered", "c1")
+    assert thread.room_for(typed) == 512
+    assert thread.room_for([*typed, *measured]) == 16
+    assert thread.room_for([*typed, *stub_card]) == 32
+    assert thread.room_for([]) is None

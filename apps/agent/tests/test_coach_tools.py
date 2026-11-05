@@ -108,8 +108,8 @@ def test_tc11_no_number_in_the_thread_runs_nothing(machine):
 
 
 def test_tc12_an_ask_check_returns_the_rubric(machine):
-    out = json.loads(tools.run_check.func("machine", "machine.3", runtime=runtime()))
-    assert "three quarters" in out["judge"] and out["question"].startswith("A 2 GB file")
+    out = json.loads(tools.run_check.func("localchat", "localchat.4", runtime=runtime()))
+    assert out["question"] == "Which machine answered?" and "Names the machine" in out["judge"]
     assert machine.calls == []
 
 
@@ -185,7 +185,30 @@ def test_tc12b_a_claim_answers_a_check_marked_answered_by_claim(machine):
     skipped = card("step_card", {"station_id": "machine", "step_id": "machine.1"}, '{"action": "skip"}', "sc1")
     assert "judge" in json.loads(tools.run_check.func("machine", "machine.1", runtime=runtime(skipped)))
     assert "judge" in json.loads(tools.run_check.func("machine", "machine.1", runtime=runtime()))
-    # machine.3 needs a worked answer, so a claim never answers it.
+    # machine.3 is a choice card (story 11), so a claim never answers it.
     claimed3 = card("step_card", {"station_id": "machine", "step_id": "machine.3"}, '{"action": "claim"}', "sc3")
-    assert "judge" in json.loads(tools.run_check.func("machine", "machine.3", runtime=runtime(claimed3)))
+    assert tools.run_check.func("machine", "machine.3", runtime=runtime(claimed3)).startswith("Show the choice card for machine.3")
     assert machine.calls == []
+
+
+
+# ------------------------------------------------------------------ choices (story 11, TC-09)
+
+RIGHT = ["Fits", "Fits", "Doesn't fit"]
+
+
+def choices(answers, call_id="ch1"):
+    return card("choice_card", {"station_id": "machine", "step_id": "machine.3"}, json.dumps({"answers": answers}), call_id)
+
+
+def test_s11_tc09_run_check_marks_the_fits_test_against_the_measured_number():
+    thread = [*check_result(PASSED), *choices(RIGHT)]
+    out = json.loads(tools.run_check.func("machine", "machine.3", runtime=runtime(thread)))
+    assert out["passed"] is True and out["measured"] == 16 and out["note"] == "On your 16 GB: 2 GB fits, 5 GB fits, 20 GB doesn't fit."
+
+
+def test_s11_tc09_run_check_without_answers_or_without_a_number():
+    assert tools.run_check.func("machine", "machine.3", runtime=runtime(check_result(PASSED))).startswith("Show the choice card for machine.3")
+    assert tools.run_check.func("machine", "machine.3", runtime=runtime(choices(RIGHT))) == "There's no memory number yet. Show the number card first."
+    bad = tools.run_check.func("machine", "machine.3", runtime=runtime([*check_result(PASSED), *choices(["Fits"])]))
+    assert bad.startswith("The answers didn't match the card")

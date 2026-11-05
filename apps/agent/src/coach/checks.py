@@ -103,3 +103,42 @@ def evaluate(
         return _verdict(True, True, PASSED_OWNED.format(where=where), evidence, destinations)
 
     raise ValueError(f"no rule for the probes {names}")
+
+
+# ------------------------------------------------------------------ choices (story 11)
+
+CHOICES_PASSED = "On your {room} GB: {results}."
+CHOICES_NOT_YET = "Have another look at {label}. {hint}"
+# The chapter's rule, true whichever way the answer was wrong; it doesn't give the arithmetic away.
+CHOICES_HINT = "Memory is the room: a model file has to fit in it whole, and the drive doesn't count."
+
+
+def _gb(value: float) -> str:
+    return f"{value:g} GB"
+
+
+def grade_choices(step: dict[str, Any], answers: list[str], room_gb: float) -> dict[str, Any]:
+    """Mark a fits test in code, against the learner's own number: a file fits when it is
+    no bigger than the room (over three quarters is a squeeze, which still fits)."""
+    choices = step["check"]["choices"]
+    items, options = choices["items"], choices["options"]
+    if len(answers) != len(items) or any(a not in options for a in answers):
+        raise ValueError(f"expected one of {options} for each of {len(items)} files")
+    fits, doesnt = options[0], options[1]
+    results = []
+    for item, answer in zip(items, answers):
+        right = fits if fits_room(item["gb"], room_gb) else doesnt
+        results.append({"label": item["label"], "answer": answer, "right": answer == right})
+    room = _shown(room_gb)
+    if all(r["right"] for r in results):
+        said = ", ".join(f"{_gb(i['gb'])} {'fits' if fits_room(i['gb'], room_gb) else 'doesn\'t fit'}" for i in items)
+        note = CHOICES_PASSED.format(room=room, results=said)
+        return {"passed": True, "checked": True, "note": note, "evidence": [], "measured": room_gb, "results": results}
+    wrong = next(r for r in results if not r["right"])
+    note = CHOICES_NOT_YET.format(label=wrong["label"], hint=CHOICES_HINT)
+    return {"passed": False, "checked": True, "note": note, "evidence": [], "measured": room_gb, "results": results}
+
+
+def fits_room(file_gb: float, room_gb: float) -> bool:
+    """Fits at all: no bigger than the room."""
+    return file_gb <= room_gb

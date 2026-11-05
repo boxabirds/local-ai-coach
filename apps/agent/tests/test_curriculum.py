@@ -357,3 +357,16 @@ def test_tc35_cli_exit_codes(root: Path, capsys: pytest.CaptureFixture[str]) -> 
 def test_answered_by_claim_only_as_a_boolean_on_an_ask_check(root: Path, mutate) -> None:
     edit(root, "lessons/machine.json", mutate)
     assert errors(run(root)) == ["CHECK_FIELD"]
+
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda d: step(d, "machine.2")["check"].__setitem__("choices", step(d, "machine.3")["check"]["choices"]),
+    lambda d: step(d, "machine.3")["check"]["choices"].__setitem__("items", []),
+    lambda d: step(d, "machine.3")["check"]["choices"]["items"][0].__setitem__("gb", 0),
+    lambda d: step(d, "machine.3")["check"]["choices"].__setitem__("options", ["Fits"]),
+    lambda d: step(d, "machine.3")["check"]["choices"].__setitem__("grade", "vibes"),
+])
+def test_s11_tc02_choices_are_checked(root: Path, mutate) -> None:
+    edit(root, "lessons/machine.json", mutate)
+    assert errors(run(root)) == ["CHECK_FIELD"]

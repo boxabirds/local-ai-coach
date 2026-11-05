@@ -101,6 +101,19 @@ def run_check(station_id: str, step_id: str, runtime: ToolRuntime) -> str:
     if step is None:
         return f"No step {step_id!r} in {station_id!r}."
     kind = (step.get("check") or {}).get("kind")
+    messages = runtime.state.get("messages", [])
+    if kind == "ask" and step["check"].get("choices"):
+        answer = thread.last_answer(messages, "choice_card", step_id)
+        if not answer or not isinstance(answer.get("answers"), list):
+            return f"Show the choice card for {step_id} (choice_card with the step's text, the choices' item labels and options), then run this check again."
+        room = thread.room_for(messages)
+        if room is None:
+            return "There's no memory number yet. Show the number card first."
+        try:
+            verdict = checks.grade_choices(step, [str(a) for a in answer["answers"]], room)
+        except ValueError as exc:
+            return f"The answers didn't match the card ({exc}). Show the choice card again."
+        return _json({"station_id": station_id, "step_id": step_id, **verdict})
     if kind == "ask":
         claimed = (thread.last_answer(runtime.state.get("messages", []), "step_card", step_id) or {}).get("action") == "claim"
         if step["check"].get("answeredByClaim") and claimed:
@@ -111,7 +124,6 @@ def run_check(station_id: str, step_id: str, runtime: ToolRuntime) -> str:
     given = consent_store.load(progress.home())
     if given is None:
         return _json(NEEDS_CONSENT)
-    messages = runtime.state.get("messages", [])
     typed = None
     if step["check"].get("compare") == "typed":
         answer = thread.last_answer(messages, "number_card", step_id)

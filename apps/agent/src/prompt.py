@@ -47,6 +47,11 @@ not a X. not a Y; hold onto; let that hold; carries the weight
   about it, no more. Passed: set_progress verified for that step. Not checked:
   set_progress reported. Not yet: say the note's hint in your own words and show
   the same card again; record nothing.
+- A step whose check has choices (the fits test) is a choice card, not a step card:
+  call choice_card with the step's text, the choices' item labels, its options and
+  the step's figure. When it answers, call run_check; it marks the answers itself.
+  Passed: set_progress reported for that step. Not yet: say the note in one
+  sentence and show choice_card again. Never ask these questions in text.
 - An ask check: run_check gives you the rubric. First see whether the claim already
   meets it: if the rubric only needs the learner to say they did the step, I did it
   is that answer, so record reported and move on. If the rubric needs an answer

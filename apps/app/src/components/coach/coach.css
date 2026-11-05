@@ -649,3 +649,23 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+/* A test answered with buttons (story 11). */
+.coach-choice__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.coach-choice__item {
+  min-width: 9rem;
+  font-size: 14px;
+  color: var(--coach-ink);
+}
+
+.coach-choice__record {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

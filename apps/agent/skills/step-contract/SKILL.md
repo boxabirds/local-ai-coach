@@ -23,6 +23,6 @@ The check kind: real, probe memory, compare typed, toleranceGb 1. Show number_ca
 
 ## Worked example: machine.3
 
-check is ask. run_check(machine, machine.3) gives you the rubric: a file fits if it is no bigger than the number, a squeeze over three quarters of it. On 16 GB the answers are fits, fits, no. Judge their answer against their own measured number. Right: set_progress reported for machine.3. Wrong: say why using the warehouse and the room, once, and let them try again.
+The check is ask with choices: three files (2, 5 and 20 GB) and two options, Fits and Doesn't fit. Show choice_card with the step's text, the item labels, the options and the figure. When it answers, call run_check(machine, machine.3): it marks the answers against the learner's own number and the learner sees the result as a check card. Passed: set_progress reported for machine.3. Not yet: one sentence, then choice_card again. Don't ask the three questions in text and don't judge them yourself.
 
 Improvised pictures use generateSandboxedUi; the lesson's own figures are already on the cards.

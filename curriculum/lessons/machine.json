@@ -48,6 +48,15 @@
       "check": {
         "kind": "ask",
         "question": "A 2 GB file, a 5 GB file, a 20 GB file: fits or doesn't fit?",
+        "choices": {
+          "items": [
+            { "label": "A 2 GB file", "gb": 2 },
+            { "label": "A 5 GB file", "gb": 5 },
+            { "label": "A 20 GB file", "gb": 20 }
+          ],
+          "options": ["Fits", "Doesn't fit"],
+          "grade": "fit"
+        },
         "rubric": "Judge against the measured number N. A file fits if it is no bigger than N, and is a squeeze if it is over three quarters of N. On 16 GB: fits, fits, no. On 32 GB: fits, fits, fits. On 8 GB: fits, fits, no."
       },
       "onFail": {

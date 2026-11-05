@@ -192,8 +192,9 @@ def test_tc10_number_out_of_range_is_refused(bad):
 
 
 def test_tc11_rendered_check_result_opens_step_three():
+    # Story 11: machine.3's fits test is a choice card.
     turn = stub.decide(thread_for("check_result", step_args("machine.2"), "rendered"), LESSON)
-    assert turn.tool == "step_card" and turn.args["step_id"] == "machine.3"
+    assert turn.tool == "choice_card" and turn.args["step_id"] == "machine.3"
 
 
 def test_tc12_claim_on_last_step_shows_map():
@@ -512,7 +513,7 @@ def test_s7_tc18_step_cards_carry_their_figure():
     }
     assert turns["machine.1"].args["figure"] == ""
     assert turns["machine.2"].tool == "number_card" and turns["machine.2"].args["figure"] == "room-and-warehouse"
-    assert turns["machine.3"].tool == "step_card" and turns["machine.3"].args["figure"] == "will-it-fit"
+    assert turns["machine.3"].tool == "choice_card" and turns["machine.3"].args["figure"] == "will-it-fit"
 
 
 # ------------------------------------------------------------------ the real check through the request handler (story 9)
@@ -616,3 +617,73 @@ def test_s8_quoted_question_through_the_request_handler(client, tmp_path):
     assert text == stub.QUOTE_ACK.format(quote="One destination. backroom. Nothing else.")
     assert _types(events)[-1] == "RUN_FINISHED"
     assert not (tmp_path / "progress.stub.json").exists()
+
+
+
+# ------------------------------------------------------------------ the fits test as a choice card (story 11)
+
+RIGHT = ["Fits", "Fits", "Doesn't fit"]
+
+
+def _checked(measured: int, call_id: str = "cr1") -> list:
+    """The stub's passing machine.2 check card, as it sits in the thread."""
+    return [ai_call("check_result", {**step_args("machine.2"), "passed": True, "checked": True, "measured": measured, "evidence": [], "note": ""}, call_id), result("rendered", call_id)]
+
+
+def _choice(answers, call_id: str = "ch1") -> list:
+    args = {**step_args("machine.3"), "text": "Now the test.", "items": ["A 2 GB file", "A 5 GB file", "A 20 GB file"], "options": ["Fits", "Doesn't fit"]}
+    return [ai_call("choice_card", args, call_id), result(json.dumps(answers), call_id)]
+
+
+def test_s11_tc10_the_fits_test_is_a_choice_card_with_the_lessons_rows():
+    turn = stub._step_turn(LESSON["steps"][2], "machine")
+    assert turn.tool == "choice_card"
+    assert turn.args["items"] == ["A 2 GB file", "A 5 GB file", "A 20 GB file"] and turn.args["options"] == ["Fits", "Doesn't fit"]
+
+
+def test_s11_tc10_right_answers_pass_and_record_reported():
+    turn = stub.decide([HumanMessage(content="start"), *_checked(16), *_choice({"answers": RIGHT})], LESSON)
+    assert turn.tool == "check_result" and turn.args["passed"] is True and turn.args["checked"] is True
+    assert turn.args["note"] == "On your 16 GB: 2 GB fits, 5 GB fits, 20 GB doesn't fit."
+    assert turn.record == (("step", "machine.3", "reported"),)
+
+
+def test_s11_tc10_a_wrong_answer_records_nothing_and_the_card_comes_back():
+    turn = stub.decide([HumanMessage(content="start"), *_checked(16), *_choice({"answers": ["Fits", "Fits", "Fits"]})], LESSON)
+    assert turn.args["passed"] is False and turn.args["note"].startswith("Have another look at A 20 GB file.")
+    assert turn.record == ()
+    again = stub.decide(thread_for("check_result", {**step_args("machine.3"), "passed": False, "checked": True}, "rendered"), LESSON)
+    assert again.tool == "choice_card" and again.args["step_id"] == "machine.3"
+
+
+def test_s11_tc10_no_number_yet_asks_for_it_and_skip_moves_on():
+    no_room = stub.decide([HumanMessage(content="start"), *_choice({"answers": RIGHT})], LESSON)
+    assert no_room.tool == "number_card"
+    skipped = stub.decide([HumanMessage(content="start"), *_choice({"action": "skip"})], LESSON)
+    assert skipped.tool == "show_map" and skipped.record == (("step", "machine.3", "skipped"),)
+    bad = stub.decide([HumanMessage(content="start"), *_checked(16), *_choice({"answers": ["Fits"]})], LESSON)
+    assert bad.text == stub.BAD_RESULT and bad.record == ()
+
+
+def _wire(messages: list) -> list[dict]:
+    """Thread messages as the browser sends them over AG-UI."""
+    out = [{"id": "m0", "role": "user", "content": "Find my number"}]
+    for i, m in enumerate(messages):
+        if isinstance(m, AIMessage):
+            out.append({"id": f"a{i}", "role": "assistant", "content": "", "toolCalls": [
+                {"id": c["id"], "type": "function", "function": {"name": c["name"], "arguments": json.dumps(c["args"])}} for c in m.tool_calls]})
+        elif isinstance(m, ToolMessage):
+            out.append({"id": f"t{i}", "role": "tool", "toolCallId": m.tool_call_id, "content": m.content})
+    return out
+
+
+def test_s11_tc10_through_the_request_handler(client, tmp_path):
+    events = _events(client.post("/stub", json=_run_input(_wire([*_checked(16), *_choice({"answers": RIGHT})]))))
+    [(name, args)] = _calls(events)
+    assert name == "check_result" and args["passed"] is True and args["measured"] == 16
+    assert [r["right"] for r in args["results"]] == [True, True, True]
+    assert stub.load(tmp_path)["steps"]["machine.3"]["status"] == "reported"
+    wrong = _events(client.post("/stub", json=_run_input(_wire([*_checked(16), *_choice({"answers": ["Fits", "Fits", "Fits"]})]))))
+    [(name, args)] = _calls(wrong)
+    assert name == "check_result" and args["passed"] is False
+    assert stub.load(tmp_path)["steps"]["machine.3"]["status"] == "reported"  # unchanged by the wrong answer

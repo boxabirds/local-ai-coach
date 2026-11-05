@@ -31,7 +31,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.bounded_memory_saver import BoundedMemorySaver
-from src.coach import checks, curriculum, probes, progress
+from src.coach import checks, curriculum, probes, progress, thread
 from src.coach import consent as consent_store
 
 # ------------------------------------------------------------------ constants
@@ -56,6 +56,7 @@ STEP_CARD = "step_card"
 NUMBER_CARD = "number_card"
 CHECK_RESULT = "check_result"
 CONSENT_CARD = "consent_card"
+CHOICE_CARD = "choice_card"
 SHOW_MAP = "show_map"
 
 # Learner-facing wording. tests/test_coach_stub.py runs every string through
@@ -122,7 +123,19 @@ def _is_number(value: Any) -> bool:
 
 
 def _step_turn(step: dict[str, Any], station: str, text: str | None = None, record: tuple = ()) -> Turn:
-    """The card for a lesson step: the number card for machine.2, else a step card."""
+    """The card for a lesson step: the number card for machine.2, the choice card for a
+    check with choices (story 11), else a step card."""
+    choices = (step.get("check") or {}).get("choices")
+    if choices:
+        args = {
+            "station_id": station,
+            "step_id": step["id"],
+            "text": step["text"],
+            "items": [item["label"] for item in choices["items"]],
+            "options": list(choices["options"]),
+            "figure": step.get("figure", ""),
+        }
+        return Turn(text=text, tool=CHOICE_CARD, args=args, record=record)
     if step["id"] == NUMBER_STEP:
         args = {"station_id": station, "step_id": step["id"], "prompt": step["text"], "unit": UNIT, "hint": step.get("hint", ""), "figure": step.get("figure", "")}
         return Turn(text=text, tool=NUMBER_CARD, args=args, record=record)
@@ -237,7 +250,7 @@ def decide(
         return _after(step_id, lesson, station)
     if name == SHOW_MAP:
         return Turn(text=MAP_TEXT)
-    if name not in (STORY, STEP_CARD, NUMBER_CARD, CONSENT_CARD):
+    if name not in (STORY, STEP_CARD, NUMBER_CARD, CONSENT_CARD, CHOICE_CARD):
         return Turn(text=HELP)
 
     try:
@@ -271,6 +284,20 @@ def decide(
             }
             return Turn(text=CONSENT_ASK, tool=CONSENT_CARD, args=ask)
         return _check_turn(step, station, value, consent, run)
+
+    if name == CHOICE_CARD:
+        if answer.get("action") == "skip":
+            return _after(step_id, lesson, station, record=(("step", step_id, SKIPPED),))
+        answers = answer.get("answers")
+        room = thread.room_for(messages)
+        if room is None:
+            return _step_turn(next(s for s in _steps(lesson) if s["id"] == NUMBER_STEP), station)
+        try:
+            verdict = checks.grade_choices(step, [str(a) for a in answers] if isinstance(answers, list) else [], room)
+        except ValueError:
+            return Turn(text=BAD_RESULT)
+        record = (("step", step_id, REPORTED),) if verdict["passed"] else ()
+        return Turn(tool=CHECK_RESULT, args={"station_id": station, "step_id": step_id, **verdict}, record=record)
 
     if name == CONSENT_CARD:
         allow, history, typed = answer.get("allow"), answer.get("history", False), args.get("typed")

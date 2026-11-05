@@ -634,3 +634,60 @@ describe("permission card and Not checked (story 9)", () => {
     expect(within(card).queryByRole("button", { name: "Show me what you looked at" })).toBeNull();
   });
 });
+
+describe("choice card (story 11)", () => {
+  // Made-up rows: these test the card, not the lesson's wording.
+  const ITEMS = ["Small", "Large"];
+  const OPTIONS = ["Yes", "No"];
+  const check = () => screen.getByRole("button", { name: "Check my answers" });
+
+  it("TC-11 one row per item with a button per option; checking waits for every row", async () => {
+    const { ChoiceCard } = await import("../choice-card");
+    render(<ChoiceCard stepId="x.1" text="Pick one per row." items={ITEMS} options={OPTIONS} status="executing" respond={vi.fn()} />);
+    for (const item of ITEMS) expect(within(screen.getByRole("group", { name: item })).getAllByRole("button")).toHaveLength(2);
+    expect(check()).toBeDisabled();
+    fireEvent.click(within(screen.getByRole("group", { name: "Small" })).getByRole("button", { name: "Yes" }));
+    expect(check()).toBeDisabled();
+    const large = within(screen.getByRole("group", { name: "Large" }));
+    fireEvent.click(large.getByRole("button", { name: "Yes" }));
+    fireEvent.click(large.getByRole("button", { name: "No" }));
+    expect(large.getByRole("button", { name: "No" })).toHaveAttribute("aria-pressed", "true");
+    expect(large.getByRole("button", { name: "Yes" })).toHaveAttribute("aria-pressed", "false");
+    expect(check()).toBeEnabled();
+  });
+
+  it("TC-12 answers go back in row order, once, and the card keeps a record", async () => {
+    const { ChoiceCard } = await import("../choice-card");
+    const respond = vi.fn();
+    render(<ChoiceCard stepId="x.1" text="Pick." items={ITEMS} options={OPTIONS} status="executing" respond={respond} />);
+    fireEvent.click(within(screen.getByRole("group", { name: "Large" })).getByRole("button", { name: "No" }));
+    fireEvent.click(within(screen.getByRole("group", { name: "Small" })).getByRole("button", { name: "Yes" }));
+    fireEvent.click(check());
+    expect(respond).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(respond.mock.calls[0][0])).toEqual({ answers: ["Yes", "No"] });
+    const records = screen.getAllByTestId("coach-record");
+    expect(records.map((r) => r.textContent)).toEqual(["Small: Yes", "Large: No"]);
+  });
+
+  it("TC-12 skip answers skip", async () => {
+    const { ChoiceCard } = await import("../choice-card");
+    const respond = vi.fn();
+    render(<ChoiceCard text="Pick." items={ITEMS} options={OPTIONS} status="executing" respond={respond} />);
+    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+    expect(JSON.parse(respond.mock.calls[0][0])).toEqual({ action: "skip" });
+  });
+});
+
+describe("choice card with streamed arguments (story 11)", () => {
+  it("rows that arrive after the card first renders can still be answered", async () => {
+    const { ChoiceCard } = await import("../choice-card");
+    const respond = vi.fn();
+    const { rerender } = render(<ChoiceCard text="" items={[]} options={[]} status="executing" respond={respond} />);
+    rerender(<ChoiceCard text="Pick." items={["Small", "Large"]} options={["Yes", "No"]} status="executing" respond={respond} />);
+    fireEvent.click(within(screen.getByRole("group", { name: "Small" })).getByRole("button", { name: "Yes" }));
+    fireEvent.click(within(screen.getByRole("group", { name: "Large" })).getByRole("button", { name: "No" }));
+    expect(within(screen.getByRole("group", { name: "Small" })).getByRole("button", { name: "Yes" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+    expect(JSON.parse(respond.mock.calls[0][0])).toEqual({ answers: ["Yes", "No"] });
+  });
+});

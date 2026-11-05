@@ -248,21 +248,43 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     expect(JSON.parse(readFileSync(join(process.env.COACH_E2E_HOME!, "consent.json"), "utf8"))).toMatchObject({ probes: true, history: false, doIt: false });
     await shot(page, "04-check-result");
 
-    // Story 7, TC-25: the fits test step draws Will it fit?; 8 GB and a 5 GB file fits.
-    const step3 = page.getByTestId("coach-step").last();
-    const fitFigure = step3.getByTestId("coach-figure");
-    await expect(fitFigure).toHaveAttribute("data-figure", "will-it-fit");
-    await expect(fitFigure.locator("svg").getByText("Doesn't run: 20 GB is bigger than 16 GB.")).toBeVisible();
-    await fitFigure.getByRole("button", { name: "8 GB", exact: true }).click();
-    await fitFigure.getByRole("button", { name: "5 GB", exact: true }).click();
-    await expect(fitFigure.locator("svg").getByText("Fits: 5 GB is under three quarters of 8 GB.")).toBeVisible();
-    await fitFigure.scrollIntoViewIfNeeded();
-    await shot(page, "04b-will-it-fit");
-
-    await page.getByRole("button", { name: "I did it" }).last().click();
-    // TC-26: the answered step keeps a record, without its figure.
-    await expect(step3.getByTestId("coach-record")).toBeVisible();
-    await expect(step3.getByTestId("coach-figure")).toHaveCount(0);
+    // Story 11, TC-13: the fits test is a choice card, marked in code against this machine's number.
+    // The rows are read from the card, so this follows whatever the lesson asks.
+    const choice = page.getByTestId("coach-choice").last();
+    await expect(choice.getByTestId("coach-figure")).toBeVisible();
+    const rows = choice.locator(".coach-choice__row");
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThan(0);
+    await expect(choice.getByRole("button", { name: "Check my answers" })).toBeDisabled();
+    await choice.getByTestId("coach-figure").scrollIntoViewIfNeeded();
+    await shot(page, "04b-fits-test");
+    // First, every row with the first option: wrong on this machine if any file is bigger than its memory.
+    for (let i = 0; i < rowCount; i += 1) await rows.nth(i).getByRole("button").first().click();
+    const checksBefore = await page.getByTestId("coach-check").count();
+    await choice.getByRole("button", { name: "Check my answers" }).click();
+    await expect(page.getByTestId("coach-check")).toHaveCount(checksBefore + 1);
+    const firstVerdict = page.getByTestId("coach-check").last();
+    await expect(firstVerdict.getByText(/^(Passed|Not yet)$/)).toBeVisible();
+    // TC-26: the answered card keeps a record of the answers, without its figure.
+    await expect(choice.getByTestId("coach-record").first()).toBeVisible();
+    await expect(choice.getByTestId("coach-figure")).toHaveCount(0);
+    if (await firstVerdict.getByText("Not yet").count()) {
+      await expect(firstVerdict).toContainText("Have another look at");
+      // A fresh card; this time answer by the rule: a file fits when it is no bigger than the memory.
+      const again = page.getByTestId("coach-choice").last();
+      await expect(again.getByRole("button", { name: "Check my answers" })).toBeVisible();
+      const againRows = again.locator(".coach-choice__row");
+      for (let i = 0; i < (await againRows.count()); i += 1) {
+        const row = againRows.nth(i);
+        const gb = Number(((await row.getAttribute("aria-label")) ?? "").match(/(\d+(?:\.\d+)?)\s*GB/)?.[1]);
+        await row.getByRole("button").nth(gb <= MEMORY_GB ? 0 : 1).click();
+      }
+      await again.getByRole("button", { name: "Check my answers" }).click();
+      await expect(page.getByTestId("coach-check")).toHaveCount(checksBefore + 2);
+      await expect(page.getByTestId("coach-check").last().getByText("Passed")).toBeVisible();
+    }
+    await expect(page.getByTestId("coach-check").last()).toContainText(`On your ${MEMORY_GB} GB:`);
+    await shot(page, "04c-fits-passed");
     const map = page.getByTestId("coach-map");
     await expect(map).toBeVisible();
     await expect(map.locator("[data-station='machine']")).toHaveAttribute("data-status", "verified");
@@ -305,7 +327,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     // Story 8, TC-15: the question asked about a sentence keeps its quote after a reload.
     await expect(page.getByTestId("copilot-user-message").getByTestId("coach-quote").first()).toBeVisible();
     await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toBeVisible();
-    await expect(page.getByText("Passed")).toBeVisible();
+    await expect(page.getByText("Passed").first()).toBeVisible();
     await expect(page.getByTestId("coach-map")).toBeVisible();
     await page.waitForTimeout(500); // the restore scroll settles
 

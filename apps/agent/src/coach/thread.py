@@ -52,3 +52,24 @@ def passing_check(messages: list[BaseMessage], step_id: str) -> dict[str, Any] |
         if args.get("step_id") == step_id and isinstance(verdict, dict):
             found = verdict
     return found if found and found.get("passed") is True and found.get("checked") is True else None
+
+
+def room_for(messages: list[BaseMessage]) -> float | None:
+    """The learner's memory number for marking (story 11): the newest checked measurement in
+    the thread (the real coach's run_check result or the stub's check card), else the newest
+    number they typed, else None."""
+    measured = None
+    for _args, verdict in results(messages, "run_check"):
+        if isinstance(verdict, dict) and verdict.get("checked") and isinstance(verdict.get("measured"), (int, float)):
+            measured = verdict["measured"]
+    for message in messages:
+        if isinstance(message, AIMessage):
+            for call in message.tool_calls:
+                args = call.get("args") or {}
+                if call.get("name") == "check_result" and args.get("checked") and isinstance(args.get("measured"), (int, float)):
+                    measured = args["measured"]
+    if measured is not None:
+        return float(measured)
+    typed = last_answer(messages, "number_card")
+    value = typed.get("value") if typed else None
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None

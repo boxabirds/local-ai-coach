@@ -20,6 +20,7 @@ import { CheckResult } from "@/components/coach/check-result";
 import { TubeMap, type MapStation } from "@/components/coach/tube-map";
 import { RunConfirm } from "@/components/coach/run-confirm";
 import { ConsentCard } from "@/components/coach/consent-card";
+import { ChoiceCard } from "@/components/coach/choice-card";
 import { RecapCard } from "@/components/coach/recap-card";
 import { TerminalTranscript } from "@/components/coach/terminal-transcript";
 import "@/components/coach/coach.css";
@@ -56,6 +57,15 @@ const NumberParams = z.object({
 });
 
 const RunConfirmParams = z.object({ cmd: z.string(), explain: z.string() });
+
+const ChoiceParams = z.object({
+  station_id: z.string().optional(),
+  step_id: z.string().optional(),
+  text: z.string(),
+  items: z.array(z.string()),
+  options: z.array(z.string()),
+  figure: z.string().optional(),
+});
 
 const ConsentParams = z.object({
   station_id: z.string().optional(),
@@ -184,6 +194,24 @@ export const useCoachUI = () => {
         hint={args.hint}
         figure={args.figure || undefined}
         platform={platform()}
+        status={status as CardStatus}
+        respond={respond ? (value) => void respond(value) : undefined}
+        result={result}
+      />
+    ),
+  });
+
+  useHumanInTheLoop({
+    name: "choice_card",
+    description: "A test answered with buttons: one row per item, one choice per row. Returns {answers} in row order, or {action: skip}.",
+    parameters: ChoiceParams,
+    render: ({ args, status, respond, result }) => (
+      <ChoiceCard
+        stepId={args.step_id}
+        text={args.text}
+        items={args.items}
+        options={args.options}
+        figure={args.figure || undefined}
         status={status as CardStatus}
         respond={respond ? (value) => void respond(value) : undefined}
         result={result}
