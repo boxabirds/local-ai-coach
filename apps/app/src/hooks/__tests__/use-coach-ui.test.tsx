@@ -43,7 +43,7 @@ describe("useCoachUI (TC-57)", () => {
 
   it("registers every coach card by its hook kind", () => {
     render(<Probe />);
-    expect(captured.useHumanInTheLoop.map((c) => c.name)).toEqual(["story", "step_card", "number_card", "run_confirm", "recap_card"]);
+    expect(captured.useHumanInTheLoop.map((c) => c.name)).toEqual(["story", "step_card", "number_card", "consent_card", "run_confirm", "recap_card"]);
     expect(captured.useComponent.map((c) => c.name)).toEqual(["check_result", "show_map"]);
     expect(captured.useRenderTool.map((c) => c.name)).toEqual(["run_do_it"]);
     expect(captured.useFrontendTool.map((c) => c.name)).toEqual(["sandbox_event"]);

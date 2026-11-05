@@ -172,7 +172,7 @@ def test_s9_tc30_a_mismatch_records_nothing_and_asks_again():
     machine = FakeMachine()
     turn = stub.decide(thread_for("number_card", step_args("machine.2"), '{"value":512}'), LESSON, consent=ALLOWED, run=probe_with(machine))
     assert turn.args["passed"] is False and turn.args["checked"] is True
-    assert turn.args["note"].startswith("You typed 512 and the machine says 16.")
+    assert turn.args["note"].startswith("You typed 512 GB and the machine says 16 GB.")
     assert turn.record == ()
     again = stub.decide(thread_for("check_result", {**step_args("machine.2"), "passed": False, "checked": True}, "rendered"), LESSON)
     assert again.tool == "number_card" and again.args["step_id"] == "machine.2"

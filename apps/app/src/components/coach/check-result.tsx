@@ -9,17 +9,19 @@ export type CheckResultProps = {
   stationId?: string;
   stepId?: string;
   passed?: boolean;
+  /** False when nothing was looked at (no permission, or the command could not run). */
+  checked?: boolean;
   evidence?: Evidence[];
   note?: string;
 };
 
-export function CheckResult({ stepId, passed, evidence = [], note }: CheckResultProps) {
+export function CheckResult({ stepId, passed, checked = true, evidence = [], note }: CheckResultProps) {
   const [open, setOpen] = useState(false);
   const { cardRef } = useArrivalScroll();
   return (
-    <CoachCard label="Check" testId="coach-check" tone={passed ? "pass" : "notyet"} cardRef={cardRef}>
+    <CoachCard label="Check" testId="coach-check" tone={!checked ? "plain" : passed ? "pass" : "notyet"} cardRef={cardRef}>
       <p className="coach-check__verdict" data-step-id={stepId}>
-        {passed ? "Passed" : "Not yet"}
+        {!checked ? "Not checked" : passed ? "Passed" : "Not yet"}
       </p>
       {note && <p className="coach-check__note">{note}</p>}
       {evidence.length > 0 && (

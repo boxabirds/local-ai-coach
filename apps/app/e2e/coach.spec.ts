@@ -1,5 +1,6 @@
 import { chromium, expect, test, type Browser, type Page } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
+import { totalmem } from "node:os";
 import { join } from "node:path";
 
 /**
@@ -17,6 +18,9 @@ const UNITS = SENTENCES + FIGURES;
 const MAX_PRESSES = 60;
 const SCROLL_SETTLE_MS = 3000;
 const ACCENT = "rgb(29, 78, 216)";
+/** This machine's memory as the probe reports it: Node reads the same source (story 9). */
+const MEMORY_GB = Math.round(totalmem() / 1024 ** 3);
+const DRIVE_GB = 512;
 const QUESTION = "The day after, what did Priya check?";
 const ANSWER = "Where her words went.";
 /** The coach under test: our own servers by default, or an installed release (E2E_BASE_URL). */
@@ -158,7 +162,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     expect(progress().stations.d_legal.status).toBe("read");
   });
 
-  test("know your machine: step, number, sample check, map", async () => {
+  test("know your machine: step, number, permission, real check, map", async () => {
     await page.getByRole("button", { name: "Find my number" }).click();
 
     const claim = page.getByRole("button", { name: "I did it" });
@@ -170,15 +174,55 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(number).toBeFocused();
     // Story 7: the number step shows the room and the warehouse above its text.
     await expect(page.getByTestId("coach-number").getByTestId("coach-figure")).toHaveAttribute("data-figure", "room-and-warehouse");
-    await page.keyboard.type("16");
+    // Story 9: the drive's number first, as a learner might.
+    await page.keyboard.type(String(DRIVE_GB));
     await page.keyboard.press("Enter");
-    await expect(page.getByText("You said: 16 GB")).toBeVisible();
+    await expect(page.getByText(`You said: ${DRIVE_GB} GB`)).toBeVisible();
 
-    await expect(page.getByText("Passed")).toBeVisible();
-    await expect(page.getByText("Sample result. The real probe arrives in step 3.")).toBeVisible();
-    await page.getByRole("button", { name: "Show me what you looked at" }).click();
-    await expect(page.getByText("sysctl -n hw.memsize")).toBeVisible();
-    await expect(page.getByText("17179869184")).toBeVisible();
+    // The permission card comes first, once, with history off; nothing has been read yet.
+    const consent = page.getByTestId("coach-consent");
+    await expect(consent).toBeVisible();
+    await expect(consent.getByRole("checkbox")).not.toBeChecked();
+    await expect(consent.getByRole("button", { name: "Allow" })).toBeFocused();
+    expect(existsSync(join(process.env.COACH_E2E_HOME!, "consent.json"))).toBe(false);
+    // The learner can see what they are allowing: Allow sits above the message box once the scroll settles.
+    await expect
+      .poll(async () => {
+        const allow = await consent.getByRole("button", { name: "Allow" }).boundingBox();
+        const input = await page.getByTestId("copilot-chat-input").boundingBox();
+        return allow !== null && input !== null && allow.y >= 0 && allow.y + allow.height <= input.y;
+      }, { timeout: SCROLL_SETTLE_MS })
+      .toBe(true);
+    await shot(page, "04a-permission");
+    await consent.getByRole("button", { name: "Allow" }).click();
+    await expect(consent.getByTestId("coach-record")).toContainText("Allowed, without shell history");
+
+    // The real probe disagrees: Not yet, the lesson's own hint, and the number card again.
+    const firstCheck = page.getByTestId("coach-check").first();
+    await expect(firstCheck.getByText("Not yet")).toBeVisible();
+    await expect(firstCheck).toContainText(`You typed ${DRIVE_GB} GB and the machine says ${MEMORY_GB} GB.`);
+    await expect(firstCheck).toContainText("The drive is the warehouse.");
+    const again = page.getByLabel("Memory in GB").last();
+    await expect(again).toBeFocused();
+    expect(progress().stations.machine).toBeUndefined();
+
+    // The right number: Passed straight away, no second permission card.
+    await page.keyboard.type(String(MEMORY_GB));
+    await page.keyboard.press("Enter");
+    await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toBeVisible();
+    const check = page.getByTestId("coach-check").last();
+    await expect(check.getByText("Passed")).toBeVisible();
+    await expect(check).toContainText(`You typed ${MEMORY_GB} GB and the machine says ${MEMORY_GB} GB.`);
+    await expect(page.getByTestId("coach-consent")).toHaveCount(1);
+    await check.getByRole("button", { name: "Show me what you looked at" }).click();
+    const evidence = check.getByTestId("coach-evidence");
+    if (process.platform === "darwin") {
+      await expect(evidence).toContainText("sysctl -n hw.memsize");
+      await expect(evidence).toContainText(String(totalmem()));
+    } else {
+      await expect(evidence).toContainText("grep MemTotal /proc/meminfo");
+    }
+    expect(JSON.parse(readFileSync(join(process.env.COACH_E2E_HOME!, "consent.json"), "utf8"))).toMatchObject({ probes: true, history: false, doIt: false });
     await shot(page, "04-check-result");
 
     // Story 7, TC-25: the fits test step draws Will it fit?; 8 GB and a 5 GB file fits.
@@ -198,14 +242,14 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(step3.getByTestId("coach-figure")).toHaveCount(0);
     const map = page.getByTestId("coach-map");
     await expect(map).toBeVisible();
-    await expect(map.locator("[data-station='machine']")).toHaveAttribute("data-status", "reported");
+    await expect(map.locator("[data-station='machine']")).toHaveAttribute("data-status", "verified");
     await expect(map.locator("[data-station='d_legal']")).toHaveAttribute("data-status", "read");
 
     // Story 5: criticality by shape and colour, progress by fill.
     const marker = (id: string) => map.locator(`[data-station='${id}']`);
     for (const [id, criticality, fill] of [
       ["d_legal", "red", "0.25"],
-      ["machine", "amber", "0.5"],
+      ["machine", "amber", "1"],
       ["localchat", "grey", "0"],
       ["prove", "red", "0"],
     ] as const) {
@@ -228,14 +272,14 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     const inputBox = (await page.getByTestId("copilot-chat-input").boundingBox())!;
     expect(mapBox.y + mapBox.height).toBeLessThanOrEqual(inputBox.y + 1);
     await shot(page, "05-map");
-    expect(progress().stations.machine.status).toBe("reported");
+    expect(progress().stations.machine.status).toBe("verified");
   });
 
   test("the conversation survives a reload", async () => {
     await page.waitForTimeout(500); // the last save lands
     await page.reload();
     await expect(page.getByTestId("coach-record").first()).toContainText(ANSWER);
-    await expect(page.getByText("You said: 16 GB")).toBeVisible();
+    await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toBeVisible();
     await expect(page.getByText("Passed")).toBeVisible();
     await expect(page.getByTestId("coach-map")).toBeVisible();
     await page.waitForTimeout(500); // the restore scroll settles
@@ -252,7 +296,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(cardMessage.getByTestId("copilot-assistant-toolbar")).toBeHidden();
 
     // Cards sit on paper, not the upstream lavender surface.
-    await expect(page.getByTestId("coach-check")).toHaveCSS("background-color", PAPER);
+    await expect(page.getByTestId("coach-check").last()).toHaveCSS("background-color", PAPER);
     await shot(page, "06-after-reload");
   });
 
@@ -261,7 +305,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(page.getByRole("button", { name: "I did it" }).last()).toBeFocused();
     await page.waitForTimeout(500);
     await page.reload();
-    await expect(page.getByText("You said: 16 GB")).toBeVisible();
+    await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toBeVisible();
     await expect(page.locator(".coach-card--active")).toHaveCount(0);
     await page.getByRole("button", { name: "Find my number" }).click();
     await expect(page.getByRole("button", { name: "I did it" }).last()).toBeFocused();
@@ -269,9 +313,9 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
 
   test("New chat clears the conversation, and a reload stays clear", async () => {
     await page.getByRole("button", { name: "New chat" }).click();
-    await expect(page.getByText("You said: 16 GB")).toHaveCount(0);
+    await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toHaveCount(0);
     await page.reload();
-    await expect(page.getByText("You said: 16 GB")).toHaveCount(0);
+    await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Read Priya's story" })).toBeVisible();
     await shot(page, "07-new-chat");
   });

@@ -34,7 +34,7 @@
       "check": { "kind": "real", "probe": "memory", "params": {}, "compare": "typed", "toleranceGb": 1 },
       "onFail": {
         "pattern": "mismatch",
-        "say": "You typed {typed} and the machine says {measured}. Did you read the drive by mistake? The drive is the warehouse. Memory is the room."
+        "say": "You typed {typed} GB and the machine says {measured} GB. Did you read the drive by mistake? The drive is the warehouse. Memory is the room."
       }
     },
     {

@@ -10,6 +10,7 @@ import { CheckResult } from "../check-result";
 import { DEFAULT_STATIONS, TubeMap, progressFill } from "../tube-map";
 import { RunConfirm } from "../run-confirm";
 import { RecapCard } from "../recap-card";
+import { ConsentCard } from "../consent-card";
 
 /** Real curriculum content, so the fixtures are the shapes the stub sends. */
 const CURRICULUM = resolve(__dirname, "../../../../../../curriculum");
@@ -587,5 +588,49 @@ describe("run confirm and recap", () => {
     fireEvent.change(screen.getByLabelText("Your answer"), { target: { value: " three quarters " } });
     fireEvent.click(screen.getByRole("button", { name: "Answer" }));
     await waitFor(() => expect(respond).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ answer: "three quarters" })));
+  });
+});
+
+describe("permission card and Not checked (story 9)", () => {
+  const ITEMS = ["How much memory this computer has.", "Where the chat app is connected, while it answers."];
+  const HISTORY = "Also read the last 200 lines of my shell history, to see the commands I typed.";
+
+  it("TC-32 lists what may be read, history off by default, Allow focused", () => {
+    render(<ConsentCard items={ITEMS} historyItem={HISTORY} status="executing" respond={vi.fn()} />);
+    const card = screen.getByTestId("coach-consent");
+    for (const item of ITEMS) expect(within(card).getByText(item)).toBeInTheDocument();
+    expect(within(card).getByRole("checkbox", { name: HISTORY })).not.toBeChecked();
+    expect(within(card).getByRole("button", { name: "Allow" })).toHaveFocus();
+  });
+
+  it.each([
+    ["Allow", false, { allow: true, history: false }, "Allowed, without shell history"],
+    ["Allow", true, { allow: true, history: true }, "Allowed, with shell history"],
+    ["Not now", true, { allow: false, history: false }, "Not now"],
+  ])("TC-32 %s with history ticked=%s answers %j and keeps a record", (button, tick, expected, record) => {
+    const respond = vi.fn();
+    render(<ConsentCard items={ITEMS} historyItem={HISTORY} status="executing" respond={respond} />);
+    if (tick) fireEvent.click(screen.getByRole("checkbox", { name: HISTORY }));
+    fireEvent.click(screen.getByRole("button", { name: button }));
+    expect(respond).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(respond.mock.calls[0][0])).toEqual(expected);
+    expect(screen.getByTestId("coach-record")).toHaveTextContent(record);
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
+  });
+
+  it("TC-32 an answered card from the thread shows its record and cannot answer again", () => {
+    const respond = vi.fn();
+    render(<ConsentCard items={ITEMS} status="complete" respond={respond} result={JSON.stringify({ allow: false, history: false })} />);
+    expect(screen.getByTestId("coach-record")).toHaveTextContent("Not now");
+    expect(respond).not.toHaveBeenCalled();
+  });
+
+  it("TC-33 a check that looked at nothing says Not checked, not Not yet", () => {
+    render(<CheckResult stepId="machine.2" passed={false} checked={false} evidence={[]} note="You chose not to let me look, so I've taken your word for it." />);
+    const card = screen.getByTestId("coach-check");
+    expect(within(card).getByText("Not checked")).toBeInTheDocument();
+    expect(within(card).queryByText("Not yet")).toBeNull();
+    expect(card).toHaveClass("coach-card--plain");
+    expect(within(card).queryByRole("button", { name: "Show me what you looked at" })).toBeNull();
   });
 });

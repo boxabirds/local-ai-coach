@@ -18,6 +18,7 @@ import { NumberCard, detectPlatform } from "@/components/coach/number-card";
 import { CheckResult } from "@/components/coach/check-result";
 import { TubeMap, type MapStation } from "@/components/coach/tube-map";
 import { RunConfirm } from "@/components/coach/run-confirm";
+import { ConsentCard } from "@/components/coach/consent-card";
 import { RecapCard } from "@/components/coach/recap-card";
 import { TerminalTranscript } from "@/components/coach/terminal-transcript";
 import "@/components/coach/coach.css";
@@ -55,6 +56,14 @@ const NumberParams = z.object({
 
 const RunConfirmParams = z.object({ cmd: z.string(), explain: z.string() });
 
+const ConsentParams = z.object({
+  station_id: z.string().optional(),
+  step_id: z.string().optional(),
+  typed: z.number().optional(),
+  items: z.array(z.string()),
+  history_item: z.string().optional(),
+});
+
 const RecapParams = z.object({
   item_id: z.string(),
   question: z.string(),
@@ -68,8 +77,10 @@ export const CheckResultParams = z.object({
   station_id: z.string(),
   step_id: z.string(),
   passed: z.boolean(),
+  checked: z.boolean().optional(),
   evidence: z.array(EvidenceSchema),
   note: z.string().optional(),
+  measured: z.unknown().optional(),
 });
 
 export const ShowMapParams = z.object({ focus: z.string().optional() });
@@ -155,6 +166,21 @@ export const useCoachUI = () => {
   });
 
   useHumanInTheLoop({
+    name: "consent_card",
+    description: "Ask once, before the first look at this computer, listing exactly what may be read. Returns {allow, history}.",
+    parameters: ConsentParams,
+    render: ({ args, status, respond, result }) => (
+      <ConsentCard
+        items={args.items}
+        historyItem={args.history_item}
+        status={status as CardStatus}
+        respond={respond ? (value) => void respond(value) : undefined}
+        result={result}
+      />
+    ),
+  });
+
+  useHumanInTheLoop({
     name: "run_confirm",
     description: "Show the exact command before the coach runs it. Returns {confirmed}.",
     parameters: RunConfirmParams,
@@ -190,8 +216,8 @@ export const useCoachUI = () => {
     name: "check_result",
     description: "Show a check's result and exactly what was looked at.",
     parameters: CheckResultParams,
-    render: ({ station_id, step_id, passed, evidence, note }) => (
-      <CheckResult stationId={station_id} stepId={step_id} passed={passed} evidence={evidence} note={note} />
+    render: ({ station_id, step_id, passed, checked, evidence, note }) => (
+      <CheckResult stationId={station_id} stepId={step_id} passed={passed} checked={checked} evidence={evidence} note={note} />
     ),
   });
 

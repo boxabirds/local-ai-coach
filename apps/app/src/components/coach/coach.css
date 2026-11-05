@@ -539,3 +539,26 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* The permission card (Ceetrix story 9). */
+.coach-consent__list {
+  margin: 0;
+  padding-left: 20px;
+  list-style: disc;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--coach-ink);
+}
+
+.coach-consent__history {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--coach-ink);
+}
+
+.coach-consent__history input {
+  margin-top: 4px;
+}
