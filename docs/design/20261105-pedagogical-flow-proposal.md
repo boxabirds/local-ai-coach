@@ -63,6 +63,13 @@ The three questions, and where each is answered:
   - **Depends:** the middle, where the settings decide. This isn't a fail. It's where the learner starts tuning, and the rest of the series is that journey (quantisation and context in chapter 2, the caches in Book 2).
 
   The candidate (mine, to be tested against the job table before anything changes): **fits if the file is under half your memory; doesn't if the file is bigger than your memory; depends in between.** On 16 GB: 2 GB fits, 5 GB fits, 10 GB depends, 20 GB doesn't. It holds for the three measurements above (the 32B's 20 GB file on a 24 GB card is "depends", and it did fit, with under 1 GB to spare). What I haven't measured is the computer's bucket on an 8 GB machine, where it is a bigger share and "under half" may be too generous. That needs a run on an 8 GB machine, which I don't have.
+- **Kinds of machine (Julian, 2026-11-05).** Two kinds of memory, named **normal memory** and **graphics card memory** ("graphics card" because the book already says it 16 times, and it's one step from "GPU"; never "shared" or "unified", since Windows uses "shared GPU memory" for the opposite). The second fact on the sticky note becomes: do you have graphics card memory, and how much?
+  - **Office laptop, or Priya's box:** normal memory only, and the processor does the work. Small and medium models at reading pace or a bit under. Measured: Qwen 3 8B on the processor alone (gruntus, i9-13900F, graphics card off) at 8.4 tokens a second, about 6 words a second; 0.6B at 71. An office laptop reads its memory more slowly than this desktop, so expect less (not measured). This keeps chapter 0's promise: no graphics card, and the letter still comes out at reading pace.
+  - **Gaming PC or laptop:** a graphics card with 4 to 16 GB of its own memory, beside normal memory (64 GB of normal memory and 12 GB on the card is typical). Graphics card memory is the small fast room. A model that fits there runs fast. A bigger one spills into normal memory and runs at about processor speed. So three outcomes, fast, slow, or doesn't fit, and the bands apply twice: to the card for "fast", and to both together for "runs at all". This is where "which model fits" matters most, and chapter 1's "complication you can ignore for now" can't be ignored any more.
+  - **Mac, or a Ryzen AI Max box:** normal memory only, but the built-in graphics uses it directly, so it's fast. Not all of it is available to the graphics; I understand macOS caps it at about two thirds to three quarters by default, which is not measured yet.
+  - **A local AI machine (64 to 128 GB):** a server for one person or a team, reached over the network. This is the PoC's box on the shelf (chapters 3 to 5).
+
+  BitNet-style models built for processors are real but few, so they're a footnote, not a category.
 - What does the work decides speed: at reading pace, or a word every few seconds. One sentence, a pointer to Book 2.
 - Goes: "A 20 GB model on a 16 GB laptop doesn't run slowly. It doesn't run." (some apps will have a go, as the chapter's own pedantic note admits) and "the sticky note really is the whole story". Stays: the room and the warehouse, which is still true and still the clearest image in the chapter.
 
@@ -119,11 +126,16 @@ Other places the three-quarters rule appears, all of which change with it:
 - figures: `will-it-fit`, `room-and-warehouse` and `one-file` (the mark, the captions and the verdict lines in `make_figures.py`), and the rule's own copy in `validate.py`;
 - coach code: `fits_room` and `grade_choices` in `checks.py` grade two answers today, and need a third.
 
+The two kinds of memory also change:
+- `map.json` term "two rooms (separate graphics card memory)", which becomes "graphics card memory", with "normal memory" as its partner;
+- `chapters/know-your-machine.md` line 260 ("A complication you can ignore for now"), its front-matter claim that the card "changes speed, not whether it runs", and the reference machine "16 GB laptop, no GPU";
+- the 16 uses of "graphics card" in the curriculum, which stay as they are.
+
 ## 5. What it means for the coach (V1)
 
 - **Lesson `machine`:**
   - step 1 asks for both facts (memory, and what does the work);
-  - step 2 checks the memory number as now, and reads the chip with a new probe (`sysctl -n machdep.cpu.brand_string` and the GPU on a Mac; `lspci` or `nvidia-smi` on Linux);
+  - step 2 checks the memory number as now, and a new probe reads the kind of machine: graphics card memory and how much (`nvidia-smi` or `rocm-smi` on Linux, `system_profiler SPDisplaysDataType` on a Mac, which reports built-in graphics using normal memory);
   - step 3 becomes the job table test on the existing choice card.
 - **Figures:**
   - will-it-fit draws the two buckets, and the three bands instead of a three-quarters mark;
@@ -141,4 +153,4 @@ Other places the three-quarters rule appears, all of which change with it:
 5. **V1 scope:** the letter-at-three-sizes example belongs to chapter 2, which isn't in V1. Add it to V1, or leave it for after?
 6. **The band edges:** "under half fits, over the whole doesn't" is my candidate. It replaces your three-quarters rule in the book, so the numbers are yours. Should I test it against the job table first, and is an 8 GB machine available to measure on?
 
-Decided 2026-11-05 (Julian): decision 6, the band edges: under half your memory fits, bigger than your memory doesn't, in between depends. No 8 GB machine is available, so the rule is marked as not measured on 8 GB wherever it appears, until someone measures it. Also decided: the two buckets, what the computer needs and what the model needs (weights, inference server, context window, other supporting features); "working space" kept as a phrase; and a rule of thumb wide enough that "fits" and "doesn't" are almost certain, with the middle left to tuning.
+Decided 2026-11-05 (Julian): decision 6, the band edges: under half your memory fits, bigger than your memory doesn't, in between depends. No 8 GB machine is available, so the rule is marked as not measured on 8 GB wherever it appears, until someone measures it. The names "normal memory" and "graphics card memory", and machines described by which of the two they have. Also decided: the two buckets, what the computer needs and what the model needs (weights, inference server, context window, other supporting features); "working space" kept as a phrase; and a rule of thumb wide enough that "fits" and "doesn't" are almost certain, with the middle left to tuning.
