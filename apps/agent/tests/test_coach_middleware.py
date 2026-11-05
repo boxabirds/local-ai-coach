@@ -90,3 +90,49 @@ def test_tc22_with_nothing_open_and_nothing_asked():
     text = capture.request.system_message.content
     assert "Permission to look at this computer: unasked." in text and "No station is open yet." in text
     assert "Lesson (the contract" not in text
+
+
+# ------------------------------------------------------------------ a card answered after a question (TC-24c)
+
+def _late_answer_thread():
+    """As the agent holds it: the card's call, deepagents' cancelled note, the question, the reply, the late answer."""
+    call = AIMessage(content="", tool_calls=[{"id": "card1", "name": "step_card", "type": "tool_call", "args": {"station_id": "machine", "step_id": "machine.1"}}])
+    cancelled = ToolMessage(content="Tool call step_card with id card1 was cancelled - another message came in before it could be completed.", tool_call_id="card1")
+    return [HumanMessage(content="Find my number"), call, cancelled, HumanMessage(content="What's memory?"), AIMessage(content="The room."), ToolMessage(content='{"action": "claim"}', tool_call_id="card1")]
+
+
+def _orphans(messages):
+    """Tool results that don't directly follow the AI message holding their call."""
+    out, open_ids = [], set()
+    for m in messages:
+        if isinstance(m, AIMessage):
+            open_ids = {c["id"] for c in m.tool_calls}
+        elif isinstance(m, ToolMessage):
+            if m.tool_call_id in open_ids:
+                open_ids.discard(m.tool_call_id)
+            else:
+                out.append(m)
+        else:
+            open_ids = set()
+    return out
+
+
+def test_tc24c_a_late_card_answer_reaches_the_model_as_a_note():
+    thread = _late_answer_thread()
+    capture = _Capture()
+    request = ModelRequest(model=None, messages=list(thread), system_message=SystemMessage(content="BASE"), tools=[], state={"messages": thread}, runtime=None)
+    CoachStateMiddleware().wrap_model_call(request, capture)
+    sent = capture.request.messages
+    assert _orphans(sent) == []
+    note = sent[-1]
+    assert isinstance(note, HumanMessage)
+    assert note.content == 'I\'ve now answered the earlier step_card for machine.1: {"action": "claim"}'
+    assert isinstance(thread[-1], ToolMessage)  # the thread itself is untouched
+
+
+def test_tc24c_a_result_right_after_its_call_passes_unchanged():
+    call = AIMessage(content="", tool_calls=[{"id": "c1", "name": "step_card", "type": "tool_call", "args": {"step_id": "machine.1"}}])
+    thread = [HumanMessage(content="Find my number"), call, ToolMessage(content='{"action": "claim"}', tool_call_id="c1")]
+    capture = _Capture()
+    CoachStateMiddleware().wrap_model_call(ModelRequest(model=None, messages=list(thread), system_message=SystemMessage(content="BASE"), tools=[], state={"messages": thread}, runtime=None), capture)
+    assert capture.request.messages == thread

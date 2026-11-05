@@ -16,7 +16,7 @@ from typing import Any, NotRequired
 
 from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 from src.coach import curriculum, progress, thread
 from src.coach import consent as consent_store
@@ -86,11 +86,39 @@ def coach_context(state: dict[str, Any]) -> str:
     return "\n\n".join(parts)
 
 
+LATE_ANSWER = "I've now answered the earlier {name} for {step}: {answer}"
+
+
+def without_late_answers(messages: list) -> list:
+    """Messages as the model may receive them: a card's answer that arrives after the learner
+    typed something (its call was marked cancelled, but the card still worked on screen) has
+    no call directly before it, which the hosted model refuses. It goes in as the learner's
+    note instead. Only what the model is sent changes; the thread keeps the tool result."""
+    calls = {c["id"]: c for m in messages if isinstance(m, AIMessage) for c in m.tool_calls if c.get("id")}
+    out, open_ids = [], set()
+    for m in messages:
+        if isinstance(m, AIMessage):
+            open_ids = {c["id"] for c in m.tool_calls if c.get("id")}
+        elif isinstance(m, ToolMessage):
+            if m.tool_call_id in open_ids:
+                open_ids.discard(m.tool_call_id)
+            else:
+                call = calls.get(m.tool_call_id, {})
+                step = (call.get("args") or {}).get("step_id") or "the open step"
+                answer = m.content if isinstance(m.content, str) else str(m.content)
+                out.append(HumanMessage(content=LATE_ANSWER.format(name=call.get("name", "card"), step=step, answer=answer)))
+                continue
+        else:
+            open_ids = set()
+        out.append(m)
+    return out
+
+
 def with_context(request):
     note = "\n\n" + coach_context(request.state)
     current = request.system_message.content if request.system_message else ""
     content = [*current, {"type": "text", "text": note}] if isinstance(current, list) else current + note
-    return request.override(system_message=SystemMessage(content=content))
+    return request.override(system_message=SystemMessage(content=content), messages=without_late_answers(list(request.messages)))
 
 
 class CoachStateMiddleware(AgentMiddleware):

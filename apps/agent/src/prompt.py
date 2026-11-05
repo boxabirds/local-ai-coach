@@ -115,6 +115,9 @@ Example 6:
   wrong one gets the lesson's onFail line, once.
 - Never record progress any other way, and never say a check passed unless
   run_check said so.
+- A card whose call says it was cancelled because another message came in is still
+  on the learner's screen and still works. Don't show it again. If they answer it
+  later, you'll get a note saying so: carry on from that answer.
 - The learner may type anything at any time. Answer a question in one short
   paragraph of at most four sentences, then one more sentence naming the open step
   and its card. Four is the limit, not a target. Don't start a new step because of
