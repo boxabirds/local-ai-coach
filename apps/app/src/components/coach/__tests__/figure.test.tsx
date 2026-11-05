@@ -6,9 +6,10 @@ import { resolve } from "node:path";
 import { Figure, FIGURE_LOAD_ERROR, FIGURE_URL, clearFigureCache } from "../figure";
 import { defaultChoices, figureId, parseWhen, resultText, sanitiseSvg, visible } from "../figure-logic";
 import { StepCard } from "../step-card";
+import { FIXTURE_CURRICULUM } from "@/test/fixture-curriculum";
 
 /** The real figures, as the agent serves them (curriculum.figure in apps/agent). */
-const CURRICULUM = resolve(__dirname, "../../../../../../curriculum");
+const CURRICULUM = FIXTURE_CURRICULUM;
 const REGISTRY = JSON.parse(readFileSync(resolve(CURRICULUM, "figures.json"), "utf8")).figures as Record<string, unknown>[];
 function served(id: string) {
   const entry = REGISTRY.find((e) => e.id === id)!;

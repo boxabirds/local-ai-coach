@@ -11,10 +11,11 @@ import { QuotedInput } from "../quoted-input";
 import { useAskAbout } from "@/hooks/use-ask-about";
 import { StepCard } from "@/components/coach/step-card";
 import { Figure, clearFigureCache } from "@/components/coach/figure";
+import { FIXTURE_CURRICULUM } from "@/test/fixture-curriculum";
 
 /** Story 8: asking about a coach bubble. The coach's own cards are rendered for real; CopilotChat's
  * message markup is copied from its rendered output (data-testid and nesting). */
-const CURRICULUM = resolve(__dirname, "../../../../../../curriculum");
+const CURRICULUM = FIXTURE_CURRICULUM;
 const WILL_IT_FIT = (() => {
   const entry = JSON.parse(readFileSync(resolve(CURRICULUM, "figures.json"), "utf8")).figures.find((e: { id: string }) => e.id === "will-it-fit");
   return { ...entry, svg: readFileSync(resolve(CURRICULUM, "figures/will-it-fit.svg"), "utf8") };

@@ -11,9 +11,10 @@ import { DEFAULT_STATIONS, TubeMap, progressFill } from "../tube-map";
 import { RunConfirm } from "../run-confirm";
 import { RecapCard } from "../recap-card";
 import { ConsentCard } from "../consent-card";
+import { FIXTURE_CURRICULUM } from "@/test/fixture-curriculum";
 
 /** Real curriculum content, so the fixtures are the shapes the stub sends. */
-const CURRICULUM = resolve(__dirname, "../../../../../../curriculum");
+const CURRICULUM = FIXTURE_CURRICULUM;
 const STORY = readFileSync(resolve(CURRICULUM, "stories/legal-letter.md"), "utf8");
 const MACHINE = JSON.parse(readFileSync(resolve(CURRICULUM, "lessons/machine.json"), "utf8"));
 const STEP1 = MACHINE.steps[0];

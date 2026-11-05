@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { BEAT_WORDS, sentences, storyBeats, storyBlocks, storySentences } from "../story-beats";
+import { FIXTURE_CURRICULUM } from "@/test/fixture-curriculum";
 
-const STORY = readFileSync(resolve(__dirname, "../../../../../../curriculum/stories/legal-letter.md"), "utf8");
+const STORY = readFileSync(resolve(FIXTURE_CURRICULUM, "stories/legal-letter.md"), "utf8");
 const HEADING = /^#{1,6}\s/;
 const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
 const proseWords = (beat: string) => beat.split("\n\n").filter((b) => !HEADING.test(b)).reduce((n, b) => n + words(b), 0);
@@ -113,7 +114,7 @@ describe("storySentences: one bubble per sentence", () => {
 
 describe("figures in the story (Ceetrix story 7)", () => {
   const units = storySentences(STORY);
-  const figures = JSON.parse(readFileSync(resolve(__dirname, "../../../../../../curriculum/figures.json"), "utf8")).figures as {
+  const figures = JSON.parse(readFileSync(resolve(FIXTURE_CURRICULUM, "figures.json"), "utf8")).figures as {
     id: string;
     coach: { story?: string };
     book: { after: string };

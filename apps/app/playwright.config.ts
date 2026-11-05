@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import { mkdtempSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 /**
  * End-to-end tests against the stub coach (no model, no keys), in a real browser.
@@ -48,7 +48,8 @@ export default defineConfig({
     {
       command: `uv run --directory ../agent uvicorn main:app --host 127.0.0.1 --port ${AGENT_PORT}`,
       url: `${AGENT_URL}/health`,
-      env: { COACH_HOME: process.env.COACH_E2E_HOME },
+      // The tests' frozen curriculum (story 13), so editing the book never changes an e2e result.
+      env: { COACH_HOME: process.env.COACH_E2E_HOME, COACH_CURRICULUM: resolve(__dirname, "../../fixtures/curriculum") },
       reuseExistingServer: false,
       timeout: 120_000,
     },
