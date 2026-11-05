@@ -59,6 +59,23 @@ Teaching point: a bigger model's mistakes are fewer per sentence but harder to s
 2. **Size costs memory and speed.** 2 GB, 7.5 GB, 23 GB; the 32B is about ten times slower than the 0.6B on the same card, and won't load on a 16 GB laptop.
 3. **No size is safe to send unread.** Every letter at every size has at least one thing wrong or made up. The 32B's invented ten-day deadline and its double-counted £60 would be in front of Mr Pell with Priya's name on them. That is the accountability line the chapter ends on.
 
+## The 16 GB Mac (added 2026-11-05)
+
+MacBook Air, Apple M2, 16 GB, Ollama 0.40.14 (newer than gruntus's 0.9.6), run with `windows-run.ps1` under PowerShell to test that script. Raw output: `result-mac-16gb.json`. The Mac has no graphics card memory; its built-in graphics used normal memory for the whole model.
+
+| Model | Memory in use | Speed | First word, cold | Whole letter, warm |
+|---|---|---|---|---|
+| 0.6B | 0.8 GB | 31 to 37 tokens/s | 2.2 s | 8 to 9 s |
+| 8B | 5.2 GB | 4.8 to 6.1 tokens/s (about 4 words/s) | 29 s | 1.5 to 2 min |
+| 32B | skipped: the 20 GB file is bigger than 16 GB | | | |
+
+Caveats:
+- **Not a quiet machine.** This is a working Mac: the coach's dev servers, Spotlight indexing, a terminal and Tailscale were running, the load average was over 20, and the machine had paged heavily earlier. A rerun of the 8B on the same machine minutes later gave 5.5 tokens/s. A quiet M2 would likely be faster; not measured.
+- **Memory in use differs from gruntus** (0.8 GB against 2.2 GB for the 0.6B; 5.2 GB against 7.5 GB for the 8B). Different Ollama versions and defaults, so the extra beyond the file depends on the program running the model, not only the model. That backs "working space" as a range, not a fixed sum.
+- The letters themselves weren't re-checked; quality was assessed on the gruntus runs of the same models.
+
+Even so, the 8B wrote the letter at about reading pace on a fanless 16 GB laptop doing other work, which is chapter 0's promise.
+
 ## The hosted reference (decided 2026-11-05)
 
 Same request and papers, three runs, on the hosted model the coach uses (`chat-latest`, OpenAI; the service reports only the alias, not the snapshot). It accepts only its default temperature, so none was set; the local runs used 0.7. Script: `hosted.py`. Raw output: `result-hosted.json`.

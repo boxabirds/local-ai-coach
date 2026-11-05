@@ -54,7 +54,7 @@ Your computer needs some of it for being a computer: the system, the browser, th
 
 The model needs more than its file, too. The **model file** is the one file you download (the whole of the clever part in one lump, closer to a film file than to an app). Running it also takes **working space**: the program that runs it, the conversation so far, and a few helpers I'll name in Book 2.
 
-How much? I measured it. A 5 GB file used 7.5 GB once it was running. A half-gigabyte file used 2.2 GB, four times its size. So the file size on the download page is where you start, never the whole answer.
+How much? I measured it, and it moves. On my Linux box a 5 GB file used 7.5 GB once it was running, and a half-gigabyte file used 2.2 GB, four times its size. On my Mac, with a newer version of the same program, the same two used 5.2 GB and 0.8 GB. So the file size on the download page is where you start, never the whole answer.
 
 ### Fact two: graphics card memory
 
@@ -108,13 +108,14 @@ So we're going to do it with Priya's own jobs. I ran them on three sizes of the 
 | Memory in use | 2.2 GB | 7.5 GB | 23.1 GB | none |
 | With a 24 GB workbench | under 1 s | 4 to 5 s | 16 to 18 s | 10 to 12 s |
 | No workbench (desktop processor) | about 5 s | about 1 min | about 4.5 min | 10 to 12 s |
+| 16 GB Mac, built-in graphics | 8 to 9 s | 1.5 to 2 min | doesn't fit | 10 to 12 s |
 | What you get | fluent, and on the wrong side | a decent trainee | the best local draft, and it invents law | better again, and still not safe unread |
 
 | Summarise a document | to measure |
 |---|---|
 | Compare two versions of a contract (a tool a coding agent builds) | to measure |
 
-(Measured in November 2026 with Qwen 3 on a Linux desktop with an RTX 4090, graphics card on and then off, and the hosted model this coach uses. The office laptop and the 16 GB Mac rows are on the companion page as I measure them.)
+(Measured in November 2026 with Qwen 3 on a Linux desktop with an RTX 4090, graphics card on and then off, on my 16 GB MacBook Air while it was busy doing other things, and with the hosted model this coach uses. The office laptop row is on the companion page once I've measured it.)
 
 The small one wrote the letter from the landlord to the tenant. Every fact was right. It just didn't understand whose letter it was. 😱
 

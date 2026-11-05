@@ -352,7 +352,8 @@ def _check_real(check: dict[str, Any], where: str, probes: dict[str, Any] | None
                 report.error("PROBE_PARAM", where, f"probe {name!r} needs param {needed!r}")
 
 
-CHOICE_GRADES = {"fit"}
+# Number of options each grade needs: fit is fits / doesn't; band is fits / depends / doesn't.
+CHOICE_GRADES = {"fit": 2, "band": 3}
 MIN_OPTIONS = 2
 
 
@@ -369,9 +370,10 @@ def _check_choices(check: dict[str, Any], kind: str, where: str, report: Report)
         and isinstance(choices.get("options"), list) and len(choices["options"]) >= MIN_OPTIONS
         and all(isinstance(o, str) and o for o in choices["options"])
         and choices.get("grade") in CHOICE_GRADES
+        and len(choices["options"]) == CHOICE_GRADES[choices["grade"]]
     )
     if not ok:
-        report.error("CHECK_FIELD", where, "choices need an ask check, items with a label and a positive gb, at least two options, and grade fit")
+        report.error("CHECK_FIELD", where, "choices need an ask check, items with a label and a positive gb, and grade fit (two options) or band (three: fits, depends, doesn't)")
 
 
 def check_step(step: Any, station: str, seen: set[str], rel: str, probes: dict[str, Any] | None, report: Report) -> None:

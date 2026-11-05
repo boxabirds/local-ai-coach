@@ -119,20 +119,27 @@ def _gb(value: float) -> str:
 
 
 def grade_choices(step: dict[str, Any], answers: list[str], room_gb: float) -> dict[str, Any]:
-    """Mark a fits test in code, against the learner's own number: a file fits when it is
-    no bigger than the room (over three quarters is a squeeze, which still fits)."""
+    """Mark a fits test in code, against the learner's own memory.
+
+    grade "fit" (two options): a file fits when it is no bigger than the room.
+    grade "band" (three options, fits / depends / doesn't): the wide rule of thumb,
+    under half the room fits, bigger than the room doesn't, anything between depends
+    (docs/design/20261105-pedagogical-flow-proposal.md, section 13, decision 6)."""
     choices = step["check"]["choices"]
-    items, options = choices["items"], choices["options"]
+    items, options, grade = choices["items"], choices["options"], choices.get("grade", "fit")
     if len(answers) != len(items) or any(a not in options for a in answers):
         raise ValueError(f"expected one of {options} for each of {len(items)} files")
-    fits, doesnt = options[0], options[1]
+    rule = BAND_RULES[grade]
+    if len(options) != len(rule["words"]):
+        raise ValueError(f"grade {grade!r} needs {len(rule['words'])} options, got {len(options)}")
     results = []
     for item, answer in zip(items, answers):
-        right = fits if fits_room(item["gb"], room_gb) else doesnt
+        verdict = rule["verdict"](item["gb"], room_gb)
+        right = options[verdict]
         results.append({"label": item["label"], "answer": answer, "right": answer == right})
     room = _shown(room_gb)
     if all(r["right"] for r in results):
-        said = ", ".join(f"{_gb(i['gb'])} {'fits' if fits_room(i['gb'], room_gb) else 'doesn\'t fit'}" for i in items)
+        said = ", ".join(f"{_gb(i['gb'])} {rule['words'][rule['verdict'](i['gb'], room_gb)]}" for i in items)
         note = CHOICES_PASSED.format(room=room, results=said)
         return {"passed": True, "checked": True, "note": note, "evidence": [], "measured": room_gb, "results": results}
     wrong = next(r for r in results if not r["right"])
@@ -143,3 +150,25 @@ def grade_choices(step: dict[str, Any], answers: list[str], room_gb: float) -> d
 def fits_room(file_gb: float, room_gb: float) -> bool:
     """Fits at all: no bigger than the room."""
     return file_gb <= room_gb
+
+
+# The wide rule of thumb: comfortably under this share of memory, it fits whatever the settings.
+FITS_SHARE = 0.5
+FITS, DEPENDS, DOESNT = 0, 1, 2
+# The two-option fit grade has no middle: its second option is "doesn't fit".
+FIT_DOESNT = 1
+
+
+def band(file_gb: float, room_gb: float) -> int:
+    """Which band a file is in: FITS under half the room, DOESNT bigger than the room, else DEPENDS."""
+    if file_gb < room_gb * FITS_SHARE:
+        return FITS
+    if file_gb > room_gb:
+        return DOESNT
+    return DEPENDS
+
+
+BAND_RULES = {
+    "fit": {"verdict": lambda f, r: FITS if fits_room(f, r) else FIT_DOESNT, "words": ["fits", "doesn't fit"]},
+    "band": {"verdict": band, "words": ["fits", "depends", "doesn't fit"]},
+}

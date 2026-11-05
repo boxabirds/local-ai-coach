@@ -197,3 +197,47 @@ def test_s11_tc08_room_prefers_the_measured_number():
     assert thread.room_for([*typed, *measured]) == 16
     assert thread.room_for([*typed, *stub_card]) == 32
     assert thread.room_for([]) is None
+
+
+# ------------------------------------------------------------------ three bands (flow proposal, decision 6)
+# A made-up step again: the rule is under half the room fits, bigger than the room doesn't, else depends.
+
+BAND_STEP = {
+    "id": "x.2",
+    "check": {"kind": "ask", "question": "?", "rubric": "r", "choices": {
+        "items": [{"label": "A", "gb": 2}, {"label": "B", "gb": 5}, {"label": "C", "gb": 10}, {"label": "D", "gb": 20}],
+        "options": ["Yes", "Maybe", "No"], "grade": "band"}},
+}
+
+
+@pytest.mark.parametrize("room, answers", [
+    (16, ["Yes", "Yes", "Maybe", "No"]),
+    (32, ["Yes", "Yes", "Yes", "Maybe"]),
+    (8, ["Yes", "Maybe", "No", "No"]),
+])
+def test_band_marks_each_file_against_the_room(room, answers):
+    verdict = checks.grade_choices(BAND_STEP, answers, room)
+    assert verdict["passed"] is True and verdict["measured"] == room
+
+
+def test_band_edges_half_is_depends_and_the_whole_room_is_depends():
+    assert checks.band(8, 16) == checks.DEPENDS
+    assert checks.band(7.9, 16) == checks.FITS
+    assert checks.band(16, 16) == checks.DEPENDS
+    assert checks.band(16.1, 16) == checks.DOESNT
+
+
+def test_band_pass_note_uses_the_three_words():
+    note = checks.grade_choices(BAND_STEP, ["Yes", "Yes", "Maybe", "No"], 16)["note"]
+    assert note == "On your 16 GB: 2 GB fits, 5 GB fits, 10 GB depends, 20 GB doesn't fit."
+
+
+def test_band_a_wrong_middle_answer_names_the_file():
+    verdict = checks.grade_choices(BAND_STEP, ["Yes", "Yes", "Yes", "No"], 16)
+    assert verdict["passed"] is False and verdict["note"].startswith("Have another look at C.")
+
+
+def test_band_needs_three_options():
+    two = {"id": "x.3", "check": {**BAND_STEP["check"], "choices": {**BAND_STEP["check"]["choices"], "options": ["Yes", "No"]}}}
+    with pytest.raises(ValueError):
+        checks.grade_choices(two, ["Yes", "Yes", "No", "No"], 16)

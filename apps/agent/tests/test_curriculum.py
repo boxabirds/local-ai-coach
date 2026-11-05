@@ -366,7 +366,17 @@ def test_answered_by_claim_only_as_a_boolean_on_an_ask_check(root: Path, mutate)
     lambda d: step(d, "machine.3")["check"]["choices"]["items"][0].__setitem__("gb", 0),
     lambda d: step(d, "machine.3")["check"]["choices"].__setitem__("options", ["Fits"]),
     lambda d: step(d, "machine.3")["check"]["choices"].__setitem__("grade", "vibes"),
+    lambda d: step(d, "machine.3")["check"]["choices"].__setitem__("grade", "band"),
+    lambda d: step(d, "machine.3")["check"]["choices"].__setitem__("options", ["a", "b", "c"]),
 ])
 def test_s11_tc02_choices_are_checked(root: Path, mutate) -> None:
     edit(root, "lessons/machine.json", mutate)
     assert errors(run(root)) == ["CHECK_FIELD"]
+
+
+def test_band_grade_with_three_options_is_valid(root: Path) -> None:
+    def to_band(d):
+        choices = step(d, "machine.3")["check"]["choices"]
+        choices["grade"], choices["options"] = "band", ["a", "b", "c"]
+    edit(root, "lessons/machine.json", to_band)
+    assert errors(run(root)) == []
