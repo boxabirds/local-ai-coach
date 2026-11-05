@@ -149,8 +149,15 @@ curriculum/
     legal-letter.md    Priya, chapter 0, the story for destination d_legal
   chapters/
     know-your-machine.md  chapter 1 body, front-matter as YAML
+  figures.json         the figures: words, choices, print state, coach and book placement
+  figures/
+    make_figures.py    draws every figure; --check reports stale files
+    <id>.svg           one per figure, its states marked data-when="key=value"
+    print/<id>.svg     the same figure in its print state, for the book
   validate.py          run by pytest and by make check
 ```
+
+**Figures** (Ceetrix story 7; proposal and decisions in `docs/design/20261105-illustration-proposal.md`). A figure is an SVG drawn by `make_figures.py`, so its arithmetic is computed. Its states are elements with `data-when`; the coach shows the elements whose conditions match the learner's choices. The book shows the print drawing. A story or chapter places a figure with `<!-- figure: id -->` on a line of its own (invisible in Markdown); a lesson step places it with `"figure": "id"`. Each figure appears once in the coach and once in the book, never blocks Go on, and records no progress. `validate.py` checks placement, unsafe SVG, that every state draws exactly one result, the three-quarters rule, station colours, print drawings against their source, and every word through the term clock and voice rules.
 
 The lesson JSON is the PoC tab's contract: `station`, `teaches`, `previews`, `stands`, `why`, `mnem`, `steps[]` with `id`, `text`, `where`, `hint`, `doIt`, `check`, `onFail`, and `recap[]`. `validate.py` checks: every `needs` resolves and the graph is acyclic; every lesson's `station` exists; every term used in a step's `text` is in `teaches` of that station or an earlier one on its path, or in `map.json` with a `definedIn` that is earlier; every `check.kind=real` names a probe on the allowlist; every `doIt.kind=shell` command is a single line with no `sudo`, `rm`, `curl | sh` or redirection.
 
