@@ -1,6 +1,6 @@
 # Proposal: the pedagogical flow for "what can my machine do?" (Book 1)
 
-Status: proposed 2026-11-05. Decided so far: the letter comparison uses real outputs from one family, Qwen (Julian, 2026-11-05). Builds on `20261105-what-fits-proposal.md` (the impact check) and answers it with a flow. Nothing in the curriculum or the book has changed. Every change to book text or to stations is the author's decision.
+Status: proposed 2026-11-05. Decided so far: the letter comparison uses real outputs from one family, Qwen (Julian, 2026-11-05). First run done: `letter-run/20261105-letter-run.md`. Builds on `20261105-what-fits-proposal.md` (the impact check) and answers it with a flow. Nothing in the curriculum or the book has changed. Every change to book text or to stations is the author's decision.
 
 ## 1. The idea in one line
 
