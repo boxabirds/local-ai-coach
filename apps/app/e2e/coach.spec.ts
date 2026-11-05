@@ -15,7 +15,8 @@ const SENTENCES = 102;
 const ACCENT = "rgb(29, 78, 216)";
 const QUESTION = "The day after, what did Priya check?";
 const ANSWER = "Where her words went.";
-const BASE = "http://127.0.0.1:3100";
+/** The coach under test: our own servers by default, or an installed release (E2E_BASE_URL). */
+const BASE = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3100";
 const VIEWPORT = { width: 1280, height: 860 };
 const PAPER = "rgb(255, 255, 255)";
 /** The reserved criticality colours (coach.css --crit-*), light theme. */

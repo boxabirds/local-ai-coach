@@ -27,7 +27,7 @@ export default defineConfig({
   reporter: [["list"]],
   outputDir: "./test-results",
   use: {
-    baseURL: `http://127.0.0.1:${APP_PORT}`,
+    baseURL: process.env.E2E_BASE_URL ?? `http://127.0.0.1:${APP_PORT}`,
     viewport: { width: 1280, height: 860 },
     trace: "retain-on-failure",
     // Claude Code issue #82660: the sandbox denies the Mach service Chromium's
@@ -41,7 +41,9 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 860 }, launchOptions: { args: ["--single-process"] } },
     },
   ],
-  webServer: [
+  // With E2E_BASE_URL set the suite tests a coach that is already running (an installed
+  // release), so it starts no servers of its own.
+  webServer: process.env.E2E_BASE_URL ? [] : [
     {
       command: `uv run --directory ../agent uvicorn main:app --host 127.0.0.1 --port ${AGENT_PORT}`,
       url: `${AGENT_URL}/health`,

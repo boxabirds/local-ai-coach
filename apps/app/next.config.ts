@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: WORKSPACE_ROOT,
   serverExternalPackages: ["@copilotkit/runtime"],
   turbopack: { root: WORKSPACE_ROOT },
+  // The coach serves no optimised images, so Next never loads sharp; the release
+  // script removes sharp's native binary so the server is plain JavaScript that runs
+  // on any Mac or Linux machine (Ceetrix story 6).
+  images: { unoptimized: true },
 };
 
 export default nextConfig;

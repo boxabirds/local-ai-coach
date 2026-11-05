@@ -77,3 +77,6 @@ __pycache__/
 # Playwright output
 apps/app/test-results/
 apps/app/playwright-report/
+
+# Release builds
+dist/

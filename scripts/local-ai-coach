@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# Start the Mastering Local AI coach on this computer (Ceetrix story 6).
+#
+#   local-ai-coach              start the coach and open it in the browser
+#   local-ai-coach --no-open    start it without opening the browser
+#   local-ai-coach --version    print the installed version
+#   local-ai-coach uninstall    remove the coach; your progress is kept
+#
+# Settings (environment variables):
+#   COACH_APP_PORT        the page's port (default 3000)
+#   COACH_AGENT_PORT      the coach agent's port (default 8123)
+#   COACH_HOME            where progress is kept (default ~/.local-ai-coach)
+#   COACH_START_TIMEOUT   seconds to wait for both to start (default 60)
+#
+# Both listen on 127.0.0.1 only: nothing on your network can reach them.
+set -uo pipefail
+# Each part runs in its own process group, so stopping it also stops anything it
+# started (uv starts Python; stopping uv alone could leave Python running).
+set -m
+
+# Resolve the install folder through the ~/.local/bin symlink.
+SELF="$0"
+while [ -L "$SELF" ]; do
+  LINK="$(readlink "$SELF")"
+  case "$LINK" in /*) SELF="$LINK" ;; *) SELF="$(dirname "$SELF")/$LINK" ;; esac
+done
+RELEASE="$(cd "$(dirname "$SELF")/.." && pwd)"
+APP_DIR="$(cd "$RELEASE/.." && pwd -P)"
+INSTALL_ROOT="$(dirname "$APP_DIR")"
+NODE="$APP_DIR/node/bin/node"
+UV="$APP_DIR/uv/uv"
+
+APP_PORT="${COACH_APP_PORT:-3000}"
+AGENT_PORT="${COACH_AGENT_PORT:-8123}"
+COACH_HOME="${COACH_HOME:-$HOME/.local-ai-coach}"
+START_TIMEOUT="${COACH_START_TIMEOUT:-60}"
+LOGS="$COACH_HOME/logs"
+HOST=127.0.0.1
+OPEN_BROWSER=1
+
+say() { printf '%s\n' "$*"; }
+fail() { printf 'local-ai-coach: %s\n' "$*" >&2; exit 1; }
+
+case "${1:-}" in
+  --version)
+    cat "$RELEASE/VERSION"
+    exit 0
+    ;;
+  uninstall)
+    rm -f "$HOME/.local/bin/local-ai-coach"
+    rm -rf "$INSTALL_ROOT/app" "$INSTALL_ROOT"/app-*
+    say "Removed the coach. Your progress is still in $COACH_HOME (delete that folder to remove it too)."
+    exit 0
+    ;;
+  --no-open) OPEN_BROWSER=0 ;;
+  "") ;;
+  *) fail "unknown option '$1'. Try: local-ai-coach, --no-open, --version or uninstall" ;;
+esac
+
+port_busy() {
+  # Something already accepts connections on this port.
+  (exec 3<>"/dev/tcp/$HOST/$1") 2>/dev/null
+}
+
+port_busy "$APP_PORT" && fail "port $APP_PORT is already in use. Close what is using it, or start with COACH_APP_PORT=<another port> local-ai-coach"
+port_busy "$AGENT_PORT" && fail "port $AGENT_PORT is already in use. Close what is using it, or start with COACH_AGENT_PORT=<another port> local-ai-coach"
+
+mkdir -p "$LOGS"
+AGENT_PID=""
+SERVER_PID=""
+
+stop_all() {
+  for pid in $SERVER_PID $AGENT_PID; do
+    kill -TERM -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null
+  done
+  for pid in $SERVER_PID $AGENT_PID; do
+    wait "$pid" 2>/dev/null
+  done
+}
+trap 'stop_all; exit 0' INT TERM
+trap 'stop_all' EXIT
+
+say "Starting the coach (version $(cat "$RELEASE/VERSION"))"
+
+(
+  cd "$RELEASE/apps/agent" || exit 1
+  export COACH_HOME
+  exec "$UV" run --frozen --no-dev --quiet uvicorn main:app --host "$HOST" --port "$AGENT_PORT"
+) >"$LOGS/agent.log" 2>&1 &
+AGENT_PID=$!
+
+(
+  cd "$RELEASE/server/apps/app" || exit 1
+  export HOSTNAME="$HOST" PORT="$APP_PORT" NODE_ENV=production DO_NOT_TRACK=1
+  export LANGGRAPH_DEPLOYMENT_URL="http://$HOST:$AGENT_PORT/stub" COACH_AGENT_URL="http://$HOST:$AGENT_PORT"
+  exec "$NODE" server.js
+) >"$LOGS/app.log" 2>&1 &
+SERVER_PID=$!
+
+healthy() {
+  curl -fs -m 2 -o /dev/null "http://$HOST:$AGENT_PORT/health" &&
+    curl -fs -m 2 -o /dev/null "http://$HOST:$APP_PORT/api/health"
+}
+
+waited=0
+until healthy; do
+  if [ "$waited" -ge "$START_TIMEOUT" ]; then
+    say "The coach did not start within ${START_TIMEOUT}s. The end of its logs:" >&2
+    tail -n 15 "$LOGS/agent.log" "$LOGS/app.log" >&2
+    exit 1
+  fi
+  sleep 1
+  waited=$((waited + 1))
+done
+
+URL="http://$HOST:$APP_PORT"
+say "The coach is running at $URL"
+say "Press Ctrl-C, or close this window, to stop it."
+if [ "$OPEN_BROWSER" = 1 ]; then
+  if command -v open >/dev/null 2>&1; then open "$URL"
+  elif command -v xdg-open >/dev/null 2>&1; then xdg-open "$URL" >/dev/null 2>&1
+  fi
+fi
+
+# Run until stopped, or until either part exits on its own.
+while kill -0 "$AGENT_PID" 2>/dev/null && kill -0 "$SERVER_PID" 2>/dev/null; do
+  sleep 1
+done
+say "Part of the coach stopped unexpectedly; see $LOGS" >&2
+exit 1
