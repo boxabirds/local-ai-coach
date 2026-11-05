@@ -26,17 +26,20 @@ from src.visualization_router import JevVisualizationMiddleware
 from src.skill_backend import SKILL_SOURCES, build_agent_backend
 from src.prompt import SYSTEM_PROMPT
 from src.coach.curriculum import figure, story_markdown
+from src.coach.middleware import CoachStateMiddleware
+from src.coach.tools import COACH_TOOLS
 from src.coach.stub import stub_graph
 
 load_dotenv()
 
 agent = create_deep_agent(
     model=CredentialScopedModel(fallback=build_model(allow_unconfigured=True)),
-    # The demo tools are deleted; the coach's tools arrive in build step 4.
-    tools=[],
+    # The coach's tools (Ceetrix story 10); the demo tools are gone.
+    tools=COACH_TOOLS,
     middleware=[
         RequestModelMiddleware(),
         CopilotKitMiddleware(),
+        CoachStateMiddleware(),
         JevVisualizationMiddleware(),
         ConsecutiveSystemMessagesMiddleware(),
     ],

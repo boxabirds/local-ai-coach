@@ -103,6 +103,13 @@ Everything under `apps/app/src/components/generative-ui/open-generative-ui/`, `l
 
 The frontend tools the model also sees, because the browser registers them: `story`, `step_card`, `number_card`, `check_result`, `recap_card`, `run_confirm`, `show_map`, `sandbox_event` (frontend tool the sandbox calls, not the model). Their schemas are in the next section.
 
+**As built in step 4 (Ceetrix story 10).** Six tools are built: `get_station`, `start_step`, `run_check`, `set_progress`, `probe` and `end_session` (`src/coach/tools.py`). `run_do_it` and `due_reviews` arrive with step 5. Three rules are enforced in code, not left to the prompt:
+- `run_check` reads the learner's number from their own `number_card` answer in the thread, never from the model.
+- `set_progress(verified)` is refused unless the thread holds a passing `run_check` result for that step.
+- Consent is saved only by `CoachStateMiddleware`, from the learner's `consent_card` answer.
+
+The check card for the real coach is drawn from `run_check`'s own result (`useRenderTool`), not from a `check_result` call the model makes, so the learner always sees what was really run. `progress.json` and the stub's `progress.stub.json` share `src/coach/progress.py`.
+
 **What the model is never allowed to do:** write `progress.json` except through `set_progress`; run a shell command except through `run_do_it` after `run_confirm`; call a probe not on the allowlist. deepagents' own file tools operate on the thread's scratch `StateBackend`, not the host filesystem (the survey confirmed the backend has no host access), so they are harmless and stay.
 
 ## Frontend design

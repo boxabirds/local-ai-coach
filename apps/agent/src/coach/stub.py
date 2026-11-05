@@ -19,8 +19,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
-import tempfile
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -33,7 +31,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, MessagesState, StateGraph
 
 from src.bounded_memory_saver import BoundedMemorySaver
-from src.coach import checks, curriculum, probes
+from src.coach import checks, curriculum, probes, progress
 from src.coach import consent as consent_store
 
 # ------------------------------------------------------------------ constants
@@ -45,14 +43,12 @@ NUMBER_STEP = "machine.2"
 UNIT = "GB"
 
 STUB_FILE = "progress.stub.json"
-DEFAULT_HOME = Path.home() / ".local-ai-coach"
-PROGRESS_SCHEMA = 1
 MAX_THREADS = 200  # as upstream main.py: threads die on restart and are bounded
 
-STATUS_ORDER = ("unseen", "read", "rehearsed", "reported", "assisted", "verified")
-SKIPPED = "skipped"
-VERIFIED = "verified"
-REPORTED = "reported"
+STATUS_ORDER = progress.STATUS_ORDER
+SKIPPED = progress.SKIPPED
+VERIFIED = progress.VERIFIED
+REPORTED = progress.REPORTED
 
 # Frontend tool names (apps/app/src/hooks/use-coach-ui.tsx).
 STORY = "story"
@@ -85,14 +81,8 @@ SAVE_FAILED = "I couldn't save your progress just now, so I haven't moved you on
 
 # The permission card (Ceetrix story 9): asked once, before the first look at the machine.
 CONSENT_ASK = "Before I check, may I look at this computer? Here's exactly what I'd read."
-CONSENT_ITEMS = (
-    "How much memory this computer has.",
-    "Which programs are running and listening, by name only.",
-    "The model files in the usual folders, by name and size.",
-    "Where the chat app is connected, while it answers.",
-    "The machines on your private link, by name.",
-)
-CONSENT_HISTORY = "Also read the last 200 lines of my shell history, to see the commands I typed."
+CONSENT_ITEMS = consent_store.ITEMS
+CONSENT_HISTORY = consent_store.HISTORY_ITEM
 
 CANNED = (
     HELP, STORY_QUESTION, *STORY_OPTIONS, STORY_DONE, CHECK_INTRO.format(value=16), MAP_TEXT, BAD_RESULT, SAVE_FAILED,
@@ -283,70 +273,25 @@ def decide(
 
 
 def home() -> Path:
-    configured = os.environ.get("COACH_HOME", "").strip()
-    return Path(configured).expanduser() if configured else DEFAULT_HOME
+    return progress.home()
 
 
 def empty_record() -> dict[str, Any]:
-    return {"schema": PROGRESS_SCHEMA, "stub": True, "stations": {}, "steps": {}}
+    return progress.empty_record(stub=True)
 
 
 def load(folder: Path) -> dict[str, Any]:
     """The stub record, or an empty one if it is missing or unreadable."""
-    try:
-        record = json.loads((folder / STUB_FILE).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return empty_record()
-    if not isinstance(record, dict) or not isinstance(record.get("stations"), dict) or not isinstance(record.get("steps"), dict):
-        return empty_record()
-    return record
+    return progress.load(folder, STUB_FILE, stub=True)
 
 
-def _allowed(current: str, requested: str) -> bool:
-    if requested == SKIPPED:
-        return current != VERIFIED and current != SKIPPED
-    if requested not in STATUS_ORDER:
-        return False
-    if current == SKIPPED:
-        return requested != STATUS_ORDER[0]
-    return STATUS_ORDER.index(requested) > STATUS_ORDER.index(current if current in STATUS_ORDER else STATUS_ORDER[0])
-
-
-def apply(record: dict[str, Any], kind: str, key: str, status: str, at: str) -> bool:
-    """Move one entry up the status order. Returns whether anything changed."""
-    table = record["stations" if kind == "station" else "steps"]
-    current = table.get(key, {}).get("status", STATUS_ORDER[0])
-    if not _allowed(current, status):
-        return False
-    table[key] = {"status": status, "at": at}
-    return True
+apply = progress.apply
+snapshot = progress.snapshot
 
 
 def save(folder: Path, record: dict[str, Any]) -> None:
     """Write the stub record by atomic rename. Raises OSError if it cannot."""
-    folder.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=".progress.stub.", suffix=".tmp", dir=folder)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(record, handle, indent=2, sort_keys=True)
-        os.replace(tmp, folder / STUB_FILE)
-    except BaseException:
-        Path(tmp).unlink(missing_ok=True)
-        raise
-
-
-def snapshot(record: dict[str, Any]) -> list[dict[str, str]]:
-    """The V1 stations the map shows, in reading order: name, the learner's status,
-    and the station's criticality from the curriculum (omitted when unrated)."""
-    names = curriculum.station_names()
-    rated = curriculum.station_criticality()
-    entries = []
-    for sid in curriculum.v1_stations():
-        entry = {"id": sid, "name": names.get(sid, sid), "status": record["stations"].get(sid, {}).get("status", STATUS_ORDER[0])}
-        if sid in rated:
-            entry["criticality"] = rated[sid]
-        entries.append(entry)
-    return entries
+    progress.save(folder, record, STUB_FILE)
 
 
 # ------------------------------------------------------------------ the graph

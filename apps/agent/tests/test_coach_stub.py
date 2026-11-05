@@ -306,7 +306,7 @@ def test_tc26_interrupted_write_leaves_the_old_file(tmp_path, monkeypatch):
     def boom(*_args, **_kwargs):
         raise OSError("disk full")
 
-    monkeypatch.setattr(stub.os, "replace", boom)
+    monkeypatch.setattr(stub.progress.os, "replace", boom)
     stub.apply(record, "station", "machine", "reported", NOW)
     with pytest.raises(OSError):
         stub.save(tmp_path, record)

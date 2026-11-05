@@ -13,6 +13,16 @@ from pathlib import Path
 from typing import Any
 
 CONSENT_FILE = "consent.json"
+
+# What the permission card lists: exactly what the probes may read (story 9).
+ITEMS = (
+    "How much memory this computer has.",
+    "Which programs are running and listening, by name only.",
+    "The model files in the usual folders, by name and size.",
+    "Where the chat app is connected, while it answers.",
+    "The machines on your private link, by name.",
+)
+HISTORY_ITEM = "Also read the last 200 lines of my shell history, to see the commands I typed."
 KEYS = ("probes", "history", "doIt")
 
 

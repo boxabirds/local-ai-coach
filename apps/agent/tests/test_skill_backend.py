@@ -8,6 +8,9 @@ from langgraph.runtime import Runtime
 
 from src.skill_backend import SKILL_SOURCES, build_agent_backend
 
+# Upstream's two plus the coach's three (Ceetrix story 10).
+COACH_AND_UPSTREAM_SKILLS = {'advanced-visualization', 'svg-diagrams', 'coach-playbook', 'step-contract', 'evidence-rules'}
+
 
 def make_runtime(files=None):
     return ToolRuntime(state={'messages': [], 'files': files or {}}, context=None,
@@ -23,7 +26,7 @@ def test_real_skills_middleware_discovers_all_bundled_skills(asynchronous):
     else:
         result = middleware.before_agent(state, Runtime(), {})
     skills = result['skills_metadata']
-    assert {s['name'] for s in skills} == {'advanced-visualization', 'svg-diagrams'}
+    assert {s['name'] for s in skills} == COACH_AND_UPSTREAM_SKILLS
     backend = build_agent_backend(make_runtime())
     for skill in skills:
         assert skill['path'].startswith('/skills/')
@@ -95,8 +98,6 @@ def test_main_graph_discovers_skills_on_a_real_agent_turn(monkeypatch):
         config = {'configurable': {'thread_id': 'skills-discovery-test'}}
         main.agent.invoke({'messages': [HumanMessage(content='Hello')]}, config)
         state = main.agent.get_state(config).values
-        assert {s['name'] for s in state['skills_metadata']} == {
-            'advanced-visualization', 'svg-diagrams',
-        }
+        assert {s['name'] for s in state['skills_metadata']} == COACH_AND_UPSTREAM_SKILLS
     finally:
         sys.modules.pop('main', None)

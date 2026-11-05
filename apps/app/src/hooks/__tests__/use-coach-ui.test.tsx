@@ -24,7 +24,9 @@ vi.mock("@copilotkit/react-core/v2", () => ({
   UseAgentUpdate: { OnMessagesChanged: "OnMessagesChanged", OnStateChanged: "OnStateChanged", OnRunStatusChanged: "OnRunStatusChanged" },
 }));
 
-import { useCoachUI, CheckResultParams } from "../use-coach-ui";
+import { useCoachUI, CheckResultParams, RunCheckResult } from "../use-coach-ui";
+import { screen, within } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
 
 function Probe() {
   useCoachUI();
@@ -45,7 +47,7 @@ describe("useCoachUI (TC-57)", () => {
     render(<Probe />);
     expect(captured.useHumanInTheLoop.map((c) => c.name)).toEqual(["story", "step_card", "number_card", "consent_card", "run_confirm", "recap_card"]);
     expect(captured.useComponent.map((c) => c.name)).toEqual(["check_result", "show_map"]);
-    expect(captured.useRenderTool.map((c) => c.name)).toEqual(["run_do_it"]);
+    expect(captured.useRenderTool.map((c) => c.name)).toEqual(["run_check", "run_do_it"]);
     expect(captured.useFrontendTool.map((c) => c.name)).toEqual(["sandbox_event"]);
     expect(captured.useDefaultRenderTool).toBe(1);
   });
@@ -73,5 +75,41 @@ describe("useCoachUI (TC-57)", () => {
     };
     expect(CheckResultParams.safeParse(sample).success).toBe(true);
     expect(CheckResultParams.safeParse({ ...sample, evidence: [{ probe: "memory" }] }).success).toBe(false);
+  });
+});
+
+describe("run_check drawn as the check card (story 10, TC-28)", () => {
+  afterEach(() => cleanup());
+  const evidence = [{ probe: "memory", cmd: "sysctl -n hw.memsize", matched: ["17179869184"] }];
+
+  it("a passing result is the Passed card with what was run", () => {
+    const result = JSON.stringify({ station_id: "machine", step_id: "machine.2", passed: true, checked: true, note: "You typed 16 GB and the machine says 16 GB.", evidence, measured: 16 });
+    render(<RunCheckResult result={result} />);
+    const card = screen.getByTestId("coach-check");
+    expect(within(card).getByText("Passed")).toBeInTheDocument();
+    expect(within(card).getByText("You typed 16 GB and the machine says 16 GB.")).toBeInTheDocument();
+    within(card).getByRole("button", { name: "Show me what you looked at" }).click();
+  });
+
+  it("a result that looked at nothing is Not checked", () => {
+    render(<RunCheckResult result={JSON.stringify({ passed: false, checked: false, note: "You chose not to let me look.", evidence: [] })} />);
+    expect(screen.getByText("Not checked")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["a request for permission", JSON.stringify({ needs: "consent", items: [] })],
+    ["a rubric to judge", JSON.stringify({ judge: "fits if...", question: "?" })],
+    ["plain text", "There's no number from the learner for machine.2 yet."],
+    ["nothing yet", undefined],
+  ])("%s draws nothing", (_label, result) => {
+    const { container } = render(<RunCheckResult result={result} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("the registered render uses the tool's own result", () => {
+    render(<Probe />);
+    const entry = captured.useRenderTool.find((c) => c.name === "run_check") as unknown as { render: (p: { result?: string }) => React.ReactElement };
+    const { container } = render(entry.render({ result: JSON.stringify({ passed: true, checked: true, evidence, note: "ok" }) }));
+    expect(within(container).getByText("Passed")).toBeInTheDocument();
   });
 });

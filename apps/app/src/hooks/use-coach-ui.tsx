@@ -94,7 +94,32 @@ const RunDoItParams = z.object({
 const SandboxEventParams = z.object({ step_id: z.string(), event: z.record(z.string(), z.unknown()) });
 
 /** Tools whose calls show the upstream reasoning card, so nothing the coach does is silent. */
-const SILENT_TOOLS = new Set<string>();
+const SILENT_TOOLS = new Set<string>(["run_check"]);
+
+const RunCheckParams = z.object({ station_id: z.string(), step_id: z.string() });
+
+type RunCheckVerdict = z.infer<typeof CheckResultParams>;
+
+/** run_check's result as the check card; a request for permission or a rubric draws nothing. */
+export function RunCheckResult({ result }: { result?: string }) {
+  let verdict: Partial<RunCheckVerdict> | null = null;
+  try {
+    verdict = result ? (JSON.parse(result) as Partial<RunCheckVerdict>) : null;
+  } catch {
+    verdict = null;
+  }
+  if (!verdict || typeof verdict.passed !== "boolean" || !Array.isArray(verdict.evidence)) return null;
+  return (
+    <CheckResult
+      stationId={verdict.station_id}
+      stepId={verdict.step_id}
+      passed={verdict.passed}
+      checked={verdict.checked}
+      evidence={verdict.evidence}
+      note={verdict.note}
+    />
+  );
+}
 
 function platform() {
   return typeof navigator === "undefined" ? "other" : detectPlatform(navigator.userAgent);
@@ -226,6 +251,14 @@ export const useCoachUI = () => {
     description: "Show the learner's map with each V1 station's status.",
     parameters: ShowMapParams,
     render: ({ focus }) => <ShowMap focus={focus} />,
+  });
+
+  // The real coach (Ceetrix story 10): the check card is drawn from run_check's own
+  // result, so the learner always sees what was really run, not a copy.
+  useRenderTool({
+    name: "run_check",
+    parameters: RunCheckParams,
+    render: ({ result }) => <RunCheckResult result={result} />,
   });
 
   useRenderTool({

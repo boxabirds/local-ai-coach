@@ -16,9 +16,13 @@ def skill_text(name: str) -> str:
 
 
 def test_bundled_skills_present():
-    # master-playbook was the demo playbook, deleted in V1 step 2.
+    # master-playbook was the demo playbook, deleted in V1 step 2; the coach's
+    # three skills arrived in step 4 (Ceetrix story 10).
     assert [p.parent.name for p in SKILL_FILES] == [
         "advanced-visualization",
+        "coach-playbook",
+        "evidence-rules",
+        "step-contract",
         "svg-diagrams",
     ]
 
