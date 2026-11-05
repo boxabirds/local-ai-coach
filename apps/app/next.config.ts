@@ -7,6 +7,12 @@ import type { NextConfig } from "next";
 const WORKSPACE_ROOT = path.join(__dirname, "..", "..");
 
 const nextConfig: NextConfig = {
+  // Test builds go to their own folder (NEXT_DIST_DIR=.next-e2e), so building for the browser
+  // suite never rewrites the folder a running `make dev` serves from.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+  // No floating "Compiling" badge in development: it covers the chat and says nothing a
+  // learner or the author needs; the terminal already shows compiles.
+  devIndicators: false,
   output: "standalone",
   outputFileTracingRoot: WORKSPACE_ROOT,
   serverExternalPackages: ["@copilotkit/runtime"],

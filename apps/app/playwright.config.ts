@@ -58,6 +58,8 @@ export default defineConfig({
       url: `http://127.0.0.1:${APP_PORT}/api/health`,
       env: {
         COACH_AGENT_URL: AGENT_URL,
+        // The test build lives in its own folder (package.json test:e2e), apart from make dev's.
+        NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || ".next-e2e",
         LANGGRAPH_DEPLOYMENT_URL: `${AGENT_URL}/stub`,
         DO_NOT_TRACK: "1",
       },

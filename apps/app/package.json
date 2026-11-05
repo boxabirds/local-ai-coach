@@ -8,7 +8,7 @@
     "start": "DO_NOT_TRACK=1 next start",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "NEXT_PUBLIC_COACH_STUB=1 next build && playwright test"
+    "test:e2e": "NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_COACH_STUB=1 next build && NEXT_DIST_DIR=.next-e2e playwright test"
   },
   "dependencies": {
     "@ag-ui/a2ui-middleware": "^0.0.2",
