@@ -34,6 +34,16 @@ Start step 1 in plan mode and show the plan before writing code.
 - Keep upstream's streaming tool contract text in `src/prompt.py` verbatim; `test_canonical_contract.py` and `test_skills_contract.py` must stay green.
 - Pin every dependency at the versions in the lockfiles. No upgrades during V1.
 
+## Feedback on teaching: check its reach before changing anything
+
+Feedback about what or how the coach teaches is rarely about one card. Before changing any learner-facing content in response to it:
+
+1. Check it against the whole curriculum, not just the lesson it was raised on: `curriculum/stations.json` (does a station's `headNote`, `proof`, `needs` or `inYourHead` already cover it, contradict it, or need to change?), `curriculum/map.json` (terms and their reading order), every lesson, story and chapter that touches the idea, the figures (`curriculum/figures.json`), `docs/spec.md` and the book text under `panel/`.
+2. Write the impact as a proposal in `docs/design/<YYYYMMDD>-<topic>-proposal.md`: each place affected, what changes there, what stays, and which decisions are the author's. Taxonomy changes (new or moved stations, changed proofs) and changes to the book's own text are always the author's decision.
+3. Only then change content, through the validator (`make check`), and record in the proposal what was done.
+
+Code tests never assert curriculum content (wording, counts, labels): they use made-up fixtures. Content is checked by `curriculum/validate.py`.
+
 ## Kept from upstream CLAUDE.md
 
 - `generateSandboxedUi` parameter order: `initialHeight`, `placeholderMessages`, `css`, `html`, `jsFunctions`, `jsExpressions`. Styles only in `css`. JS channels are classic scripts: no top-level await.

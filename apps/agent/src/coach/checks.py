@@ -109,8 +109,9 @@ def evaluate(
 
 CHOICES_PASSED = "On your {room} GB: {results}."
 CHOICES_NOT_YET = "Have another look at {label}. {hint}"
-# The chapter's rule, true whichever way the answer was wrong; it doesn't give the arithmetic away.
-CHOICES_HINT = "Memory is the room: a model file has to fit in it whole, and the drive doesn't count."
+# True whichever way the answer was wrong, without the arithmetic and without talking down:
+# memory holds the file and the model's working space (docs/design/20261105-what-fits-proposal.md).
+CHOICES_HINT = "A model needs room in memory for the whole file and for its working space while it answers."
 
 
 def _gb(value: float) -> str:
