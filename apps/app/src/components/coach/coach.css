@@ -562,3 +562,83 @@
 .coach-consent__history input {
   margin-top: 4px;
 }
+
+/* Asking about a coach bubble (Ceetrix story 8). */
+[data-ask-quotable] {
+  cursor: pointer;
+}
+
+[data-ask-quotable]:focus-visible {
+  outline: 2px solid var(--coach-accent);
+  outline-offset: 2px;
+}
+
+[data-ask-selected] {
+  outline: 2px solid var(--coach-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-lg);
+}
+
+.coach-ask-button {
+  position: fixed;
+  z-index: 50;
+  padding: 4px 10px;
+  border: 1px solid var(--coach-accent);
+  border-radius: var(--radius-md);
+  background: var(--coach-accent);
+  color: var(--coach-accent-ink);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.coach-quoted-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* CopilotKit centres its input at max-w-3xl (48rem) with 1rem side padding below sm;
+   the waiting quote lines up with it. */
+.coach-quoted-input > .coach-quote {
+  box-sizing: border-box;
+  width: calc(100% - 2rem);
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.coach-quote {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px 10px;
+  border-left: 3px solid var(--coach-accent);
+  border-radius: var(--radius-md);
+  background: var(--coach-code);
+  color: var(--coach-ink);
+  font-size: 0.875rem;
+}
+
+.coach-quote__text {
+  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  user-select: text;
+}
+
+.coach-quote__remove {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.coach-quoted-question {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

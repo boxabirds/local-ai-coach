@@ -56,3 +56,7 @@ def test_tc26_each_coach_skill_passes_the_voice_rules(name):
 def test_the_prompt_names_every_coach_tool_and_card():
     for name in ("get_station", "start_step", "run_check", "set_progress", "end_session", "step_card", "number_card", "consent_card", "show_map"):
         assert name in SYSTEM_PROMPT
+
+
+def test_s8_tc17_the_prompt_names_the_quote_rule():
+    assert "A message that starts with lines beginning > quotes something" in SYSTEM_PROMPT

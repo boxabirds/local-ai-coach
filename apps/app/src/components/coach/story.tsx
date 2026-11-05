@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { Markdown } from "./markdown";
+import { QUOTABLE_ATTR } from "../chat/ask-about";
 import { Figure } from "./figure";
 import { figureId } from "./figure-logic";
 import { storySentences } from "./story-beats";
@@ -31,6 +32,8 @@ export function useContinueKeys(enabled: boolean, onContinue: () => void) {
       if (!CONTINUE_KEYS.has(event.key) || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
       const target = event.target;
       if (target instanceof HTMLElement && target.closest("button, a, [role='button']")) return;
+      // Enter on a focused coach bubble selects it to ask about (story 8); Space still goes on.
+      if (event.key === "Enter" && target instanceof HTMLElement && target.closest(`[${QUOTABLE_ATTR}]`)) return;
       if (isTypingTarget(target) === "filled") return;
       event.preventDefault();
       event.stopPropagation();

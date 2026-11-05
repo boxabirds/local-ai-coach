@@ -107,6 +107,29 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     expect(footer.x + footer.width).toBeLessThanOrEqual(bubble.x + bubble.width + 1);
     await shot(page, "02-story-reading");
 
+    // Story 8, TC-18: ask about a sentence while reading, then keep reading.
+    const asked = page.getByTestId("coach-beat").nth(2);
+    const askedText = (await asked.innerText()).trim();
+    await asked.click();
+    await expect(asked).toHaveAttribute("data-ask-selected", "true");
+    await page.getByTestId("coach-ask-button").click();
+    const inputQuote = page.locator(".coach-quoted-input").getByTestId("coach-quote");
+    await expect(inputQuote).toContainText(askedText);
+    await expect(page.getByTestId("copilot-chat-textarea")).toBeFocused();
+    await page.keyboard.type("What does that mean?");
+    await shot(page, "02a-ask-about");
+    await page.keyboard.press("Enter");
+    const sent = page.getByTestId("copilot-user-message").last();
+    await expect(sent.getByTestId("coach-quote")).toContainText(askedText);
+    await expect(sent).toContainText("What does that mean?");
+    await expect(page.getByText(/^You asked about “/)).toBeVisible();
+    await expect(inputQuote).toHaveCount(0);
+    // The story card still works: Go on advances it.
+    const beatsBefore = await page.getByTestId("coach-beat").count();
+    await page.getByRole("button", { name: "Go on" }).click();
+    await expect(page.getByTestId("coach-beat")).toHaveCount(beatsBefore + 1);
+    await page.getByRole("button", { name: "Go on" }).focus();
+
     // Story 7, TC-24: the first figure arrives right after its sentence, as a unit of its own.
     // Wait on the figure's beat, which is there before the drawing has loaded.
     const figureBeat = page.locator(".coach-beat--figure");
@@ -279,6 +302,8 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await page.waitForTimeout(500); // the last save lands
     await page.reload();
     await expect(page.getByTestId("coach-record").first()).toContainText(ANSWER);
+    // Story 8, TC-15: the question asked about a sentence keeps its quote after a reload.
+    await expect(page.getByTestId("copilot-user-message").getByTestId("coach-quote").first()).toBeVisible();
     await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toBeVisible();
     await expect(page.getByText("Passed")).toBeVisible();
     await expect(page.getByTestId("coach-map")).toBeVisible();

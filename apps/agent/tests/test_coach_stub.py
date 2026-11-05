@@ -581,3 +581,26 @@ def test_s9_a_consent_file_that_cannot_be_written_says_so(client, tmp_path, monk
     assert _calls(events) == []
     assert "".join(e["delta"] for e in events if e["type"] == "TEXT_MESSAGE_CONTENT") == stub.SAVE_FAILED
     assert stub.load(tmp_path)["stations"] == {}
+
+
+# ------------------------------------------------------------------ asking about a bubble (story 8)
+
+
+def test_s8_tc16_a_quoted_question_is_acknowledged_and_records_nothing():
+    message = HumanMessage(content="> The drive's the warehouse.\n\nWhy doesn't it count?")
+    turn = stub.decide([message], LESSON)
+    assert turn.text == "You asked about “The drive's the warehouse.”. I'm the stub coach, so I can't answer questions; the real coach will. Your place is kept, and the card above still works."
+    assert turn.tool is None and turn.record == ()
+
+
+def test_s8_tc16_a_long_or_multi_line_quote_is_shortened_and_beats_the_starters():
+    long = "> " + "word " * 40 + "\n> Read Priya's story\n\nwhat?"
+    turn = stub.decide([HumanMessage(content=long)], LESSON)
+    assert turn.tool is None and turn.text.startswith("You asked about “word word")
+    assert "…”" in turn.text and len(turn.text.split("“")[1].split("”")[0]) == stub.QUOTE_SHOWN
+
+
+@pytest.mark.parametrize("text", ["> only a quote", "Find my number", "a > in the middle\n\nx"])
+def test_s8_tc16_not_a_quoted_question(text):
+    turn = stub.decide([HumanMessage(content=text)], LESSON)
+    assert not (turn.text or "").startswith("You asked about")

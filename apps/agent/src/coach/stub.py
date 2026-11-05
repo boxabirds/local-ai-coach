@@ -76,6 +76,9 @@ STORY_DONE = (
 )
 CHECK_INTRO = "You typed {value} GB. Here's what the check found."
 MAP_TEXT = "That's where you are. Each station shows how far you've got."
+# Story 8: a question that quotes a bubble. The stub can't answer; it says so and keeps the place.
+QUOTE_ACK = "You asked about “{quote}”. I'm the stub coach, so I can't answer questions; the real coach will. Your place is kept, and the card above still works."
+QUOTE_SHOWN = 80
 BAD_RESULT = "I couldn't read that answer. Try the card again."
 SAVE_FAILED = "I couldn't save your progress just now, so I haven't moved you on. Try the card again."
 
@@ -86,7 +89,7 @@ CONSENT_HISTORY = consent_store.HISTORY_ITEM
 
 CANNED = (
     HELP, STORY_QUESTION, *STORY_OPTIONS, STORY_DONE, CHECK_INTRO.format(value=16), MAP_TEXT, BAD_RESULT, SAVE_FAILED,
-    CONSENT_ASK, *CONSENT_ITEMS, CONSENT_HISTORY,
+    CONSENT_ASK, *CONSENT_ITEMS, CONSENT_HISTORY, QUOTE_ACK.format(quote="The drive's the warehouse."),
 )
 
 Run = Callable[..., dict[str, Any]]
@@ -153,6 +156,20 @@ def _tool_call(messages: list[BaseMessage], tool_call_id: str) -> dict[str, Any]
     return None
 
 
+def _quoted(text: str) -> str | None:
+    """The quoted words at the start of a message (story 8's "> " lines), shortened, or None."""
+    lines = text.split("\n")
+    quote = []
+    for line in lines:
+        if not line.startswith(">"):
+            break
+        quote.append(line[1:].strip())
+    words = " ".join(w for w in quote if w)
+    if not quote or len(quote) == len(lines) or not words:
+        return None
+    return words if len(words) <= QUOTE_SHOWN else words[: QUOTE_SHOWN - 1].rstrip() + "…"
+
+
 def _starter(text: str) -> str | None:
     folded = text.casefold()
     for keyword, tool in STARTER_KEYWORDS:
@@ -191,6 +208,9 @@ def decide(
     last = messages[-1]
 
     if isinstance(last, HumanMessage):
+        quoted = _quoted(last.text if hasattr(last, "text") and isinstance(last.text, str) else str(last.content))
+        if quoted is not None:
+            return Turn(text=QUOTE_ACK.format(quote=quoted))
         starter = _starter(last.text if hasattr(last, "text") and isinstance(last.text, str) else str(last.content))
         if starter == STORY:
             return Turn(tool=STORY, args={"story_id": STORY_ID, "question": STORY_QUESTION, "options": list(STORY_OPTIONS)})

@@ -6,6 +6,10 @@ import { useProviderKeys } from "@/components/chat/provider-keys";
 import { COACH_STUB, KeyGatedChatView, StubBadge } from "@/components/chat/key-gated-chat-view";
 import { ReaderScrollView } from "@/components/chat/reader-scroll-view";
 import { AnswerMarkdown } from "@/components/chat/answer-markdown";
+import { QuoteContext } from "@/components/chat/quote-block";
+import { QuotedInput } from "@/components/chat/quoted-input";
+import { QuotedUserText } from "@/components/chat/quoted-user-text";
+import { useAskAbout } from "@/hooks/use-ask-about";
 import {
   CopilotChat,
   useAgent,
@@ -43,6 +47,14 @@ export default function HomePage() {
   const [retrying, setRetrying] = useState(false);
   const retryingRef = useRef(false);
   const chatRoot = useRef<HTMLDivElement>(null);
+  // Story 8: click a coach bubble, Ask about this, and its words wait in the message box.
+  const [quote, setQuote] = useState<string | null>(null);
+  const clearQuote = useCallback(() => setQuote(null), []);
+  const askAbout = useCallback((text: string) => {
+    setQuote(text);
+    requestAnimationFrame(() => chatRoot.current?.querySelector<HTMLTextAreaElement>('[data-testid="copilot-chat-textarea"]')?.focus());
+  }, []);
+  const { button: askButton } = useAskAbout(chatRoot, askAbout);
   const latestQuestion = agent.messages.filter((message) => message.role === "user").at(-1)?.id;
 
   // Move only when a question is submitted. Streamed text and growing visuals
@@ -129,12 +141,14 @@ export default function HomePage() {
           </div>
         )}
         <div className="chat-content" ref={chatRoot}>
+          <QuoteContext.Provider value={{ quote, clear: clearQuote }}>
           <CopilotChat
             threadId={threadId}
             chatView={KeyGatedChatView}
             autoScroll={false}
             scrollView={ReaderScrollView}
-            messageView={{ assistantMessage: { markdownRenderer: AnswerMarkdown } }}
+            messageView={{ assistantMessage: { markdownRenderer: AnswerMarkdown }, userMessage: { messageRenderer: QuotedUserText } }}
+            input={QuotedInput}
             onError={() =>
               setError(
                 "Something interrupted the answer. Try again or send another message.",
@@ -150,6 +164,8 @@ export default function HomePage() {
                   : "Connect the coach: add your OpenAI and Jev API keys. Keys clear when you refresh.",
             }}
           />
+          </QuoteContext.Provider>
+          {askButton}
         </div>
       </main>
     </div>
