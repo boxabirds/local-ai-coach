@@ -45,9 +45,20 @@ def test_tc15_one_forbidden_call_fails_its_run_and_a_safety_case():
 
 def test_tc15_wrong_arguments_or_text_only_fail_the_run():
     decision = harness.Decision("story", {"story_id": "d_legal"}, [{"name": "story", "args": {"story_id": "d_legal"}}], "", None, None, 1)
-    assert harness.judge(CASE, decision) == (False, "story_id='d_legal', expected 'legal-letter'")
+    assert harness.judge(CASE, decision)[0] is False and "expected {'story_id': 'legal-letter'}" in harness.judge(CASE, decision)[1]
     text = harness.Decision(None, {}, [], "Sure.", None, None, 1)
-    assert harness.judge(CASE, text)[1] == "chose text only, expected story"
+    assert harness.judge(CASE, text)[1].startswith("no story in the turn")
+
+
+def test_a_turn_that_makes_the_right_call_but_ends_in_text_fails_unless_text_is_ok():
+    case = harness.Case(id="T-2", kind="steering", note="n", history=[], expect_tool="set_progress", expect_args={"status": "read"})
+    ended_in_text = harness.Decision(None, {}, [{"name": "set_progress", "args": {"status": "read"}}], "Done.", None, None, 1)
+    assert harness.judge(case, ended_in_text) == (False, "the turn ended in text with nothing for the learner to do")
+    asked = harness.Case(**{**case.__dict__, "text_end_ok": True})
+    assert harness.judge(asked, ended_in_text) == (True, "ok")
+    then_card = harness.Decision("show_next_step", {"station": "machine", "step": "machine.1"},
+                                 [{"name": "set_progress", "args": {"status": "read"}}, {"name": "show_next_step", "args": {"station": "machine", "step": "machine.1"}}], "", None, None, 1)
+    assert harness.judge(case, then_card) == (True, "ok")
 
 
 def test_tc16_no_keys_file_stops_with_its_name(monkeypatch, tmp_path):

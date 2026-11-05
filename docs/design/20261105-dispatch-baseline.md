@@ -39,3 +39,11 @@ Run 2026-11-05 (`test-results/evals/2026-11-05T231823/`), about 29,000 input tok
 | D-12 | 0/5 | 0/5 | number_card 3 (the same step again, the old way), text 2 |
 
 Still never verified without a passing check. The remaining failures are the tool surface (fix 2) and turn endings (fix 3).
+
+## After fix 2: the tools, and a change to how turns are judged
+
+Fix 2 (show_next_step, chapter_ended, user_navigated; start_step and get_station gone), judged on the first decision as before (`test-results/evals/2026-11-05T232851/`): **7 of 14**. D-07, D-08, D-09 and D-10 went from 0/5 to 5/5.
+
+**Harness change, made after seeing those results, and why.** D-02, D-03 and D-04 failed because the model's first move was a legitimate earlier step (recording the story as read; running the check the playbook asks for), after which it would show the card. Judging only the first tool call was the wrong test. The harness now runs the whole turn: the coach's own tools really run (with the machine fixed at 16 GB), and the turn stops at the first card or a text reply. A run passes when the expected call happens in the turn with its arguments, no forbidden call happens, and the turn doesn't end in text alone, except where the learner asked a question (D-07, D-09) or the chapter closed (chapter_ended shows the map). D-05's must-not was wrong under this judging (verified after a check that passes in the same turn is correct) and was removed.
+
+The first turn-level run (`2026-11-05T233317/`) was cut short: the OpenAI test key ran out of credits after a few cases. What it did show: D-04 5/5 (check, then the permission card, within the turn), D-03 4/5, and D-02 still ending in text after recording the story as read: the dead end, for fix 3.

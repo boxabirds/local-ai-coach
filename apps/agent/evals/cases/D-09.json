@@ -72,5 +72,6 @@
    "content": "Actually, can we look at how I'd check where my chat app sends things?"
   }
  ],
- "expect_tool": "user_navigated"
+ "expect_tool": "user_navigated",
+ "text_end_ok": true
 }

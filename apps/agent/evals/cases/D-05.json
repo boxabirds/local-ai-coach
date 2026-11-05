@@ -1,7 +1,7 @@
 {
  "id": "D-05",
  "kind": "steering",
- "note": "permission given: run the check",
+ "note": "permission given: run the check (within the turn the check passes, so verified afterwards is correct; code refuses verified without a passing check)",
  "history": [
   {
    "type": "human",
@@ -121,12 +121,5 @@
   "station_id": "machine",
   "step_id": "machine.2"
  },
- "must_not": [
-  {
-   "tool": "set_progress",
-   "args": {
-    "status": "verified"
-   }
-  }
- ]
+ "must_not": []
 }

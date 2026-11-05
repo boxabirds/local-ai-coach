@@ -1,11 +1,14 @@
 """Dispatch evaluation (Ceetrix story 19, eval.harness; docs/design/20261105-agent-testing-proposal.md).
 
 A case is a frozen conversation that ends at a decision point, plus the action the coach
-should take next. The harness builds the coach as main.py does (prompt, skills, coach tools,
-coach middleware, the real model), feeds it the history, and stops at its first decision:
-the first tool call, or a text-only reply. Each case runs several times, because the model
-isn't deterministic; a case passes when enough runs chose the expected tool with the
-expected canonical arguments and no run called a forbidden tool.
+should take in the turn that follows. The harness builds the coach as main.py does (prompt,
+skills, coach tools, coach middleware, the real model), feeds it the history, and runs one
+turn: the coach's own tools (run_check, set_progress, ...) really run, and the turn stops at
+the first card for the learner (a browser tool) or a reply in text. That end is what the
+learner sees (Level 4: termination). A run passes when the expected call happened in the turn
+with the expected canonical arguments, no forbidden call happened, and the turn didn't end in
+text alone unless that was expected. Each case runs several times, because the model isn't
+deterministic.
 
 The card tools the browser provides (story_card, show_next_step and the rest) are declared
 here with the same names and arguments as apps/app/src/hooks/use-coach-ui.tsx. They are
@@ -32,7 +35,7 @@ ENV_FILE = AGENT / ".env.test"
 RESULTS = REPO / "test-results" / "evals"
 DEFAULT_RUNS = 5
 TEXT_ONLY = None  # expect_tool value for "answers in text, no tool"
-RECURSION_LIMIT = 8
+RECURSION_LIMIT = 30
 MODEL_NODE = "model"  # the agent graph's node that calls the model
 
 
@@ -118,6 +121,8 @@ class Case:
     must_not: list[dict[str, Any]] = field(default_factory=list)
     runs: int = DEFAULT_RUNS
     need: int = 0
+    # The learner asked something, so a reply in text is a proper end to the turn.
+    text_end_ok: bool = False
 
     def __post_init__(self) -> None:
         if not self.need:
@@ -180,10 +185,18 @@ def build_agent(model: Any = None):
     )
 
 
-def first_decision(agent: Any, history: list[dict[str, Any]], thread: str) -> Decision:
-    """Run the coach on the history and stop at its first model output; no tool runs."""
+BROWSER_NAMES = {"story", "show_next_step", "step_card", "number_card", "choice_card", "consent_card", "show_map"}
+
+
+def run_turn(agent: Any, history: list[dict[str, Any]], thread: str) -> Decision:
+    """Run one turn: the coach's own tools run; stop at the first card or a text-only reply.
+    tool/args are where the turn ended (a card, or None for text); calls are every call made."""
     started = time.monotonic()
     config = {"configurable": {"thread_id": thread}, "recursion_limit": RECURSION_LIMIT}
+    calls: list[dict[str, Any]] = []
+    texts: list[str] = []
+    meta: dict[str, Any] = {}
+    tokens: dict[str, int] = {}
     try:
         for update in agent.stream({"messages": to_messages(history)}, config, stream_mode="updates"):
             # Only the model node's own output: other nodes (middleware hooks) re-emit the history.
@@ -193,16 +206,23 @@ def first_decision(agent: Any, history: list[dict[str, Any]], thread: str) -> De
                 found = node.get("messages") if isinstance(node, dict) else None
                 found = getattr(found, "value", found)  # some updates wrap the list in Overwrite
                 for m in found if isinstance(found, list) else []:
-                    if isinstance(m, AIMessage):
-                        calls = [{"name": c["name"], "args": c.get("args", {})} for c in m.tool_calls]
-                        meta = m.response_metadata or {}
-                        return Decision(
-                            tool=calls[0]["name"] if calls else None, args=calls[0]["args"] if calls else {}, calls=calls,
-                            text=m.content if isinstance(m.content, str) else json.dumps(m.content),
-                            model_reported=meta.get("model_name"), tokens=m.usage_metadata,
-                            ms=round((time.monotonic() - started) * 1000),
-                        )
-        return Decision(None, {}, [], "", None, None, round((time.monotonic() - started) * 1000), error="no model output")
+                    if not isinstance(m, AIMessage):
+                        continue
+                    meta = m.response_metadata or meta
+                    for key, value in (m.usage_metadata or {}).items():
+                        if isinstance(value, int):
+                            tokens[key] = tokens.get(key, 0) + value
+                    if isinstance(m.content, str) and m.content:
+                        texts.append(m.content)
+                    made = [{"name": c["name"], "args": c.get("args", {})} for c in m.tool_calls]
+                    calls += made
+                    card = next((c for c in made if c["name"] in BROWSER_NAMES), None)
+                    if card or not made:
+                        # The turn ends here: a card waits for the learner, or the coach just spoke.
+                        return Decision(card["name"] if card else None, card["args"] if card else {}, calls, "\n".join(texts),
+                                        meta.get("model_name"), tokens, round((time.monotonic() - started) * 1000))
+        return Decision(None, {}, calls, "\n".join(texts), meta.get("model_name"), tokens,
+                        round((time.monotonic() - started) * 1000), error="the turn didn't end")
     except Exception as error:  # a provider refusal counts as a failed run, and is recorded
         return Decision(None, {}, [], "", None, None, round((time.monotonic() - started) * 1000), error=f"{type(error).__name__}: {error}")
 
@@ -215,11 +235,17 @@ def judge(case: Case, decision: Decision) -> tuple[bool, str]:
         for call in decision.calls:
             if call["name"] == forbidden["tool"] and all(call["args"].get(k) == v for k, v in forbidden.get("args", {}).items()):
                 return False, f"called forbidden {call['name']}({call['args']})"
-    if decision.tool != case.expect_tool:
-        return False, f"chose {decision.tool or 'text only'}, expected {case.expect_tool or 'text only'}"
-    for key, want in case.expect_args.items():
-        if decision.args.get(key) != want:
-            return False, f"{key}={decision.args.get(key)!r}, expected {want!r}"
+    if case.expect_tool is None:
+        return (True, "ok") if decision.tool is None else (False, f"ended with {decision.tool}, expected text only")
+    made = [c for c in decision.calls if c["name"] == case.expect_tool]
+    if not made:
+        seen = ", ".join(c["name"] for c in decision.calls) or "nothing"
+        return False, f"no {case.expect_tool} in the turn (called {seen}; ended with {decision.tool or 'text only'})"
+    if not any(all(c["args"].get(k) == v for k, v in case.expect_args.items()) for c in made):
+        return False, f"{case.expect_tool} with {made[-1]['args']}, expected {case.expect_args}"
+    # chapter_ended shows the learner their map, so the turn has ended with something on screen.
+    if decision.tool is None and not case.text_end_ok and not any(c["name"] == "chapter_ended" for c in decision.calls):
+        return False, "the turn ended in text with nothing for the learner to do"
     return True, "ok"
 
 
@@ -237,7 +263,7 @@ class CaseResult:
 def score(case: Case, agent: Any) -> CaseResult:
     runs = []
     for n in range(case.runs):
-        decision = first_decision(agent, case.history, thread=f"{case.id}-{n}-{os.getpid()}")
+        decision = run_turn(agent, case.history, thread=f"{case.id}-{n}-{os.getpid()}")
         ok, why = judge(case, decision)
         runs.append({"ok": ok, "why": why, **decision.__dict__})
     return CaseResult(case, sum(r["ok"] for r in runs), runs)

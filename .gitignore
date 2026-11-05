@@ -81,3 +81,6 @@ apps/app/playwright-report/
 
 # Release builds
 dist/
+
+# test and eval output
+test-results/
