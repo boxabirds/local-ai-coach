@@ -39,7 +39,7 @@ The three questions, and where each is answered:
 
 ### Chapter 1: Know your machine
 
-**Change: the main one.** Two parts, as you asked, inside the same five-minute promise.
+**Change: the main one.** Two parts, as you asked.
 
 **Part 1: local models use a lot of your machine.**
 - Two facts on the sticky note, not one: the memory number, and what does the work (a graphics card, Apple silicon, or the plain processor). The station's own proof already asks for "RAM, GPU memory and disk free", so this catches the chapter up with its station rather than adding to it.
@@ -174,8 +174,8 @@ Places that change:
 - the coach: the number card's label "Your number" (`apps/app/src/components/coach/number-card.tsx`) and the figure's "Your number" control;
 - docs: CLAUDE.md and `docs/design.md` call the step "Find your number".
 
-## 8. The time promises
+## 8. No time promises (Julian, 2026-11-05)
 
-The chapter promises two minutes (finding the memory number), five minutes (the chapter's hands-on part) and five seconds (judging a model page afterwards). They tell a nervous beginner the step is small, which is what gets them to start. None has been timed with a reader, and the two new facts make the first longer on Windows and Linux. For a book about proof, an untimed promise is a liability. Proposed: time the new chapter 1 on one real person before publishing, and print only the times that held.
+Decided: the chapter makes no promises about how long anything takes the reader. The "two minutes", "five minutes" and "five seconds" lines go from the book text (`panel/final-narrative.md`, `curriculum/chapters/know-your-machine.md`) and the front-matter's "in two minutes". The "five-minute promise" I used as a design limit in sections 3 and in `20261105-what-fits-proposal.md` goes with them. The job table's model speeds stay: they are measurements of the machine, not promises to the reader.
 
-Open (author): the station and chapter title "Know your machine" is framed as a fact too. A goal-framed title would match, for example "What can my computer do?". A station rename is a taxonomy change.
+Decided (Julian, 2026-11-05): the station and chapter are renamed "What can my computer do?". The station id `machine` stays, so progress files and links keep working; the name changes in `stations.json`, the chapter, the lesson, `scope.json` and wherever the coach shows it.
