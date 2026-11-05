@@ -48,6 +48,7 @@ release-test: ## Build, install from scratch and run the browser suite against t
 
 check: ## Validate the curriculum (lessons, term register, probes, voice rules)
 	uv run --directory apps/agent python ../../curriculum/validate.py
+	uv run --directory apps/agent python ../../curriculum/figures/make_figures.py --check
 
 clean: ## Clean build artifacts
 	pnpm clean

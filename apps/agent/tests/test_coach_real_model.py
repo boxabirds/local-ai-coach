@@ -33,6 +33,14 @@ pytestmark = pytest.mark.skipif(
     os.environ.get("COACH_REAL_MODEL") != "1" or not os.environ.get("OPENAI_API_KEY"),
     reason="set COACH_REAL_MODEL=1 and OPENAI_API_KEY (calls the hosted model)",
 )
+
+
+@pytest.fixture(autouse=True)
+def _real_curriculum(monkeypatch):
+    """This test watches the coach teach the real lessons, so it reads curriculum/, not the fixture."""
+    monkeypatch.delenv("COACH_CURRICULUM", raising=False)
+
+
 CARDS = ("step_card", "number_card", "consent_card")
 MAX_RUNS = 12
 

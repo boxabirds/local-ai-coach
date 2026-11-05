@@ -1,0 +1,84 @@
+{
+  "station": "localchat",
+  "status": "draft",
+  "untested": [
+    "Which chat app the series names is not decided (chapter 1 authorWork). Steps use {chat_app} until it is.",
+    "None of the curl commands has been run against the reference server this month, so the practice terminal has no captured output to copy.",
+    "That an OpenAI-compatible server answers /v1/models and /v1/chat/completions comes from llama-server's documentation, not from a run.",
+    "Opening Terminal with Command and Space on a Mac is from memory, not checked on the current macOS version.",
+    "The connections probe saw curl's connection to a model on another machine over Tailscale, on macOS (lsof) and on Linux (ss), during a long answer (2026-11-05). A short answer from a fast machine can finish before the check looks. A real chat app is not tried yet."
+  ],
+  "teaches": ["terminal", "server", "address"],
+  "previews": [],
+  "stands": null,
+  "why": "Priya's chat app looks like any other. The difference is where it sends things: a box on her shelf, not a company's servers. Yours will send to a machine you own, this laptop or one on your own network. A script sets it up. You press go, ask, and say which machine answered.",
+  "mnem": "Ask the box, not the cloud.",
+  "steps": [
+    {
+      "id": "localchat.1",
+      "text": "First, a practice run. This is a **terminal** (a window where you type a command and the machine types back), and it's a pretend one, so nothing you type here can break anything. Ask your **server** which models it has: `curl http://{server}/v1/models` (The server is the program on the model's machine that holds the model in memory and answers.)",
+      "where": "sandbox",
+      "hint": "Type it exactly and press Return. The bit after http:// is the server's **address**: the name or number a machine is found by on a network.",
+      "doIt": { "kind": "sim", "cmd": "curl http://{server}/v1/models" },
+      "check": { "kind": "sim", "event": "command", "match": "^curl .*/v1/models$" },
+      "onFail": {
+        "pattern": "Could not resolve host",
+        "say": "The address is wrong. Check the spelling of {server_name}. The practice terminal only knows that one."
+      }
+    },
+    {
+      "id": "localchat.2",
+      "text": "Now the real one. Open Terminal (on a Mac, press Command and Space, type Terminal, press Return) and type the same command: `curl http://{server}/v1/models` You should see your model's name in the reply.",
+      "where": "real-terminal",
+      "hint": "Same command, same address. If it just sits there, the machine with the model is asleep or switched off.",
+      "doIt": {
+        "kind": "shell",
+        "cmd": "curl -s -m 10 http://{server}/v1/models",
+        "explain": "Asks your server which models it has, and gives up after ten seconds if nothing answers."
+      },
+      "check": {
+        "kind": "ask",
+        "question": "What's the model's name in the reply?",
+        "rubric": "Accept a model name that matches the reply. If the coach ran the command, compare with the transcript. If the learner ran it, a plausible model file name is enough; record it as reported, not verified."
+      },
+      "onFail": {
+        "pattern": "Connection refused",
+        "say": "The machine answered, but nothing is listening for the model there. The server isn't running. Start it again on {server_name} and try once more."
+      }
+    },
+    {
+      "id": "localchat.3",
+      "figure": "one-file",
+      "text": "Open {chat_app}, choose {server_name} as the machine to talk to, and ask it anything you like.",
+      "where": "chat-app",
+      "hint": "If {chat_app} asks for a key or an account, it's pointed at a company, not at your machine. Go back and choose {server_name}.",
+      "doIt": {
+        "kind": "shell",
+        "cmd": "curl -s -m 60 http://{server}/v1/chat/completions -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"Say hello in five words.\"}]}'",
+        "explain": "Sends one question to your server and prints its answer, so you see it work once."
+      },
+      "check": { "kind": "real", "probe": "connections", "params": { "process": "{chat_app}" }, "expect": "owned" },
+      "onFail": {
+        "pattern": "public",
+        "say": "{chat_app} is sending to {address}, and that isn't a machine on your network. Check which machine it's set to."
+      }
+    },
+    {
+      "id": "localchat.4",
+      "text": "Which machine answered you? Say its name.",
+      "where": "coach",
+      "hint": "It's the one you chose in {chat_app}: this laptop, or the box on your network.",
+      "doIt": { "kind": "instructions", "explain": "I'll show you the address I saw and the machine it belongs to." },
+      "check": {
+        "kind": "ask",
+        "question": "Which machine answered?",
+        "rubric": "Names the machine running the model: this laptop, or the named machine on their network. It matches the address seen in localchat.3."
+      }
+    }
+  ],
+  "recap": [
+    "A server is the program that holds the model in memory and answers.",
+    "Your chat app talks to the server, and the server can be on this laptop or on a box you own.",
+    "If the app asks for an account or a key, it's pointed at a company."
+  ]
+}

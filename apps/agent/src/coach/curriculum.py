@@ -1,39 +1,69 @@
-"""Read-only access to the curriculum at the repo root (docs/design.md, Curriculum on disk).
+"""Read-only access to the curriculum (docs/design.md, Curriculum on disk).
 
-Nothing here writes. Paths come from `scope.json`, never from a request.
+Nothing here writes. Paths come from `scope.json`, never from a request. The folder is
+curriculum/ at the repo root unless COACH_CURRICULUM names another; the code tests point it
+at their own frozen copy, fixtures/curriculum/ (Ceetrix story 13).
 """
 
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-CURRICULUM = Path(__file__).resolve().parents[4] / "curriculum"
+REPO = Path(__file__).resolve().parents[4]
+DEFAULT = REPO / "curriculum"
+ENV = "COACH_CURRICULUM"
+SCOPE_FILE = "scope.json"
 STORY_KIND = "story"
+
+
+def root() -> Path:
+    """The curriculum folder: $COACH_CURRICULUM (relative paths resolve against the repo; empty
+    means unset), else curriculum/. A folder without scope.json, or a file, is an error, never
+    a fallback to the real curriculum."""
+    chosen = os.environ.get(ENV, "").strip()
+    folder = DEFAULT if not chosen else Path(chosen) if Path(chosen).is_absolute() else REPO / chosen
+    if not (folder / SCOPE_FILE).is_file():
+        raise FileNotFoundError(f"curriculum folder {folder} has no {SCOPE_FILE}")
+    return folder
 
 
 def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=None)
+def _scope(folder: Path) -> dict[str, Any]:
+    return _read_json(folder / SCOPE_FILE)
+
+
 def scope() -> dict[str, Any]:
-    return _read_json(CURRICULUM / "scope.json")
+    return _scope(root())
 
 
 @lru_cache(maxsize=None)
-def lesson(station_id: str) -> dict[str, Any]:
-    """The lesson JSON for a station listed in the reading order."""
-    for item in scope()["readingOrder"]:
+def _lesson(folder: Path, station_id: str) -> dict[str, Any]:
+    for item in _scope(folder)["readingOrder"]:
         if item["kind"] == "lesson" and item["station"] == station_id:
-            return _read_json(CURRICULUM / item["file"])
+            return _read_json(folder / item["file"])
     raise KeyError(station_id)
 
 
-@lru_cache(maxsize=1)
+def lesson(station_id: str) -> dict[str, Any]:
+    """The lesson JSON for a station listed in the reading order."""
+    return _lesson(root(), station_id)
+
+
 def station_names() -> dict[str, str]:
+    """Station id to display name, for every station in stations.json."""
+    return _station_names(root())
+
+
+@lru_cache(maxsize=None)
+def _station_names(folder: Path) -> dict[str, str]:
     """Station id to display name, for every station in stations.json."""
     names: dict[str, str] = {}
 
@@ -47,7 +77,7 @@ def station_names() -> dict[str, str]:
             for value in node:
                 walk(value)
 
-    walk(_read_json(CURRICULUM / "stations.json"))
+    walk(_read_json(folder / "stations.json"))
     return names
 
 
@@ -55,9 +85,13 @@ def station_names() -> dict[str, str]:
 CRITICALITY = {"press go": "grey", "know what it does": "amber", "must understand": "red"}
 
 
-@lru_cache(maxsize=1)
 def station_criticality() -> dict[str, str]:
     """Station id to grey, amber or red; stations without a known rating are left out."""
+    return _station_criticality(root())
+
+
+@lru_cache(maxsize=None)
+def _station_criticality(folder: Path) -> dict[str, str]:
     rated: dict[str, str] = {}
 
     def walk(node: Any) -> None:
@@ -71,7 +105,7 @@ def station_criticality() -> dict[str, str]:
             for value in node:
                 walk(value)
 
-    walk(_read_json(CURRICULUM / "stations.json"))
+    walk(_read_json(folder / "stations.json"))
     return rated
 
 
@@ -82,24 +116,26 @@ def v1_stations() -> list[str]:
 
 def story_markdown(story_id: str) -> str | None:
     """The story text for an id listed in scope.json as a story, else None."""
-    for item in scope()["readingOrder"]:
+    folder = root()
+    for item in _scope(folder)["readingOrder"]:
         if item["kind"] == STORY_KIND and item["id"] == story_id:
-            return (CURRICULUM / item["file"]).read_text(encoding="utf-8")
+            return (folder / item["file"]).read_text(encoding="utf-8")
     return None
 
 
 FIGURE_FIELDS = ("id", "title", "alt", "caption", "controls")
 
 
-@lru_cache(maxsize=1)
-def _figures() -> dict[str, dict[str, Any]]:
-    return {entry["id"]: entry for entry in _read_json(CURRICULUM / "figures.json")["figures"]}
+@lru_cache(maxsize=None)
+def _figures(folder: Path) -> dict[str, dict[str, Any]]:
+    return {entry["id"]: entry for entry in _read_json(folder / "figures.json")["figures"]}
 
 
 def figure(figure_id: str) -> dict[str, Any] | None:
     """A figure listed in figures.json, as the coach draws it: its words, choices and SVG; else None."""
-    entry = _figures().get(figure_id)
+    folder = root()
+    entry = _figures(folder).get(figure_id)
     if entry is None:
         return None
-    svg = (CURRICULUM / "figures" / f"{entry['id']}.svg").read_text(encoding="utf-8")
+    svg = (folder / "figures" / f"{entry['id']}.svg").read_text(encoding="utf-8")
     return {**{key: entry[key] for key in FIGURE_FIELDS}, "svg": svg}

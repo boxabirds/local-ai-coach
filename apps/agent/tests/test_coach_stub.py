@@ -410,7 +410,7 @@ def test_tc34_story_endpoint_serves_the_file(client):
     response = client.get("/curriculum/story/legal-letter")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/markdown")
-    assert response.text == (REPO / "curriculum" / "stories" / "legal-letter.md").read_text(encoding="utf-8")
+    assert response.text == (curriculum.root() / "stories" / "legal-letter.md").read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("story_id", ["nope", "machine", "..%2Fscope", "..%2F..%2FREADME"])
@@ -484,7 +484,7 @@ def test_s5_tc03_snapshot_carries_criticality():
 
 # ---------------------------------------------------------------- figures (Ceetrix story 7)
 
-FIGURE_IDS = [e["id"] for e in json.loads((REPO / "curriculum" / "figures.json").read_text(encoding="utf-8"))["figures"]]
+FIGURE_IDS = [e["id"] for e in json.loads((REPO / "fixtures" / "curriculum" / "figures.json").read_text(encoding="utf-8"))["figures"]]
 
 
 @pytest.mark.parametrize("figure_id", FIGURE_IDS)
@@ -494,7 +494,7 @@ def test_s7_tc17_figure_endpoint_serves_words_choices_and_svg(client, figure_id)
     body = response.json()
     assert set(body) == {"id", "title", "alt", "caption", "controls", "svg"}
     assert body["id"] == figure_id and body["controls"]
-    assert body["svg"] == (REPO / "curriculum" / "figures" / f"{figure_id}.svg").read_text(encoding="utf-8")
+    assert body["svg"] == (curriculum.root() / "figures" / f"{figure_id}.svg").read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("figure_id", ["nope", "legal-letter", "..%2Ffigures", "print"])

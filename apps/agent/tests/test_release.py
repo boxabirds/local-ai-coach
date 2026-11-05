@@ -225,6 +225,7 @@ def launcher_env(fakes: Fakes, home: Path, **extra: str) -> dict[str, str]:
     env = fakes.env(home)
     env.update({"COACH_APP_PORT": str(free_port()), "COACH_AGENT_PORT": str(free_port()), "COACH_HOME": str(home / ".local-ai-coach")})
     env.update(extra)
+    env.pop("COACH_CURRICULUM", None)  # the installed coach reads the curriculum it ships with
     return env
 
 
@@ -428,6 +429,7 @@ def test_tc12_to_tc14_install_run_browse_reinstall(built_release, tmp_path):
     # The installed coach keeps progress in its default place, ~/.local-ai-coach under this HOME,
     # which is where the browser suite looks; the test-wide COACH_HOME must not leak in.
     env = {**os.environ, "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach"), "COACH_APP_PORT": str(app_port), "COACH_AGENT_PORT": str(agent_port)}
+    env.pop("COACH_CURRICULUM", None)  # the installed coach reads the curriculum it ships with
     coach = subprocess.Popen([command(home), "--no-open"], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     try:
         deadline = time.monotonic() + START_WAIT

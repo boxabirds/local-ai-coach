@@ -19,9 +19,9 @@ from typing import Callable
 
 import pytest
 
-from tests.test_curriculum import CURRICULUM, errors, root, run, validate_mod  # noqa: F401  (root is a fixture)
+from tests.test_curriculum import CODE, CURRICULUM, errors, root, run, validate_mod  # noqa: F401  (root is a fixture)
 
-GENERATOR = CURRICULUM / "figures" / "make_figures.py"
+GENERATOR = CODE / "figures" / "make_figures.py"
 _gspec = importlib.util.spec_from_file_location("make_figures", GENERATOR)
 assert _gspec and _gspec.loader
 make_figures = importlib.util.module_from_spec(_gspec)
@@ -58,8 +58,9 @@ def edit_registry(root: Path, fid: str, fn: Callable[[dict], None]) -> None:
 # ---------------------------------------------------------------- the generator
 
 
-def test_tc01_committed_figures_are_what_the_generator_writes():
-    result = subprocess.run([sys.executable, str(GENERATOR), "--check"], capture_output=True, text=True, check=False)
+def test_tc01_committed_figures_are_what_the_generator_writes(root):
+    # On the tests' copy; make check runs the same --check on the real curriculum.
+    result = subprocess.run([sys.executable, str(root / "figures" / "make_figures.py"), "--check"], capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stderr
 
 

@@ -1,7 +1,7 @@
 """Tests for curriculum/validate.py (Ceetrix story 1, TC-01 to TC-38).
 
-Every case copies the real curriculum into a temp dir and applies exactly one
-mutation, then asserts the full set of error codes, so a defect is shown to
+Every case copies the tests' own frozen curriculum (fixtures/curriculum, story 13)
+into a temp dir and applies exactly one mutation, then asserts the full set of error codes, so a defect is shown to
 produce its own code and nothing else.
 """
 
@@ -18,11 +18,13 @@ from typing import Any, Callable
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
-CURRICULUM = REPO / "curriculum"
+# The tests' frozen copy; the real curriculum/ is checked by make check, never here (story 13).
+CURRICULUM = REPO / "fixtures" / "curriculum"
+CODE = REPO / "curriculum"
 PROBES = REPO / "apps" / "agent" / "src" / "coach" / "probes.py"
 STYLECHECK = REPO / "panel" / "stylecheck.py"
 
-_spec = importlib.util.spec_from_file_location("curriculum_validate", CURRICULUM / "validate.py")
+_spec = importlib.util.spec_from_file_location("curriculum_validate", CODE / "validate.py")
 assert _spec and _spec.loader
 validate_mod = importlib.util.module_from_spec(_spec)
 sys.modules[_spec.name] = validate_mod  # dataclasses look the module up by name
@@ -35,6 +37,8 @@ DESIGN_PROBES = {"memory", "history_has", "process", "listening", "model_file", 
 def root(tmp_path: Path) -> Path:
     dest = tmp_path / "curriculum"
     shutil.copytree(CURRICULUM, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    # The figure generator is code, not content: the copy gets the real one.
+    shutil.copy2(CODE / "figures" / "make_figures.py", dest / "figures" / "make_figures.py")
     return dest
 
 

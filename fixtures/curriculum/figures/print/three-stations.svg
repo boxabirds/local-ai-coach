@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230" width="640" height="230" font-family="system-ui, -apple-system, Segoe UI, sans-serif" class="fig" data-figure="three-stations">
+  <title>Three stations, three amounts of you</title>
+  <line x1="110" y1="90" x2="530" y2="90" class="fig-line-stroke" stroke="#8b8ba3" stroke-width="8" stroke-linecap="round" />
+  <polygon points="110,72 128,90 110,108 92,90" class="fig-crit coach-crit--amber" fill="#b45309" data-station="machine" />
+  <text x="110" y="150" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">Know your machine</text>
+  <text x="110" y="170" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Amber</text>
+  <circle cx="320" cy="90" r="18" class="fig-crit coach-crit--grey" fill="#6b7280" data-station="localchat" />
+  <text x="320" y="150" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">Local chat</text>
+  <text x="320" y="170" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Grey</text>
+  <circle cx="530" cy="90" r="30" class="fig-accent-stroke" fill="none" stroke="#1d4ed8" stroke-width="3" />
+  <polygon points="530,72 548,104.4 512,104.4" class="fig-crit coach-crit--red" fill="#b91c1c" data-station="prove" />
+  <text x="530" y="99" font-size="15" text-anchor="middle" class="fig-on-crit" fill="#ffffff" font-weight="bold">!</text>
+  <text x="530" y="150" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">Prove it stays local</text>
+  <text x="530" y="170" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Red</text>
+  <text x="320" y="212" font-size="15" text-anchor="middle" class="fig-ink fig-result" fill="#1c1c28" font-weight="bold">Red: you can say what it looks like when it goes wrong.</text>
+  <text x="320" y="36" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Priya's week, on the map</text>
+</svg>

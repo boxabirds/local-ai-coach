@@ -62,7 +62,7 @@ def chapter_body(station_id: str) -> str | None:
     item = _item(station_id)
     if not item or not item.get("chapter"):
         return None
-    text = (curriculum.CURRICULUM / item["chapter"]).read_text(encoding="utf-8")
+    text = (curriculum.root() / item["chapter"]).read_text(encoding="utf-8")
     if text.startswith("---"):
         end = text.find("\n---", 3)
         text = text[end + 4:] if end != -1 else text
@@ -71,7 +71,7 @@ def chapter_body(station_id: str) -> str | None:
 
 def _terms(station_id: str) -> list[dict[str, Any]]:
     item = _item(station_id)
-    terms = json.loads((curriculum.CURRICULUM / "map.json").read_text(encoding="utf-8"))["terms"]
+    terms = json.loads((curriculum.root() / "map.json").read_text(encoding="utf-8"))["terms"]
     return [{k: t[k] for k in ("term", "gloss", "analogy", "recap")} for t in terms if item and t.get("firstAt") == item["id"]]
 
 

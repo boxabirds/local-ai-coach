@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" width="640" height="300" font-family="system-ui, -apple-system, Segoe UI, sans-serif" class="fig" data-figure="where-words-go">
+  <title>Where the words go</title>
+  <rect x="20" y="40" width="330" height="200" class="fig-line-stroke" fill="none" stroke="#8b8ba3" rx="14" stroke-dasharray="6 6" stroke-width="2" data-when="when=last-year" />
+  <rect x="20" y="40" width="450" height="200" class="fig-line-stroke" fill="none" stroke="#8b8ba3" rx="14" stroke-dasharray="6 6" stroke-width="2" data-when="when=tuesday" />
+  <text x="36" y="64" font-size="13" text-anchor="start" class="fig-muted" fill="#55556a">Priya's network</text>
+  <rect x="60" y="92" width="120" height="76" class="fig-paper fig-line-stroke" fill="#ffffff" stroke="#8b8ba3" rx="6" stroke-width="2" />
+  <rect x="48" y="168" width="144" height="10" class="fig-line-fill" fill="#8b8ba3" stroke="none" rx="3" />
+  <text x="120" y="198" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Priya's laptop</text>
+  <text x="120" y="112" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Chatting with:</text>
+  <text x="120" y="136" font-size="15" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="when=last-year">a company</text>
+  <text x="120" y="136" font-size="15" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold" data-when="when=tuesday">backroom</text>
+  <g>
+    <rect x="230" y="180" width="90" height="36" class="fig-code fig-line-stroke" fill="#f2f2f4" stroke="#8b8ba3" rx="6" stroke-width="2" />
+    <text x="275" y="203" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">printer</text>
+  </g>
+  <g data-when="when=tuesday">
+    <rect x="350" y="96" width="96" height="44" class="fig-code fig-line-stroke" fill="#f2f2f4" stroke="#8b8ba3" rx="6" stroke-width="2" />
+    <text x="398" y="123" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">backroom</text>
+    <text x="398" y="158" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">the box on the shelf</text>
+  </g>
+  <rect x="500" y="80" width="120" height="80" class="fig-code fig-line-stroke" fill="#f2f2f4" stroke="#8b8ba3" rx="6" stroke-width="2" />
+  <text x="560" y="112" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">A company's</text>
+  <text x="560" y="130" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">computers,</text>
+  <text x="560" y="148" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">far away</text>
+  <g data-when="when=last-year">
+    <line x1="185" y1="128" x2="494" y2="120" class="fig-accent-stroke" stroke="#1d4ed8" stroke-width="3" />
+    <polygon points="494,120 484.133,125.257 483.874,115.26" class="fig-accent-fill" fill="#1d4ed8" />
+  </g>
+  <g data-when="when=tuesday">
+    <line x1="185" y1="128" x2="344" y2="118" class="fig-accent-stroke" stroke="#1d4ed8" stroke-width="3" />
+    <polygon points="344,118 334.334,123.618 333.706,113.638" class="fig-accent-fill" fill="#1d4ed8" />
+  </g>
+  <text x="20" y="280" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" font-weight="bold" data-when="when=last-year">Last year: the letter left her network.</text>
+  <text x="20" y="280" font-size="15" text-anchor="start" class="fig-ink fig-result" fill="#1c1c28" font-weight="bold" data-when="when=tuesday">Tuesday: the letter stays on her network.</text>
+</svg>

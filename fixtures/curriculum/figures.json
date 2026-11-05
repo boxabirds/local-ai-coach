@@ -1,0 +1,123 @@
+{
+  "version": "v1",
+  "note": "The curriculum's figures (Ceetrix story 7). Each is drawn by figures/make_figures.py into figures/<id>.svg, and printed from figures/print/<id>.svg in its print state. coach says where the coach shows it (a story, or a lesson step); book names the Markdown file and the sentence its marker follows. validate.py checks every word, the placement, the states and the arithmetic.",
+  "figures": [
+    {
+      "id": "where-words-go",
+      "item": "legal-letter",
+      "title": "Where the words go",
+      "alt": "Priya's laptop and printer inside her network. Last year an arrow leaves her network for a company's computers far away. On Tuesday the arrow goes to backroom, the box on the shelf, inside her network.",
+      "caption": "Same app, same letter. What changed is where it goes.",
+      "controls": [
+        { "name": "when", "label": "Show", "default": "tuesday", "options": [
+          { "value": "last-year", "label": "Last year" },
+          { "value": "tuesday", "label": "Tuesday" }
+        ] }
+      ],
+      "print": { "when": "tuesday" },
+      "coach": { "story": "legal-letter" },
+      "book": { "file": "stories/legal-letter.md", "after": "A box on a shelf, talking to a laptop on a desk, above a bakery." }
+    },
+    {
+      "id": "spot-the-line",
+      "item": "legal-letter",
+      "title": "Spot the line",
+      "alt": "A sample list of where each program is sending data. Line 1: the chat app to backroom. Line 2: the printer app to the printer. Line 3: the chat app to a company's computers far away, the line that shouldn't be there.",
+      "caption": "A made-up bad Wednesday. Nothing beeps; the list is how you find out.",
+      "controls": [
+        { "name": "pick", "label": "Which line shouldn't be there?", "default": "", "options": [
+          { "value": "1", "label": "Line 1" },
+          { "value": "2", "label": "Line 2" },
+          { "value": "3", "label": "Line 3" }
+        ] }
+      ],
+      "print": { "pick": "3" },
+      "coach": { "story": "legal-letter" },
+      "book": { "file": "stories/legal-letter.md", "after": "It's an open window in a house you've just locked up: the house doesn't tell you, you go and look." }
+    },
+    {
+      "id": "three-stations",
+      "item": "legal-letter",
+      "title": "Three stations, three amounts of you",
+      "alt": "Three stations on one line: Know your machine, an amber diamond; Local chat, a grey circle; Prove it stays local, a red triangle with an exclamation mark.",
+      "caption": "Priya's three stations. The shape says the same as the colour, so it reads in black and white too.",
+      "controls": [
+        { "name": "station", "label": "Station", "default": "machine", "options": [
+          { "value": "machine", "label": "Know your machine" },
+          { "value": "localchat", "label": "Local chat" },
+          { "value": "prove", "label": "Prove it stays local" }
+        ] }
+      ],
+      "crit": { "machine": "amber", "localchat": "grey", "prove": "red" },
+      "check": "criticality",
+      "print": { "station": "prove" },
+      "coach": { "story": "legal-letter" },
+      "book": { "file": "stories/legal-letter.md", "after": "Those are the station colours." }
+    },
+    {
+      "id": "room-and-warehouse",
+      "item": "machine",
+      "title": "The room and the warehouse",
+      "alt": "A 2 TB drive drawn as a long warehouse, and 16 GB of memory drawn as a room with a three quarters mark. A model file sits in the warehouse, or is loaded into the room, where a 20 GB file spills out.",
+      "caption": "A 16 GB laptop with a 2 TB drive. The file can sit in the warehouse all day; it only runs in the room.",
+      "controls": [
+        { "name": "file", "label": "Model file", "default": "20", "role": "file", "options": [
+          { "value": "5", "label": "5 GB", "gb": 5 },
+          { "value": "20", "label": "20 GB", "gb": 20 }
+        ] },
+        { "name": "place", "label": "Where is it?", "default": "drive", "role": "place", "options": [
+          { "value": "drive", "label": "On the drive" },
+          { "value": "memory", "label": "Loaded into memory" }
+        ] }
+      ],
+      "fixed": { "room": 16 },
+      "check": "fit",
+      "print": { "file": "20", "place": "memory" },
+      "coach": { "step": "machine.2" },
+      "book": { "file": "chapters/know-your-machine.md", "after": "The choir doesn't sing in the warehouse. 😆" }
+    },
+    {
+      "id": "will-it-fit",
+      "item": "machine",
+      "title": "Will it fit?",
+      "alt": "Your memory drawn as a room with a three quarters mark, and a model file drawn to the same scale inside it, spilling out past the end when it is bigger than the room.",
+      "caption": "Pick your number, then a file. Under three quarters fits; over it is a squeeze; bigger than the room doesn't run.",
+      "controls": [
+        { "name": "memory", "label": "Your number", "default": "16", "role": "room", "options": [
+          { "value": "8", "label": "8 GB", "gb": 8 },
+          { "value": "16", "label": "16 GB", "gb": 16 },
+          { "value": "32", "label": "32 GB", "gb": 32 },
+          { "value": "128", "label": "128 GB", "gb": 128 }
+        ] },
+        { "name": "file", "label": "Model file", "default": "20", "role": "file", "options": [
+          { "value": "2", "label": "2 GB", "gb": 2 },
+          { "value": "5", "label": "5 GB", "gb": 5 },
+          { "value": "20", "label": "20 GB", "gb": 20 }
+        ] }
+      ],
+      "check": "fit",
+      "print": { "memory": "16", "file": "20" },
+      "coach": { "step": "machine.3" },
+      "book": { "file": "chapters/know-your-machine.md", "after": "When the model table at the end of this chapter is in front of you, do the same for any three rows." }
+    },
+    {
+      "id": "one-file",
+      "item": "machine",
+      "title": "One file, nothing to call",
+      "alt": "One 5 GB model file, copied to another machine. On a machine with enough memory it fits; on a 4 GB laptop it doesn't run. No line goes anywhere else.",
+      "caption": "The whole model is the file. Copy it, and it runs wherever the room is big enough.",
+      "controls": [
+        { "name": "machine", "label": "Copy it to", "default": "box", "role": "room", "options": [
+          { "value": "box", "label": "Priya's box", "gb": 16 },
+          { "value": "old", "label": "An old laptop", "gb": 4 },
+          { "value": "desktop", "label": "A desktop", "gb": 32 }
+        ] }
+      ],
+      "fixed": { "file": 5 },
+      "check": "fit",
+      "print": { "machine": "desktop" },
+      "coach": { "step": "localchat.3" },
+      "book": { "file": "chapters/know-your-machine.md", "after": "Copy it to another machine with enough memory and it works there too." }
+    }
+  ]
+}

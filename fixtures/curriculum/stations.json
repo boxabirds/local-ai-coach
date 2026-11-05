@@ -1,0 +1,2696 @@
+{
+ "asOf": "2026-10-31",
+ "note": "Draft placements and criticality ratings, not measured facts. Zones: 1 any recent laptop; 2 24-32 GB GPU or 32 GB+ unified memory; 3 128 GB unified memory or multi-GPU. Round 2 (31 Oct 2026) applied the completeness and integrity audit against OWASP LLM 2025 / Agentic 2026, NCSC, NIST AI 600-1, ICO guidance and tool docs.",
+ "areas": [
+  {
+   "id": "trunk",
+   "name": "Foundations"
+  },
+  {
+   "id": "models",
+   "name": "Models"
+  },
+  {
+   "id": "text",
+   "name": "Text"
+  },
+  {
+   "id": "docs",
+   "name": "Documents"
+  },
+  {
+   "id": "in",
+   "name": "Media in"
+  },
+  {
+   "id": "out",
+   "name": "Media out"
+  },
+  {
+   "id": "code",
+   "name": "Code"
+  },
+  {
+   "id": "agents",
+   "name": "Agents"
+  },
+  {
+   "id": "net",
+   "name": "Network"
+  },
+  {
+   "id": "ops",
+   "name": "Operations"
+  },
+  {
+   "id": "govern",
+   "name": "Governance"
+  },
+  {
+   "id": "build",
+   "name": "Building"
+  }
+ ],
+ "stations": [
+  {
+   "id": "machine",
+   "name": "Know your machine",
+   "area": "trunk",
+   "needs": [],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Reading which models fit.",
+   "proof": "You can state your RAM, GPU memory and disk free.",
+   "ifSkipped": "Downloads that never load; blame falls on the model.",
+   "headNote": "RAM vs GPU memory, and why model size is the gate.",
+   "destination": false
+  },
+  {
+   "id": "lmbasics",
+   "name": "Language model basics",
+   "area": "trunk",
+   "needs": [],
+   "betterWith": [
+    "machine"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Reading any model card.",
+   "proof": "You can say what parameters, quantisation, context and licence mean for you.",
+   "ifSkipped": "Picking by hype; surprises on memory, speed and rights.",
+   "headNote": "Size, quantisation, context window, licence.",
+   "destination": false
+  },
+  {
+   "id": "web",
+   "name": "Internet and web basics",
+   "area": "trunk",
+   "needs": [],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Knowing what a connection, a request and a page are.",
+   "proof": "Web Jelly missions.",
+   "ifSkipped": "Cannot tell a network problem from a model problem.",
+   "headNote": "Your machine talks to others; you can see when it does.",
+   "destination": false
+  },
+  {
+   "id": "localchat",
+   "name": "Local chat",
+   "area": "trunk",
+   "needs": [
+    "lmbasics"
+   ],
+   "betterWith": [
+    "download",
+    "quant"
+   ],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "A chat with a model that runs on a machine you own: this laptop, or a box on your own network.",
+   "proof": "Ask a question; the answer comes from your own machine or a machine on your own network, and you can name which.",
+   "ifSkipped": "You never see the whole game, so every later station is abstract.",
+   "headNote": "The model is a file on a machine you own. The chat app only has to find that machine.",
+   "destination": false
+  },
+  {
+   "id": "prove",
+   "name": "Prove it stays local",
+   "area": "trunk",
+   "needs": [
+    "localchat",
+    "web"
+   ],
+   "betterWith": [
+    "bind",
+    "vpn"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Knowing, not hoping, that a prompt went only to a machine you own.",
+   "proof": "While the model answers, the chat app has exactly one outbound destination, and it is a private or tailnet address of a machine you own. Nothing to the internet.",
+   "ifSkipped": "A silent failure: a draft leaves the building and nothing beeps.",
+   "headNote": "Where did the bytes go? Read the destinations, not the wifi icon. Private addresses and your tailnet are yours; anything else is not.",
+   "destination": false
+  },
+  {
+   "id": "shell",
+   "name": "Shell basics",
+   "area": "trunk",
+   "needs": [],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Running scripts, reading errors, fixing paths.",
+   "proof": "Shell Jelly 1 and 2 missions.",
+   "ifSkipped": "Every script is magic you cannot debug.",
+   "headNote": "Files, folders, commands, permissions.",
+   "destination": false
+  },
+  {
+   "id": "backups",
+   "name": "Tested backups",
+   "area": "trunk",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Giving anything write access.",
+   "proof": "You restored one file from backup this month.",
+   "ifSkipped": "Agent deletes the folder; nothing comes back.",
+   "headNote": "Backups you have not restored are a hope, not a backup.",
+   "destination": false
+  },
+  {
+   "id": "json",
+   "name": "Structured JSON",
+   "area": "trunk",
+   "needs": [
+    "lmbasics"
+   ],
+   "betterWith": [
+    "run"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Chaining tasks, agent tool calls, extraction.",
+   "proof": "Model fills a 5-field schema from a sample, 10 of 10 valid.",
+   "ifSkipped": "Pipelines break on malformed output and you cannot see why.",
+   "headNote": "Why machines need fixed shapes and models drift from them.",
+   "destination": false
+  },
+  {
+   "id": "leastpriv",
+   "name": "Least privilege",
+   "area": "trunk",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Any station where the AI acts.",
+   "proof": "Security Jelly missions 2 and 5.",
+   "ifSkipped": "AI with your account can reach everything you can.",
+   "headNote": "Give each worker only the keys it needs.",
+   "destination": false
+  },
+  {
+   "id": "ledger",
+   "name": "Hardening ledger",
+   "area": "trunk",
+   "needs": [
+    "git"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Toggling controls off and on with a record.",
+   "proof": "Every config change is a commit with a one-line reason; you can revert one.",
+   "ifSkipped": "Nobody knows what is on, what is off, or why.",
+   "headNote": "A change log is the only honest memory of a setup.",
+   "destination": false
+  },
+  {
+   "id": "git",
+   "name": "Git basics",
+   "area": "trunk",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Undo for everything the agent touches.",
+   "proof": "Git Jelly missions; you can revert a commit.",
+   "ifSkipped": "No undo when the agent breaks something.",
+   "headNote": "Commits are save points; revert is the undo.",
+   "destination": false
+  },
+  {
+   "id": "containers",
+   "name": "Containers and micro-VMs",
+   "area": "trunk",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "The mechanism behind sandboxing.",
+   "proof": "Agent runs with no host Docker socket mounted; ports bound to loopback.",
+   "ifSkipped": "A container that can reach the host through a mounted socket.",
+   "headNote": "A container is not a sandbox until you check what it can see.",
+   "destination": false
+  },
+  {
+   "id": "vet",
+   "name": "Vet extensions",
+   "area": "trunk",
+   "needs": [
+    "download",
+    "leastpriv"
+   ],
+   "betterWith": [
+    "containers"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Installing MCP servers, custom nodes and plugins without installing malware.",
+   "proof": "Every extension has source, pinned version and a review note.",
+   "ifSkipped": "Executable code from a stranger running as you.",
+   "headNote": "Extensions are programs; model files are data.",
+   "destination": false
+  },
+  {
+   "id": "secrets",
+   "name": "Secrets out of prompts and repos",
+   "area": "trunk",
+   "needs": [
+    "shell",
+    "git"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Tokens and passwords nowhere a model or a repo can see them.",
+   "proof": "A grep of repos, prompts and config finds no tokens.",
+   "ifSkipped": "One leaked prompt or commit leaks an account.",
+   "headNote": "The system prompt is not a secret.",
+   "destination": false
+  },
+  {
+   "id": "hwkeys",
+   "name": "Hardware keys and passkeys",
+   "area": "trunk",
+   "needs": [
+    "backups"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "The root accounts every agent grant derives from, protected.",
+   "proof": "Email, registrar and vault require a hardware key; recovery codes are in a tested backup.",
+   "ifSkipped": "Phished once, everything downstream falls.",
+   "headNote": "Losing the key is the irreversible failure; back up the recovery codes.",
+   "destination": false
+  },
+  {
+   "id": "minimise",
+   "name": "Minimise and redact before prompting",
+   "area": "trunk",
+   "needs": [
+    "extract"
+   ],
+   "betterWith": [
+    "small"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Models, logs and memory see placeholders, not account numbers.",
+   "proof": "A test record with names and numbers reaches the model as placeholders only.",
+   "ifSkipped": "Personal data copied into every log, cache and memory.",
+   "headNote": "Encryption protects storage; minimisation protects what the model sees.",
+   "destination": false
+  },
+  {
+   "id": "retention",
+   "name": "Retention and deletion",
+   "area": "trunk",
+   "needs": [
+    "backups",
+    "encrypt"
+   ],
+   "betterWith": [
+    "trace"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Deleting one person’s data everywhere it was copied.",
+   "proof": "Delete one person and show it gone from chat history, vector store, memory, traces and backups.",
+   "ifSkipped": "Copies you forgot about: caches, embeddings, traces.",
+   "headNote": "Local AI scatters copies; nothing reminds you.",
+   "destination": false
+  },
+  {
+   "id": "context",
+   "name": "Context window",
+   "area": "models",
+   "needs": [
+    "lmbasics"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Long inputs, agents, RAG.",
+   "proof": "You can predict when a document will not fit and what happens then.",
+   "ifSkipped": "It silently forgets the start; you trust half an answer.",
+   "headNote": "The model only sees what fits; the rest is gone.",
+   "destination": false
+  },
+  {
+   "id": "prefill",
+   "name": "Prefill vs generation",
+   "area": "models",
+   "needs": [
+    "context"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Choosing batch vs interactive; judging hardware.",
+   "proof": "You can explain why 80 pages took two minutes before the first word.",
+   "ifSkipped": "Buying the wrong hardware for the job.",
+   "headNote": "Reading is bandwidth-bound and fast; writing is one token at a time.",
+   "destination": false
+  },
+  {
+   "id": "download",
+   "name": "Download safely",
+   "area": "models",
+   "needs": [
+    "shell",
+    "web"
+   ],
+   "betterWith": [
+    "licence"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Any new model.",
+   "proof": "Known publisher; safetensors or GGUF, not pickle; checksum matches.",
+   "ifSkipped": "A model file is a program; a bad one runs on your machine.",
+   "headNote": "A model file is untrusted input, exactly like an email attachment.",
+   "destination": false
+  },
+  {
+   "id": "run",
+   "name": "Run it",
+   "area": "models",
+   "needs": [
+    "download"
+   ],
+   "betterWith": [
+    "quant",
+    "bind"
+   ],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Using a model outside the chat app.",
+   "proof": "Model served on a local port; a one-line request returns an answer.",
+   "ifSkipped": "Stuck in one app forever.",
+   "headNote": "Press go while the server is bound to loopback. Opened to the network it is an unauthenticated API.",
+   "destination": false
+  },
+  {
+   "id": "small",
+   "name": "System one models",
+   "area": "models",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Ultra-efficient fast classifiers: models that return only structured results (a label, a score, fields, a vector), never free text. Also routers, extractors, embedders, rerankers.",
+   "proof": "A system one classifier labels 20 items in under a second with 18 or more right, and cannot be prompted into writing prose.",
+   "ifSkipped": "Paying a general model, and taking on its injection risk, for every reflex step.",
+   "headNote": "System one answers by reflex with structure only; system two reasons in text. Most steps in a pipeline or agent are system one jobs. Jev (hosted) started the category; open ones you can run yourself include Kev (0.8B to 27B, Qwen base, Apache-2.0), Von and Laya (encoder models, CPU), and SemIf (reads option probabilities from a model you already run).",
+   "destination": false
+  },
+  {
+   "id": "test",
+   "name": "Test on your own examples",
+   "area": "models",
+   "needs": [
+    "localchat"
+   ],
+   "betterWith": [
+    "run"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Trusting a model for your job.",
+   "proof": "5 to 10 real cases with known answers, scored.",
+   "ifSkipped": "Benchmark numbers that do not match your documents.",
+   "headNote": "A benchmark is somebody else’s job; yours is the only one that counts.",
+   "destination": false
+  },
+  {
+   "id": "compare",
+   "name": "Compare and choose",
+   "area": "models",
+   "needs": [
+    "test"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Switching when a new model lands.",
+   "proof": "Two candidates on the same set, results written down.",
+   "ifSkipped": "Churn with every release, no basis to decide.",
+   "headNote": "Same set, same scoring, write it down.",
+   "destination": false
+  },
+  {
+   "id": "evalharness",
+   "name": "Evaluation harness",
+   "area": "models",
+   "needs": [
+    "test",
+    "json",
+    "run"
+   ],
+   "betterWith": [
+    "guided"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Automated, repeatable scoring of a model on your own cases.",
+   "proof": "One command scores a model on 50 cases and prints a number you trust.",
+   "ifSkipped": "Changing models or prompts on vibes.",
+   "headNote": "A score you can rerun is the only way to know a change helped.",
+   "destination": false
+  },
+  {
+   "id": "synth",
+   "name": "Data synthesis",
+   "area": "models",
+   "needs": [
+    "json",
+    "run"
+   ],
+   "betterWith": [
+    "guided",
+    "provenance"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Generating training and evaluation examples with a model.",
+   "proof": "200 synthetic cases, a sample of 20 checked by hand, under 2 bad.",
+   "ifSkipped": "Training on nonsense; personal data or licensed text leaking into a dataset.",
+   "headNote": "Synthetic data inherits the biases and the rights of what it was made from.",
+   "destination": false
+  },
+  {
+   "id": "finetune",
+   "name": "Fine-tunes, adapters and LoRAs",
+   "area": "models",
+   "needs": [
+    "evalharness"
+   ],
+   "betterWith": [
+    "synth",
+    "provenance",
+    "quant"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Teaching a model your format, style, character or domain.",
+   "proof": "Fine-tuned model beats the base on your harness; a LoRA reproduces your character or style.",
+   "ifSkipped": "A worse model that feels better; wasted GPU hours.",
+   "headNote": "Adapters are small and swappable; full fine-tunes are not. Evaluate before and after.",
+   "destination": false
+  },
+  {
+   "id": "quant",
+   "name": "Quantisation: format and level",
+   "area": "models",
+   "needs": [
+    "download",
+    "machine"
+   ],
+   "betterWith": [
+    "test"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Fitting a bigger model into your memory by trading quality.",
+   "proof": "Same model at Q4 and Q8 on your 20 test prompts; you can state memory saved and quality lost.",
+   "ifSkipped": "Quietly worse answers that you blame on the model.",
+   "headNote": "Fit versus quality is a dial you can measure.",
+   "destination": false
+  },
+  {
+   "id": "kvcache",
+   "name": "KV cache and prompt caching",
+   "area": "models",
+   "needs": [
+    "prefill",
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Fast repeated prompts; knowing what the cache holds.",
+   "proof": "A repeated long system prompt shows near-zero prefill on the second call.",
+   "ifSkipped": "Paying prefill every time; cache files on disk you did not know about.",
+   "headNote": "The cache is memory and it is data; both need a budget.",
+   "destination": false
+  },
+  {
+   "id": "guided",
+   "name": "Guided (constrained) decoding",
+   "area": "models",
+   "needs": [
+    "json",
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Output that always parses.",
+   "proof": "Server enforces a JSON schema; 100 of 100 outputs parse.",
+   "ifSkipped": "Pipelines that break on the one malformed output.",
+   "headNote": "Valid is not the same as correct.",
+   "destination": false
+  },
+  {
+   "id": "parallel",
+   "name": "Parallel serving and batching",
+   "area": "models",
+   "needs": [
+    "run",
+    "kvcache"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Several requests or people on one box.",
+   "proof": "Four simultaneous requests finish faster than four sequential ones.",
+   "ifSkipped": "A household or team fighting over one GPU.",
+   "headNote": "Throughput and per-request context trade off.",
+   "destination": false
+  },
+  {
+   "id": "tune",
+   "name": "Inference optimisation",
+   "area": "models",
+   "needs": [
+    "run",
+    "quant"
+   ],
+   "betterWith": [
+    "parallel"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "The same model, faster: offload split, KV-cache quantisation, speculative decoding, batch and thread settings.",
+   "proof": "Tokens per second measured before and after each change; identical output at temperature 0.",
+   "ifSkipped": "Slow serving you blame on the hardware.",
+   "headNote": "Four levers, each a trade-off: speed for memory, context for a small quality risk, memory for faster generation. Change one, measure, keep or revert.",
+   "destination": false
+  },
+  {
+   "id": "route",
+   "name": "Model routing and fallback",
+   "area": "models",
+   "needs": [
+    "small",
+    "evalharness"
+   ],
+   "betterWith": [
+    "classify"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Easy requests to a small model, hard ones to a big one.",
+   "proof": "Eval numbers show the large model adds nothing on the easy set.",
+   "ifSkipped": "Paying a large model for every trivial step, or routing hard work to a weak model.",
+   "headNote": "Routing by difficulty needs evidence to be safe.",
+   "destination": false
+  },
+  {
+   "id": "licence",
+   "name": "Model licences",
+   "area": "models",
+   "needs": [
+    "web"
+   ],
+   "betterWith": [
+    "download"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Knowing what you may do with a model.",
+   "proof": "For every model in use: licence name, commercial use yes or no, field-of-use limits.",
+   "ifSkipped": "A breach is silent and the bill comes later.",
+   "headNote": "Open weights is not open source.",
+   "destination": false
+  },
+  {
+   "id": "provenance",
+   "name": "Training-data provenance",
+   "area": "models",
+   "needs": [
+    "synth",
+    "licence"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Knowing where every fine-tuning row came from.",
+   "proof": "Every row records source, licence and generator model.",
+   "ifSkipped": "Licence and personal-data problems baked into weights, invisible.",
+   "headNote": "Once trained in, it cannot be removed.",
+   "destination": false
+  },
+  {
+   "id": "multinode",
+   "name": "Split one model across machines",
+   "area": "models",
+   "needs": [
+    "parallel",
+    "quant"
+   ],
+   "betterWith": [
+    "vpn",
+    "segment"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 3,
+   "unlocks": "Models larger than any one box.",
+   "proof": "A model too big for one machine serves from two; you can name the bottleneck.",
+   "ifSkipped": "Version skew and link speed surprises.",
+   "headNote": "The network is now part of the model.",
+   "destination": false
+  },
+  {
+   "id": "summarise",
+   "name": "Summarise",
+   "area": "text",
+   "needs": [
+    "localchat"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Gist of anything under about 6k tokens.",
+   "proof": "A summary of a document you know well misses nothing important.",
+   "ifSkipped": "Faithful-sounding summaries that drop the clause that mattered.",
+   "headNote": "Press go, then read it against the original once.",
+   "destination": false
+  },
+  {
+   "id": "classify",
+   "name": "Classify and route",
+   "area": "text",
+   "needs": [
+    "run",
+    "test"
+   ],
+   "betterWith": [
+    "small"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Sorting, tagging, triage; the first step of most agents.",
+   "proof": "20 hand-labelled items; model agrees on 18 or more.",
+   "ifSkipped": "Silent mis-sorting at scale.",
+   "headNote": "A general model can do it; a small specialist model does it faster and cheaper.",
+   "destination": false
+  },
+  {
+   "id": "extract",
+   "name": "Extract to JSON",
+   "area": "text",
+   "needs": [
+    "json",
+    "run"
+   ],
+   "betterWith": [
+    "guided"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Pulling dates, names, amounts into fields.",
+   "proof": "Fields match 10 hand-filled forms.",
+   "ifSkipped": "Wrong field values that look right.",
+   "headNote": "Check fields, not prose.",
+   "destination": false
+  },
+  {
+   "id": "translate",
+   "name": "Translate",
+   "area": "text",
+   "needs": [
+    "localchat"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Sentence to page.",
+   "proof": "A passage you can read in both languages.",
+   "ifSkipped": "Fluent nonsense.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "write",
+   "name": "Write and edit",
+   "area": "text",
+   "needs": [
+    "localchat"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Drafting, rewriting, proofreading in private.",
+   "proof": "Your own voice survives a rewrite.",
+   "ifSkipped": "Nothing serious; the quality bar is yours.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "review",
+   "name": "Review queue (human in the loop)",
+   "area": "text",
+   "needs": [
+    "extract",
+    "test"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Low-confidence outputs routed to a person.",
+   "proof": "Low-confidence extractions queue for review; you sample 5% of auto-accepted ones.",
+   "ifSkipped": "Bad data accepted at scale.",
+   "headNote": "Data quality, distinct from approving agent actions.",
+   "destination": false
+  },
+  {
+   "id": "analyse",
+   "name": "Analyse tabular exports",
+   "area": "text",
+   "needs": [
+    "sandbox",
+    "json"
+   ],
+   "betterWith": [
+    "codechat"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Questions over spreadsheets and bank exports answered by code.",
+   "proof": "Answers about a CSV are computed by code you can read, not by the model’s arithmetic.",
+   "ifSkipped": "Confident wrong sums.",
+   "headNote": "The model writes the code; a sandbox runs it.",
+   "destination": false
+  },
+  {
+   "id": "pdftext",
+   "name": "PDF text layer",
+   "area": "docs",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Text from born-digital PDFs, no AI needed.",
+   "proof": "Page count in equals page count out; spot-check three pages.",
+   "ifSkipped": "Garbled text fed to every later station.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "ocr",
+   "name": "Scan OCR",
+   "area": "docs",
+   "needs": [
+    "pdftext"
+   ],
+   "betterWith": [
+    "vision",
+    "cv"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Text from scanned pages.",
+   "proof": "Your worst scan, checked line by line.",
+   "ifSkipped": "Dropped lines you never notice.",
+   "headNote": "Scans are pictures; a model is guessing the letters.",
+   "destination": false
+  },
+  {
+   "id": "tables",
+   "name": "Tables and layout",
+   "area": "docs",
+   "needs": [
+    "pdftext"
+   ],
+   "betterWith": [
+    "ocr",
+    "vision"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Multi-column pages, tables kept as tables.",
+   "proof": "A re-extracted table matches the original cell for cell.",
+   "ifSkipped": "Numbers shift columns.",
+   "headNote": "Layout is information; flattening loses it.",
+   "destination": false
+  },
+  {
+   "id": "embed",
+   "name": "Embeddings and chunking",
+   "area": "docs",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Search over your own documents.",
+   "proof": "Search finds the document you know is right.",
+   "ifSkipped": "It retrieves the wrong page confidently.",
+   "headNote": "Search by meaning, in pieces; piece size changes what is found.",
+   "destination": false
+  },
+  {
+   "id": "rag",
+   "name": "Ask your own docs",
+   "area": "docs",
+   "needs": [
+    "embed",
+    "context"
+   ],
+   "betterWith": [
+    "json",
+    "pdftext",
+    "injection"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Questions across a folder, with citations.",
+   "proof": "Answer cites the page; the page says what the answer says.",
+   "ifSkipped": "Hallucinated citations.",
+   "headNote": "Retrieval first, answer second; check the page.",
+   "destination": false
+  },
+  {
+   "id": "longdoc",
+   "name": "Long document",
+   "area": "docs",
+   "needs": [
+    "prefill"
+   ],
+   "betterWith": [
+    "pdftext",
+    "kvcache"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "32k to 128k tokens in one shot.",
+   "proof": "100-page document, question answered from page 90.",
+   "ifSkipped": "Two-minute waits with no explanation, or truncated input.",
+   "headNote": "Fit and wait time, before you start.",
+   "destination": false
+  },
+  {
+   "id": "encrypt",
+   "name": "Encrypt at rest",
+   "area": "docs",
+   "needs": [
+    "backups"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Personal documents on the box.",
+   "proof": "Encryption on; you have unlocked after a reboot.",
+   "ifSkipped": "Laptop stolen, bundle exposed.",
+   "headNote": "What is encrypted, what unlocks it, and that unlock survives a reboot.",
+   "destination": false
+  },
+  {
+   "id": "retrieve",
+   "name": "Hybrid search and reranking",
+   "area": "docs",
+   "needs": [
+    "rag"
+   ],
+   "betterWith": [
+    "small"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Finding the right passage more often.",
+   "proof": "Keyword plus vector plus reranker beats vector-only on 20 of your own questions.",
+   "ifSkipped": "Quiet retrieval misses that look like model failures.",
+   "headNote": "Most RAG failures are retrieval failures.",
+   "destination": false
+  },
+  {
+   "id": "grounding",
+   "name": "Grounding check and RAG evaluation",
+   "area": "docs",
+   "needs": [
+    "rag",
+    "evalharness"
+   ],
+   "betterWith": [
+    "retrieve"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Answers you can trust in legal or medical use.",
+   "proof": "Every answer cites a passage; hit rate and faithfulness measured on a gold set.",
+   "ifSkipped": "A wrong answer with a confident citation.",
+   "headNote": "A citation is not a check until you read the passage.",
+   "destination": false
+  },
+  {
+   "id": "vision",
+   "name": "Vision: describe an image",
+   "area": "in",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Captions, screenshots to text.",
+   "proof": "Describes a photo you took, including small text.",
+   "ifSkipped": "Wrong reading of a chart or screen.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "stt",
+   "name": "Speech to text",
+   "area": "in",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Transcripts from recordings.",
+   "proof": "A 2-minute clip you transcribed yourself, under 5 errors.",
+   "ifSkipped": "Minutes built on misheard names and numbers.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "speakers",
+   "name": "Speaker labels and word timing",
+   "area": "in",
+   "needs": [
+    "stt"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Who said what, when; subtitles; lyric timing.",
+   "proof": "Two-person clip, speakers right, timestamps within a second.",
+   "ifSkipped": "Actions assigned to the wrong person.",
+   "headNote": "Timing and diarisation are separate steps that can each fail.",
+   "destination": false
+  },
+  {
+   "id": "cv",
+   "name": "Classical computer vision (OpenCV)",
+   "area": "in",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Crop, deskew, threshold, detect motion, extract frames, no model needed.",
+   "proof": "A skewed scan straightened and cleaned by a script.",
+   "ifSkipped": "Feeding a model garbage it then guesses at.",
+   "headNote": "Many vision jobs are arithmetic, not intelligence; do those first.",
+   "destination": false
+  },
+  {
+   "id": "stems",
+   "name": "Audio separation",
+   "area": "in",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Vocals and instruments apart.",
+   "proof": "A song splits into vocal and backing tracks.",
+   "ifSkipped": "Later stages get muddy input.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "videoin",
+   "name": "Video in",
+   "area": "in",
+   "needs": [
+    "vision"
+   ],
+   "betterWith": [
+    "cv",
+    "detect"
+   ],
+   "inYourHead": "press go",
+   "zone": 2,
+   "unlocks": "Clip to description or Q&A.",
+   "proof": "Describes a 30-second clip in order.",
+   "ifSkipped": "Nothing serious for home use.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "streaming",
+   "name": "Streaming speech: VAD, real-time STT, wake word",
+   "area": "in",
+   "needs": [
+    "stt"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "A microphone that listens and responds live.",
+   "proof": "Wake word fires locally; partial transcript within a second; silence yields nothing.",
+   "ifSkipped": "An always-on microphone you did not think about.",
+   "headNote": "Latency and an always-on mic are the new failures.",
+   "destination": false
+  },
+  {
+   "id": "detect",
+   "name": "Object detection",
+   "area": "in",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [
+    "cv"
+   ],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "People, cars and objects located in frames.",
+   "proof": "People and cars detected in 100 frames at a threshold you chose.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "tts",
+   "name": "Text to speech",
+   "area": "out",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Documents read aloud, podcast voices.",
+   "proof": "A paragraph you wrote, listened to end to end.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "image",
+   "name": "Make an image",
+   "area": "out",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "A picture from a prompt.",
+   "proof": "An image saved to your folder from your prompt.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "seeds",
+   "name": "Seeds and sampling",
+   "area": "out",
+   "needs": [
+    "image"
+   ],
+   "betterWith": [
+    "pin"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Getting the same image back; controlled variation.",
+   "proof": "Same prompt and seed twice gives the same image.",
+   "ifSkipped": "You can never reproduce the one you liked.",
+   "headNote": "Randomness has a dial.",
+   "destination": false
+  },
+  {
+   "id": "edit",
+   "name": "Edit an image",
+   "area": "out",
+   "needs": [
+    "image"
+   ],
+   "betterWith": [
+    "seeds"
+   ],
+   "inYourHead": "press go",
+   "zone": 2,
+   "unlocks": "Change one thing, keep the rest.",
+   "proof": "“Make the sky darker” changes only the sky.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "consistency",
+   "name": "Character consistency",
+   "area": "out",
+   "needs": [
+    "edit"
+   ],
+   "betterWith": [
+    "json",
+    "comfy",
+    "finetune",
+    "control"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Same person or style across many images.",
+   "proof": "Five images, the character recognisably the same.",
+   "ifSkipped": "Pipelines produce a different hero every shot.",
+   "headNote": "A style sheet is state the pipeline must carry.",
+   "destination": false
+  },
+  {
+   "id": "comfy",
+   "name": "Node-graph pipelines (ComfyUI)",
+   "area": "out",
+   "needs": [
+    "image"
+   ],
+   "betterWith": [
+    "json",
+    "vet"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Chaining image, video and audio models visually, and driving the graph from a script.",
+   "proof": "A saved graph runs from the API and writes to your folder.",
+   "ifSkipped": "Hand-running every stage of every pipeline.",
+   "headNote": "A graph is a pipeline you can see; the API makes it a pipeline you can script.",
+   "destination": false
+  },
+  {
+   "id": "music",
+   "name": "Music generation",
+   "area": "out",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 2,
+   "unlocks": "A song from lyrics and a style prompt.",
+   "proof": "A 2-minute track you would play to someone.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "videogen",
+   "name": "Video generation",
+   "area": "out",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [
+    "image",
+    "comfy"
+   ],
+   "inYourHead": "press go",
+   "zone": 2,
+   "unlocks": "Clips from a prompt or a still.",
+   "proof": "A 5-second clip from one of your images.",
+   "ifSkipped": "Time and electricity.",
+   "headNote": "Press go, then wait.",
+   "destination": false
+  },
+  {
+   "id": "lipsync",
+   "name": "Lip-sync and audio-driven video",
+   "area": "out",
+   "needs": [
+    "run",
+    "stitch",
+    "consent"
+   ],
+   "betterWith": [
+    "videogen",
+    "stems",
+    "speakers",
+    "videoin"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "A face singing or speaking to a track.",
+   "proof": "Mouth matches a sung line you can hear.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Clean vocals in, timing in, face out.",
+   "destination": false
+  },
+  {
+   "id": "stitch",
+   "name": "Stitch and mix",
+   "area": "out",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Clips and sound into one file.",
+   "proof": "Clips join without gaps; audio in sync.",
+   "ifSkipped": "Pipeline output nobody can watch.",
+   "headNote": "Press go (ffmpeg).",
+   "destination": false
+  },
+  {
+   "id": "consent",
+   "name": "Likeness and consent",
+   "area": "out",
+   "needs": [],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Cloning or reanimating a real voice or face lawfully.",
+   "proof": "A consent record exists for every real voice or face used.",
+   "ifSkipped": "Irreversible harm to a real person.",
+   "headNote": "Spans voice cloning, lip-sync and face swap.",
+   "destination": false
+  },
+  {
+   "id": "voiceclone",
+   "name": "Voice cloning",
+   "area": "out",
+   "needs": [
+    "tts",
+    "consent"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "A voice from a short sample.",
+   "proof": "Your own voice cloned and outputs labelled synthetic.",
+   "ifSkipped": "Impersonation.",
+   "headNote": "Same tech as TTS, different harm.",
+   "destination": false
+  },
+  {
+   "id": "control",
+   "name": "Guided image generation (ControlNet, pose, depth)",
+   "area": "out",
+   "needs": [
+    "image"
+   ],
+   "betterWith": [
+    "comfy"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Composition and pose under your control.",
+   "proof": "Same pose from a reference skeleton three times.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "The main lever for consistency.",
+   "destination": false
+  },
+  {
+   "id": "restore",
+   "name": "Upscale, restore, interpolate",
+   "area": "out",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [
+    "image"
+   ],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Old photos restored, clips smoothed, backgrounds removed.",
+   "proof": "A 2x upscale of an old photo; 24 to 48 fps interpolation of a clip.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "threed",
+   "name": "3D generation",
+   "area": "out",
+   "needs": [
+    "image"
+   ],
+   "betterWith": [
+    "comfy"
+   ],
+   "inYourHead": "press go",
+   "zone": 2,
+   "unlocks": "Meshes from text or an image.",
+   "proof": "Image-to-mesh output opens in a 3D viewer.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "autocomplete",
+   "name": "Code autocomplete",
+   "area": "code",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Suggestions as you type, under 300 ms.",
+   "proof": "Completion appears in your editor, served from your own machine; the editor's only outbound destination is local.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Press go.",
+   "destination": false
+  },
+  {
+   "id": "codechat",
+   "name": "Code chat",
+   "area": "code",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Explain, write and fix single files.",
+   "proof": "A function from your description passes a test you wrote.",
+   "ifSkipped": "Plausible code that does not run.",
+   "headNote": "Press go, then run the test.",
+   "destination": false
+  },
+  {
+   "id": "sandbox",
+   "name": "Sandbox the agent",
+   "area": "code",
+   "needs": [
+    "leastpriv",
+    "backups"
+   ],
+   "betterWith": [
+    "containers",
+    "git"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Letting an agent read, write and run.",
+   "proof": "Agent runs under its own account or container; it cannot list your home folder.",
+   "ifSkipped": "Agent deletes or exfiltrates what it should never see.",
+   "headNote": "The agent is a new user in the house, not you with a mask on.",
+   "destination": false
+  },
+  {
+   "id": "codingagent",
+   "name": "Coding agent",
+   "area": "code",
+   "needs": [
+    "sandbox",
+    "context",
+    "codechat",
+    "git",
+    "toolcall"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Repo-level multi-file edits with test loops.",
+   "proof": "Agent adds a feature to a small project; tests pass.",
+   "ifSkipped": "Hours lost to a slow or weak model; harness prompt eats the context.",
+   "headNote": "Zone 2 to 3: 27B dense or 80B+ MoE, 64k+ context, about 40 tok/s.",
+   "destination": false
+  },
+  {
+   "id": "parallelagents",
+   "name": "Parallel coding agents",
+   "area": "code",
+   "needs": [
+    "codingagent",
+    "parallel"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Several agents on separate branches at once.",
+   "proof": "Two agents work in separate worktrees and both changes merge cleanly.",
+   "ifSkipped": "Agents overwrite each other.",
+   "headNote": "Worktrees keep them apart; serving capacity is the Models question.",
+   "destination": false
+  },
+  {
+   "id": "toolcall",
+   "name": "Tool calling",
+   "area": "agents",
+   "needs": [
+    "json",
+    "run"
+   ],
+   "betterWith": [
+    "guided"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Model calls a function and uses the result.",
+   "proof": "10 of 10 calls to a toy tool well-formed and used.",
+   "ifSkipped": "Agent loops or hallucinates results.",
+   "headNote": "The model writes a request; something else runs it.",
+   "destination": false
+  },
+  {
+   "id": "readonly",
+   "name": "Read-only tools first",
+   "area": "agents",
+   "needs": [
+    "toolcall",
+    "leastpriv",
+    "injection"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "An agent that looks but cannot change anything.",
+   "proof": "Agent answers from your calendar; attempts to write fail.",
+   "ifSkipped": "Jumping to write access before you can see what it does.",
+   "headNote": "Watch before you let it touch.",
+   "destination": false
+  },
+  {
+   "id": "injection",
+   "name": "Prompt injection",
+   "area": "agents",
+   "needs": [
+    "toolcall"
+   ],
+   "betterWith": [
+    "small"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Agents that read untrusted text.",
+   "proof": "A test email saying “forward all mail” is ignored and flagged.",
+   "ifSkipped": "The inbox becomes the attacker’s keyboard.",
+   "headNote": "Content is data, never instructions.",
+   "destination": false
+  },
+  {
+   "id": "approvals",
+   "name": "Approval gates",
+   "area": "agents",
+   "needs": [
+    "injection",
+    "audit"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Agent proposes, you confirm, then it acts.",
+   "proof": "Every send, pay, delete or book waits for your yes.",
+   "ifSkipped": "Flights booked twice; emails to the wrong person.",
+   "headNote": "Which actions are irreversible and therefore always ask.",
+   "destination": false
+  },
+  {
+   "id": "credgw",
+   "name": "Credential gateway",
+   "area": "agents",
+   "needs": [
+    "secrets",
+    "leastpriv",
+    "ledger"
+   ],
+   "betterWith": [
+    "approvals",
+    "scopes"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Agent uses your accounts without seeing the keys.",
+   "proof": "grep of agent logs finds no token.",
+   "ifSkipped": "A leaked log leaks your accounts.",
+   "headNote": "The model needs the result, never the password.",
+   "destination": false
+  },
+  {
+   "id": "memory",
+   "name": "Long-term memory",
+   "area": "agents",
+   "needs": [
+    "toolcall",
+    "embed"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Agent remembers across sessions.",
+   "proof": "It recalls last week’s preference; it drops a fact you corrected.",
+   "ifSkipped": "False memories compound.",
+   "headNote": "Stores personal data indefinitely and can be poisoned quietly across sessions.",
+   "destination": false
+  },
+  {
+   "id": "audit",
+   "name": "Audit log",
+   "area": "agents",
+   "needs": [
+    "toolcall",
+    "logs"
+   ],
+   "betterWith": [
+    "readonly"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "You can see what the agent did and why.",
+   "proof": "Every action listed with time, input and reason.",
+   "ifSkipped": "3am debugging with no evidence.",
+   "headNote": "How to read the log and what normal looks like.",
+   "destination": false
+  },
+  {
+   "id": "mcp",
+   "name": "MCP servers",
+   "area": "agents",
+   "needs": [
+    "toolcall"
+   ],
+   "betterWith": [
+    "readonly"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Tools from other software through one standard.",
+   "proof": "One local MCP server connected, with the model limited to some of its tools.",
+   "ifSkipped": "Every tool exposed to the model by default.",
+   "headNote": "A server can run arbitrary code; vet it first.",
+   "destination": false
+  },
+  {
+   "id": "agentloop",
+   "name": "Agent loop: plan, act, observe, stop",
+   "area": "agents",
+   "needs": [
+    "toolcall",
+    "context"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "A model that completes a multi-step task.",
+   "proof": "Agent finishes a five-step task and stops at an iteration cap you set.",
+   "ifSkipped": "Loops, drift, never stopping.",
+   "headNote": "Stopping is a design decision.",
+   "destination": false
+  },
+  {
+   "id": "workflow",
+   "name": "Workflow engines",
+   "area": "agents",
+   "needs": [
+    "toolcall",
+    "json"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "A fixed graph with LLM steps instead of a free agent.",
+   "proof": "The same task built as a fixed graph; you can say which is safer.",
+   "ifSkipped": "Using an agent where a script would do.",
+   "headNote": "Fixed graphs are usually the safer choice.",
+   "destination": false
+  },
+  {
+   "id": "scheduled",
+   "name": "Unattended and scheduled agents",
+   "area": "agents",
+   "needs": [
+    "agentloop",
+    "budgets",
+    "audit"
+   ],
+   "betterWith": [
+    "killswitch",
+    "workflow"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Jobs that run while nobody watches.",
+   "proof": "Nightly job runs, emits a summary, halts on budget breach with nobody watching.",
+   "ifSkipped": "Failures nobody sees until the damage is done.",
+   "headNote": "No human watching means every failure is quiet.",
+   "destination": false
+  },
+  {
+   "id": "browseragent",
+   "name": "Browser and computer-use agents",
+   "area": "agents",
+   "needs": [
+    "agentloop",
+    "sandbox",
+    "injection"
+   ],
+   "betterWith": [
+    "vision",
+    "approvals"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Agents that drive a browser or desktop.",
+   "proof": "Agent fills a form in a sandboxed browser and stops at Submit for approval.",
+   "ifSkipped": "Every web page becomes an instruction channel with full UI reach.",
+   "headNote": "Pages are untrusted input.",
+   "destination": false
+  },
+  {
+   "id": "multiagent",
+   "name": "Multi-agent orchestration",
+   "area": "agents",
+   "needs": [
+    "agentloop",
+    "audit"
+   ],
+   "betterWith": [
+    "parallel"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Agents handing work to each other.",
+   "proof": "Two agents hand off a task with every message logged and attributed.",
+   "ifSkipped": "Cascading failures nobody can trace.",
+   "headNote": "Agents trust each other too easily.",
+   "destination": false
+  },
+  {
+   "id": "identity",
+   "name": "Separate agent identity",
+   "area": "agents",
+   "needs": [
+    "leastpriv"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "The agent acts as itself, never as you.",
+   "proof": "Agent’s actions appear under its own account.",
+   "ifSkipped": "Actions you cannot tell apart from your own.",
+   "headNote": "A new user in the house, not you in a mask.",
+   "destination": false
+  },
+  {
+   "id": "scopes",
+   "name": "Scoped access",
+   "area": "agents",
+   "needs": [
+    "identity",
+    "readonly"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Each grant limited to what the task needs.",
+   "proof": "A read-only mail token cannot send; tested by trying.",
+   "ifSkipped": "An agent with your whole inbox and calendar.",
+   "headNote": "Scope belongs to each grant, not to the sandbox.",
+   "destination": false
+  },
+  {
+   "id": "outputs",
+   "name": "Treat model output as untrusted",
+   "area": "agents",
+   "needs": [
+    "toolcall"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Generated code and HTML never run raw.",
+   "proof": "Output containing a shell command or script tag is never executed or rendered.",
+   "ifSkipped": "Injection in, execution out.",
+   "headNote": "Injection is the entrance; output handling is the exit.",
+   "destination": false
+  },
+  {
+   "id": "budgets",
+   "name": "Budgets: loops, rate, tokens, spend",
+   "area": "agents",
+   "needs": [
+    "agentloop"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Runaway agents stop by themselves.",
+   "proof": "A runaway loop halts at its cap and alerts; outbound emails capped per hour.",
+   "ifSkipped": "A cooked GPU, a full disk or 500 sent emails.",
+   "headNote": "Caps on everything that can run away.",
+   "destination": false
+  },
+  {
+   "id": "memhygiene",
+   "name": "Memory hygiene",
+   "area": "agents",
+   "needs": [
+    "memory",
+    "injection"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Memories you can review, revert and wipe.",
+   "proof": "Every memory entry has a source; a wipe is tested.",
+   "ifSkipped": "Poisoned memories that persist across sessions.",
+   "headNote": "What it remembers, it will act on.",
+   "destination": false
+  },
+  {
+   "id": "killswitch",
+   "name": "Kill switch",
+   "area": "agents",
+   "needs": [
+    "credgw"
+   ],
+   "betterWith": [
+    "audit"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Stopping the agent and revoking its access in one action.",
+   "proof": "One action stops the agent and revokes its tokens; drilled quarterly.",
+   "ifSkipped": "An agent you cannot stop at 3am.",
+   "headNote": "Recording and stopping fail differently.",
+   "destination": false
+  },
+  {
+   "id": "redteam",
+   "name": "Red-team your own agent",
+   "area": "agents",
+   "needs": [
+    "injection",
+    "evalharness"
+   ],
+   "betterWith": [
+    "approvals"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "A fixed attack suite rerun on every change.",
+   "proof": "Injection and jailbreak cases rerun on each model or prompt change.",
+   "ifSkipped": "Knowing the threat but never testing for it.",
+   "headNote": "Knowing is not testing.",
+   "destination": false
+  },
+  {
+   "id": "bind",
+   "name": "Bind and firewall the AI box",
+   "area": "net",
+   "needs": [
+    "machine",
+    "web"
+   ],
+   "betterWith": [
+    "shell"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "A model server only you can reach.",
+   "proof": "From another device the model port refuses; from the internet nothing answers.",
+   "ifSkipped": "Someone else using your GPU, silently.",
+   "headNote": "Most local servers ship with no authentication.",
+   "destination": false
+  },
+  {
+   "id": "vpn",
+   "name": "Private remote access (VPN or tailnet)",
+   "area": "net",
+   "needs": [
+    "bind",
+    "leastpriv"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Reaching your box from outside without opening it to everyone.",
+   "proof": "Your UI loads on a phone on 4G while the public port stays closed.",
+   "ifSkipped": "Opening a public port because you wanted remote access.",
+   "headNote": "Private access and public exposure are different tools. Tailscale and similar give every machine you own a private address that works from anywhere, without opening a port.",
+   "destination": false
+  },
+  {
+   "id": "segment",
+   "name": "Network segmentation",
+   "area": "net",
+   "needs": [
+    "bind"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Limiting what a compromised box can reach.",
+   "proof": "AI box on its own segment; laptop reaches box, box cannot reach laptop.",
+   "ifSkipped": "A compromised agent box with the whole home network in reach.",
+   "headNote": "Blast radius.",
+   "destination": false
+  },
+  {
+   "id": "egress",
+   "name": "Outbound allowlist",
+   "area": "net",
+   "needs": [
+    "bind",
+    "prove"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Agents that may reach some sites and nothing else.",
+   "proof": "A canary request to an unlisted domain is blocked and logged.",
+   "ifSkipped": "Data leaving through any channel the agent finds.",
+   "headNote": "Offline is all or nothing; agents need the graded version.",
+   "destination": false
+  },
+  {
+   "id": "pin",
+   "name": "Pin and reproduce",
+   "area": "ops",
+   "needs": [
+    "git",
+    "download"
+   ],
+   "betterWith": [
+    "seeds"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Rebuilding last month’s output exactly.",
+   "proof": "Rebuild an output from a manifest of model hash, quant, server version, parameters and seed.",
+   "ifSkipped": "Results you cannot reproduce or explain.",
+   "headNote": "A manifest per run.",
+   "destination": false
+  },
+  {
+   "id": "trace",
+   "name": "Tracing and observability",
+   "area": "ops",
+   "needs": [
+    "run",
+    "json"
+   ],
+   "betterWith": [
+    "audit"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Answering why it was slow or wrong.",
+   "proof": "Every request has a span with model, tokens, latency and tool calls.",
+   "ifSkipped": "Debugging by guesswork.",
+   "headNote": "Traces contain prompts, so they are data too.",
+   "destination": false
+  },
+  {
+   "id": "logs",
+   "name": "Logs you actually read",
+   "area": "ops",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Noticing scans and failures.",
+   "proof": "Weekly review of server and tunnel logs; you can spot a scan.",
+   "ifSkipped": "Attacks and errors nobody saw.",
+   "headNote": "A log nobody reads is not a control.",
+   "destination": false
+  },
+  {
+   "id": "power",
+   "name": "Power, heat and running cost",
+   "area": "ops",
+   "needs": [
+    "machine"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Knowing what the box costs to run and when it throttles.",
+   "proof": "Watts at idle and under load, pounds per day, throttle temperature.",
+   "ifSkipped": "A slow box and a surprising electricity bill.",
+   "headNote": "Local AI is paid for in electricity.",
+   "destination": false
+  },
+  {
+   "id": "dpia",
+   "name": "DPIA for business use",
+   "area": "govern",
+   "needs": [
+    "retention",
+    "minimise"
+   ],
+   "betterWith": [
+    "prove"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Using personal data in a business lawfully.",
+   "proof": "A written assessment for each business destination that touches personal data.",
+   "ifSkipped": "Processing personal data with no record of why it is acceptable.",
+   "headNote": "The ICO’s preferred way to show compliance.",
+   "destination": false
+  },
+  {
+   "id": "static",
+   "name": "Static site",
+   "area": "build",
+   "needs": [
+    "web",
+    "git"
+   ],
+   "betterWith": [
+    "codingagent",
+    "codechat"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "A site with no server-side code to attack.",
+   "proof": "Site builds to a folder of files; opens locally.",
+   "ifSkipped": "A database you must now defend.",
+   "headNote": "No server code means almost nothing to break into.",
+   "destination": false
+  },
+  {
+   "id": "tunnelgated",
+   "name": "Tunnel, gated",
+   "area": "build",
+   "needs": [
+    "bind",
+    "leastpriv",
+    "ledger"
+   ],
+   "betterWith": [
+    "static",
+    "vpn"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Site reachable from outside, behind a login.",
+   "proof": "Friend with the login sees it; you without it do not.",
+   "ifSkipped": "Open door by default.",
+   "headNote": "The tunnel is the one door in the castle wall.",
+   "destination": false
+  },
+  {
+   "id": "toggle",
+   "name": "Tunnel toggle",
+   "area": "build",
+   "needs": [
+    "tunnelgated"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Door open only when you want.",
+   "proof": "Off: external check fails. On: it works. Both in the ledger.",
+   "ifSkipped": "Forgetting it is on.",
+   "headNote": "Default off, with an auto-expiry. A toggle left on is quiet exposure.",
+   "destination": false
+  },
+  {
+   "id": "tunnelpublic",
+   "name": "Tunnel, public",
+   "area": "build",
+   "needs": [
+    "tunnelgated",
+    "logs"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Anyone can reach it.",
+   "proof": "Access log shows hits; you know which are bots.",
+   "ifSkipped": "Hackers knocking with no record.",
+   "headNote": "Public means bots within minutes; read the log.",
+   "destination": false
+  },
+  {
+   "id": "d_legal",
+   "name": "Private legal drafting",
+   "area": "text",
+   "needs": [
+    "prove",
+    "write",
+    "encrypt"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Confidential drafts that only ever reach a machine you own.",
+   "proof": "A draft written; the chat app's only destination is a machine you own, on your own network.",
+   "ifSkipped": "A cloud fallback leaks the brief.",
+   "headNote": "Only the proof that it stays local.",
+   "destination": true
+  },
+  {
+   "id": "d_finance",
+   "name": "Personal finance over bank exports",
+   "area": "text",
+   "needs": [
+    "analyse",
+    "extract",
+    "encrypt",
+    "backups",
+    "prove"
+   ],
+   "betterWith": [
+    "review"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Questions over your own statements, answered by code.",
+   "proof": "Monthly totals match your bank’s own figures.",
+   "ifSkipped": "Wrong sums; statements leaking.",
+   "headNote": "Offline proof and encryption.",
+   "destination": true
+  },
+  {
+   "id": "d_newsletter",
+   "name": "Newsletter and blog pipeline",
+   "area": "text",
+   "needs": [
+    "write",
+    "summarise",
+    "rag",
+    "grounding",
+    "static",
+    "pin",
+    "licence"
+   ],
+   "betterWith": [
+    "image",
+    "tts",
+    "review"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Research to published post.",
+   "proof": "A post with checked citations published to your static site.",
+   "ifSkipped": "Fabricated claims published under your name.",
+   "headNote": "Grounding and licence.",
+   "destination": true
+  },
+  {
+   "id": "d_bundle",
+   "name": "Legal bundle review",
+   "area": "docs",
+   "needs": [
+    "tables",
+    "classify",
+    "extract",
+    "rag",
+    "longdoc",
+    "encrypt",
+    "prove",
+    "backups",
+    "grounding",
+    "retention"
+   ],
+   "betterWith": [
+    "dpia"
+   ],
+   "inYourHead": "must understand",
+   "zone": 3,
+   "unlocks": "Chronology, parties and dates from a bundle, with citations.",
+   "proof": "A bundle you know, every citation checked against the page.",
+   "ifSkipped": "Confident wrong citations; bundle exposed if stolen.",
+   "headNote": "Scripted, 5 to 6 steps; offline proof and encryption are red.",
+   "destination": true
+  },
+  {
+   "id": "d_research",
+   "name": "Research assistant with citations",
+   "area": "docs",
+   "needs": [
+    "rag",
+    "retrieve",
+    "grounding",
+    "agentloop",
+    "injection",
+    "egress",
+    "outputs"
+   ],
+   "betterWith": [
+    "longdoc",
+    "kvcache",
+    "browseragent"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Questions answered from sources you can check.",
+   "proof": "Every claim cites a passage that says what the claim says.",
+   "ifSkipped": "Confident fabrication with fake citations.",
+   "headNote": "Grounding, injection, egress, outputs.",
+   "destination": true
+  },
+  {
+   "id": "d_reader",
+   "name": "Accessibility reader",
+   "area": "docs",
+   "needs": [
+    "pdftext",
+    "ocr",
+    "tables",
+    "tts",
+    "summarise",
+    "vision"
+   ],
+   "betterWith": [
+    "streaming"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Any document read aloud or described.",
+   "proof": "A scanned letter read aloud correctly, tables included.",
+   "ifSkipped": "Quiet OCR errors read out as fact.",
+   "headNote": "Recognise quiet OCR errors.",
+   "destination": true
+  },
+  {
+   "id": "d_support",
+   "name": "Customer support bot over company docs",
+   "area": "docs",
+   "needs": [
+    "rag",
+    "retrieve",
+    "grounding",
+    "injection",
+    "outputs",
+    "minimise",
+    "budgets",
+    "tunnelgated",
+    "logs",
+    "retention",
+    "dpia",
+    "licence"
+   ],
+   "betterWith": [
+    "tunnelpublic",
+    "review",
+    "redteam",
+    "trace"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Answers for customers from your own documents.",
+   "proof": "Twenty real questions answered with citations; a hostile question refused.",
+   "ifSkipped": "Wrong answers to customers; personal data retained without basis.",
+   "headNote": "Eight red stations; this is a business.",
+   "destination": true
+  },
+  {
+   "id": "d_invoices",
+   "name": "Invoice and receipt processing",
+   "area": "docs",
+   "needs": [
+    "ocr",
+    "tables",
+    "extract",
+    "guided",
+    "review",
+    "encrypt",
+    "backups",
+    "retention"
+   ],
+   "betterWith": [
+    "classify"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Receipts to structured records.",
+   "proof": "Fifty receipts; totals match a hand count.",
+   "ifSkipped": "Wrong figures accepted; financial records exposed.",
+   "headNote": "Encryption, backups, retention.",
+   "destination": true
+  },
+  {
+   "id": "d_teamkb",
+   "name": "Knowledge base for a small team",
+   "area": "docs",
+   "needs": [
+    "rag",
+    "retrieve",
+    "grounding",
+    "vpn",
+    "identity",
+    "encrypt",
+    "backups",
+    "retention",
+    "dpia",
+    "logs"
+   ],
+   "betterWith": [
+    "trace"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Shared search over team documents, private to the team.",
+   "proof": "A user cannot retrieve a document they are not allowed to open.",
+   "ifSkipped": "Cross-user leakage through a shared index.",
+   "headNote": "Identity, encryption, backups, retention, DPIA, grounding.",
+   "destination": true
+  },
+  {
+   "id": "d_minutes",
+   "name": "Meeting minutes",
+   "area": "in",
+   "needs": [
+    "speakers",
+    "summarise",
+    "extract",
+    "encrypt",
+    "backups",
+    "prove",
+    "retention"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Recording to minutes with action items.",
+   "proof": "A real meeting, minutes checked by an attendee.",
+   "ifSkipped": "Actions assigned to the wrong person.",
+   "headNote": "Scripted, 4 steps.",
+   "destination": true
+  },
+  {
+   "id": "d_photos",
+   "name": "Searchable photo archive",
+   "area": "in",
+   "needs": [
+    "vision",
+    "embed",
+    "encrypt",
+    "backups",
+    "prove",
+    "retention"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "Find your own photos by description.",
+   "proof": "“Red bike” finds the photo you had in mind.",
+   "ifSkipped": "Private photos readable if the box is stolen.",
+   "headNote": "Scripted, 3 steps.",
+   "destination": true
+  },
+  {
+   "id": "d_voice",
+   "name": "Voice assistant",
+   "area": "in",
+   "needs": [
+    "streaming",
+    "stt",
+    "tts",
+    "agentloop",
+    "budgets",
+    "prove"
+   ],
+   "betterWith": [
+    "small",
+    "route",
+    "kvcache"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Wake word to speech to model to speech, all local.",
+   "proof": "Ask it the time with the router's internet cable out; it answers within two seconds.",
+   "ifSkipped": "An always-on mic that sends audio somewhere.",
+   "headNote": "prove, budgets, download are red.",
+   "destination": true
+  },
+  {
+   "id": "d_family",
+   "name": "Family photo and video organiser",
+   "area": "in",
+   "needs": [
+    "vision",
+    "detect",
+    "embed",
+    "videoin",
+    "encrypt",
+    "backups",
+    "retention",
+    "prove"
+   ],
+   "betterWith": [
+    "restore",
+    "speakers"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Find any photo or clip by description.",
+   "proof": "“Beach, 2019, the dog” finds the clip.",
+   "ifSkipped": "Family data leaking or unrecoverable.",
+   "headNote": "Encryption, backups, retention, offline proof; consent if faces are named.",
+   "destination": true
+  },
+  {
+   "id": "d_tutor",
+   "name": "Language tutor",
+   "area": "in",
+   "needs": [
+    "streaming",
+    "stt",
+    "translate",
+    "tts",
+    "write",
+    "memory",
+    "memhygiene"
+   ],
+   "betterWith": [
+    "voiceclone"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Conversation practice that remembers your mistakes.",
+   "proof": "It corrects an error you made last week.",
+   "ifSkipped": "False memories about your progress.",
+   "headNote": "Memory and its hygiene.",
+   "destination": true
+  },
+  {
+   "id": "d_cctv",
+   "name": "CCTV event detection",
+   "area": "in",
+   "needs": [
+    "videoin",
+    "detect",
+    "segment",
+    "bind",
+    "encrypt",
+    "retention",
+    "dpia"
+   ],
+   "betterWith": [
+    "vision",
+    "scheduled"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Alerts for people and vehicles, kept local.",
+   "proof": "A person at the gate triggers an alert; a cat does not; footage expires on schedule.",
+   "ifSkipped": "Cameras reachable from the internet; footage kept forever.",
+   "headNote": "Bind, encrypt, retention, DPIA; consent if faces are recognised.",
+   "destination": true
+  },
+  {
+   "id": "d_shownotes",
+   "name": "Podcast transcription and show notes",
+   "area": "in",
+   "needs": [
+    "stt",
+    "speakers",
+    "summarise",
+    "extract",
+    "longdoc",
+    "backups"
+   ],
+   "betterWith": [
+    "stems"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Transcript, chapters and notes from an episode.",
+   "proof": "Chapter timestamps land within five seconds.",
+   "ifSkipped": "Misattributed quotes.",
+   "headNote": "Backups.",
+   "destination": true
+  },
+  {
+   "id": "d_podcast",
+   "name": "Document to podcast",
+   "area": "out",
+   "needs": [
+    "pdftext",
+    "summarise",
+    "write",
+    "tts",
+    "stitch",
+    "backups",
+    "licence"
+   ],
+   "betterWith": [
+    "consent"
+   ],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "A two-voice audio version of a document.",
+   "proof": "Listen end to end; nothing misread.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Scripted, 4 steps.",
+   "destination": true
+  },
+  {
+   "id": "d_storybook",
+   "name": "Illustrated story book",
+   "area": "out",
+   "needs": [
+    "write",
+    "consistency",
+    "backups"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "A story with a consistent hero on every page.",
+   "proof": "Ten pages, same character, you approved each.",
+   "ifSkipped": "Different hero every page.",
+   "headNote": "Human in the loop, 5 steps.",
+   "destination": true
+  },
+  {
+   "id": "d_dubbing",
+   "name": "Video dubbing",
+   "area": "out",
+   "needs": [
+    "stt",
+    "translate",
+    "tts",
+    "lipsync",
+    "backups",
+    "consent"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 2,
+   "unlocks": "A clip speaking another language.",
+   "proof": "Native speaker understands it; mouth roughly matches.",
+   "ifSkipped": "Nothing serious.",
+   "headNote": "Scripted, 4 steps.",
+   "destination": true
+  },
+  {
+   "id": "d_musicvideo",
+   "name": "Prompt to music video",
+   "area": "out",
+   "needs": [
+    "write",
+    "music",
+    "consistency",
+    "lipsync",
+    "extract",
+    "stitch",
+    "backups",
+    "licence"
+   ],
+   "betterWith": [
+    "comfy",
+    "consent"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 3,
+   "unlocks": "A finished music video from one prompt.",
+   "proof": "Three minutes you would show someone.",
+   "ifSkipped": "Most maintenance on the map.",
+   "headNote": "Stateful pipeline, 8 steps, several models.",
+   "destination": true
+  },
+  {
+   "id": "d_codereview",
+   "name": "Code review bot",
+   "area": "code",
+   "needs": [
+    "codechat",
+    "git",
+    "sandbox",
+    "readonly",
+    "injection",
+    "outputs",
+    "secrets"
+   ],
+   "betterWith": [
+    "evalharness",
+    "route"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Review comments on every change.",
+   "proof": "Bot flags a planted bug and never runs the code it reviews outside the sandbox.",
+   "ifSkipped": "Secrets in diffs reaching logs; injected code comments.",
+   "headNote": "Sandbox, injection, outputs, secrets.",
+   "destination": true
+  },
+  {
+   "id": "d_agent",
+   "name": "Personal agent",
+   "area": "agents",
+   "needs": [
+    "credgw",
+    "memory",
+    "memhygiene",
+    "audit",
+    "killswitch",
+    "identity",
+    "scopes",
+    "secrets",
+    "hwkeys",
+    "encrypt",
+    "backups",
+    "minimise",
+    "egress",
+    "budgets",
+    "outputs",
+    "vet",
+    "retention",
+    "redteam"
+   ],
+   "betterWith": [
+    "trace",
+    "sandbox",
+    "segment",
+    "mcp",
+    "workflow"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "“Find me flights”, inbox triage, calendar changes.",
+   "proof": "A week read-only, then one approved write a day, log reviewed.",
+   "ifSkipped": "Everything in the security section.",
+   "headNote": "Every control on this line is red.",
+   "destination": true
+  },
+  {
+   "id": "d_home",
+   "name": "Home automation agent",
+   "area": "agents",
+   "needs": [
+    "streaming",
+    "stt",
+    "tts",
+    "agentloop",
+    "budgets",
+    "prove",
+    "readonly",
+    "approvals",
+    "scopes",
+    "segment",
+    "audit",
+    "killswitch"
+   ],
+   "betterWith": [
+    "mcp"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Lights, heating and devices by voice or schedule.",
+   "proof": "Agent controls only the devices you exposed; a request for an unexposed one is refused.",
+   "ifSkipped": "An agent with the whole house.",
+   "headNote": "Expose few devices; approvals for anything that unlocks or heats.",
+   "destination": true
+  },
+  {
+   "id": "d_triage",
+   "name": "Email triage",
+   "area": "agents",
+   "needs": [
+    "classify",
+    "summarise",
+    "extract",
+    "identity",
+    "scopes",
+    "readonly",
+    "injection",
+    "minimise",
+    "encrypt",
+    "retention",
+    "audit"
+   ],
+   "betterWith": [
+    "route",
+    "review"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Inbox sorted and summarised, nothing sent.",
+   "proof": "A week of correct sorting; a hostile test email ignored and flagged.",
+   "ifSkipped": "Mis-sorting, or an injected email acting on your behalf.",
+   "headNote": "Read-only first; seven red stations.",
+   "destination": true
+  },
+  {
+   "id": "d_tasks",
+   "name": "Meeting to tasks",
+   "area": "agents",
+   "needs": [
+    "speakers",
+    "summarise",
+    "extract",
+    "encrypt",
+    "backups",
+    "guided",
+    "scopes",
+    "approvals"
+   ],
+   "betterWith": [
+    "review"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Minutes that become tasks in your task tool.",
+   "proof": "Tasks created with the right owners after your approval.",
+   "ifSkipped": "Tasks assigned to the wrong person, automatically.",
+   "headNote": "Scopes and approvals.",
+   "destination": true
+  },
+  {
+   "id": "d_website",
+   "name": "Website live",
+   "area": "build",
+   "needs": [
+    "tunnelpublic",
+    "toggle",
+    "backups"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "Your own site, built by an agent, reachable by anyone.",
+   "proof": "Friend opens it from their phone; access log shows the hit.",
+   "ifSkipped": "Open door, no record.",
+   "headNote": "Sandbox and both tunnel stations are red.",
+   "destination": true
+  }
+ ]
+}
