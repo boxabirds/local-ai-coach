@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import json
 import platform
+from functools import lru_cache
+from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any, NotRequired
 
@@ -61,28 +63,59 @@ def compressed_map(record: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+STATION_FIELDS = ("name", "area", "inYourHead", "needs", "headNote", "proof", "unlocks")
+
+
+@lru_cache(maxsize=None)
+def _curriculum_block(folder: str) -> str:
+    """The whole curriculum, as the model reads it (Ceetrix story 19, flow.context). The same text
+    all session for a given folder, so it sits before anything that changes and can be cached."""
+    root = Path(folder)
+    scope = json.loads((root / "scope.json").read_text(encoding="utf-8"))
+    stations = json.loads((root / "stations.json").read_text(encoding="utf-8"))["stations"]
+    terms = json.loads((root / "map.json").read_text(encoding="utf-8"))["terms"]
+    parts = ["## The curriculum, all of it",
+             "Everything the learner can ask about. Use ids exactly as written here.",
+             "### Reading order (what the coach teaches now, in order)",
+             json.dumps(scope["readingOrder"], ensure_ascii=False)]
+    if scope.get("shownOnMap"):
+        parts += ["Shown on the map but not taught yet: " + json.dumps(scope["shownOnMap"], ensure_ascii=False)]
+    parts.append("### Every station on the map")
+    parts += [f"- {s['id']}: " + json.dumps({k: s[k] for k in STATION_FIELDS if k in s}, ensure_ascii=False) for s in stations]
+    parts += ["### Terms (where each is first taught)",
+              "\n".join(f"- {t['term']} (first at {t.get('firstAt', '?')}): {t.get('gloss', '')}" for t in terms)]
+    for item in scope["readingOrder"]:
+        path = root / item["file"]
+        if not path.is_file():
+            raise FileNotFoundError(f"scope.json lists {item['file']}, which isn't in {root}")
+        text = path.read_text(encoding="utf-8")
+        if item["kind"] == "lesson":
+            parts += [f"### Lesson {item['station']} (its steps are the contract: use their text and ids)", text.strip()]
+            body = chapter_body(item["station"])
+            if body:
+                parts += [f"### Chapter for {item['station']} (for answering questions)", body]
+        else:
+            parts += [f"### Story {item['id']} (story_id \"{item['id']}\", for station {item['station']})", text.strip()]
+    return "\n\n".join(parts)
+
+
+def curriculum_block() -> str:
+    return _curriculum_block(str(curriculum.root()))
+
+
 def coach_context(state: dict[str, Any]) -> str:
+    """What changes turn to turn: who the learner is now. Comes after the curriculum block."""
     record = progress.load(progress.home())
     given = consent_store.load(progress.home())
     parts = [
         "## The learner, now",
         f"Platform: {platform.system() or 'unknown'}.",
         f"Permission to look at this computer: {consent_status(given)}.",
-        "Map (V1 stations, the learner's status):",
+        "Map (the learner's status per station):",
         compressed_map(record),
     ]
     station, step = state.get("station_id"), state.get("step_id")
-    if station:
-        parts.append(f"Open station: {station}; open step: {step or 'none'}.")
-        try:
-            parts += ["Lesson (the contract; use its text):", json.dumps(curriculum.lesson(station), ensure_ascii=False)]
-        except KeyError:
-            pass
-        body = chapter_body(station)
-        if body:
-            parts += ["Chapter text (for answering questions; the learner may not have read it):", body]
-    else:
-        parts.append("No station is open yet.")
+    parts.append(f"Open station: {station}; open step: {step or 'none'}." if station else "No station is open yet.")
     return "\n\n".join(parts)
 
 
@@ -115,7 +148,8 @@ def without_late_answers(messages: list) -> list:
 
 
 def with_context(request):
-    note = "\n\n" + coach_context(request.state)
+    # The stable curriculum first, then what changes (story 19): the provider caches the prefix.
+    note = "\n\n" + curriculum_block() + "\n\n" + coach_context(request.state)
     current = request.system_message.content if request.system_message else ""
     content = [*current, {"type": "text", "text": note}] if isinstance(current, list) else current + note
     return request.override(system_message=SystemMessage(content=content), messages=without_late_answers(list(request.messages)))

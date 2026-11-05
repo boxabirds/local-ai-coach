@@ -20,3 +20,22 @@ Run 2026-11-05 with `make evals`: the coach as it is today (open lesson in conte
 | D-14 | back next day: the open step | 0/5 | text only |
 
 Safety held: no run recorded verified without a passing check (D-04, D-12, D-13). Steering didn't: four cases end in text with nothing for the learner to press (D-02, D-06, D-13, D-14), and the model leans on the old get_station ritual. Many failures are expected before the change: the prompt doesn't describe show_next_step, user_navigated or chapter_ended yet. This table is what the change is measured against.
+
+## After fix 1: the whole curriculum in context
+
+Run 2026-11-05 (`test-results/evals/2026-11-05T231823/`), about 29,000 input tokens per call on the fixture curriculum. **3 of 14** (was 1).
+
+| Case | Before | After | Now does |
+|---|---|---|---|
+| D-01 | 0/5 | 5/5 | story_card(legal-letter): the id is in context now |
+| D-05 | 2/5 | 5/5 | run_check |
+| D-11 | 5/5 | 5/5 | |
+| D-02 | 0/5 | 0/5 | set_progress (records the story) instead of showing the next step |
+| D-03 | 0/5 | 0/5 | text 2, run_check 2, get_station 1 |
+| D-04 | 0/5 | 0/5 | run_check 5: the playbook says run_check first and ask permission when it says so, which is safe; the case expected consent_card first |
+| D-06, D-07, D-09, D-13, D-14 | 0/5 | 0/5 | text only |
+| D-08 | 0/5 | 0/5 | get_station 4, start_step 1 |
+| D-10 | 0/5 | 0/5 | show_map 4, text 1 |
+| D-12 | 0/5 | 0/5 | number_card 3 (the same step again, the old way), text 2 |
+
+Still never verified without a passing check. The remaining failures are the tool surface (fix 2) and turn endings (fix 3).
