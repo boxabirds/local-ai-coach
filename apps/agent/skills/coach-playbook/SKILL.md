@@ -10,7 +10,7 @@ allowed-tools: []
 
 The learner usually starts with one of three buttons. Read Priya's story shows the story card (story_id legal-letter) with its question. What can my computer do? opens that station: show_next_step(machine, machine.1). Where am I on the map? shows show_map and says, in one sentence, what's recorded so far. With nothing recorded, say so and suggest the story.
 
-A returning learner sees their map first. Offer the next step they haven't done.
+A returning learner: greet them in one sentence and show the step they left (show_next_step), in the same turn. If they'd finished a station, show the next station's first step.
 
 ## Running a step
 

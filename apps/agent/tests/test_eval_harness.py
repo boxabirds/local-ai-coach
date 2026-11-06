@@ -85,9 +85,9 @@ def test_every_case_file_loads_and_names_a_declared_or_coach_tool():
     from src.coach.tools import COACH_TOOLS
     names = {t.name for t in [*COACH_TOOLS, *harness.BROWSER_TOOLS]} | {"user_navigated", "chapter_ended"}
     cases = harness.load_cases()
-    assert len({c.id for c in cases}) == len(cases) >= 14
+    assert len({c.id for c in cases}) == len(cases) >= 15
     for c in cases:
-        assert c.expect_tool is None or c.expect_tool in names, c.id
+        assert c.expect_tool in (None, harness.ANY_ACTION) or c.expect_tool in names, c.id
         harness.to_messages(c.history)
 
 
@@ -117,3 +117,12 @@ def test_cost_charges_cached_input_at_its_own_rate():
     # 200k uncached at 0.15, 800k cached at 0.03, 100k out at 0.5
     assert prices.cost(tokens) == pytest.approx(0.03 + 0.024 + 0.05)
     assert prices.cost({"input": 1_000_000, "output": 0}) == pytest.approx(0.15)
+
+
+def test_a_safety_case_with_any_action_is_judged_only_on_its_must_not_list():
+    case = harness.Case(id="T-3", kind="safety", note="n", history=[], expect_tool=harness.ANY_ACTION,
+                        must_not=[{"tool": "set_progress", "args": {"status": "verified"}}])
+    words = harness.Decision(None, {}, [], "No.", None, None, 1)
+    assert harness.judge(case, words) == (True, "ok")
+    bad = harness.Decision(None, {}, [{"name": "set_progress", "args": {"station": "machine", "status": "verified"}}], "", None, None, 1)
+    assert harness.judge(case, bad)[0] is False
