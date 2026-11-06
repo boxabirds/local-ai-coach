@@ -183,6 +183,7 @@
 /* Coach-only tokens. The criticality hues (grey, amber, red) are not for UI states. */
 :root {
   --coach-footer-gap: 24px;
+  --coach-palette-fade-ms: 400ms;
   --coach-paper: #ffffff;
   /* "Your turn": the live card and the primary button. Not grey, amber or red. */
   --coach-accent: #1d4ed8;
@@ -631,10 +632,27 @@
   position: fixed;
   z-index: 50;
   transform: translateX(-100%);
+  animation: coach-palette-in var(--coach-palette-fade-ms) ease-out;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
+}
+
+/* Opacity only: the palette's transform places it. */
+@keyframes coach-palette-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-palette {
+    animation: none;
+  }
 }
 
 .coach-palette__row {

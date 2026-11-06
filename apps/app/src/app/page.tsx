@@ -10,7 +10,7 @@ import { AnswerMarkdown } from "@/components/chat/answer-markdown";
 import { QuoteContext } from "@/components/chat/quote-block";
 import { QuotedInput } from "@/components/chat/quoted-input";
 import { QuotedUserText } from "@/components/chat/quoted-user-text";
-import { useAskAbout, type RateRequest } from "@/hooks/use-ask-about";
+import { AskAboutPalette, type RateRequest } from "@/hooks/use-ask-about";
 import { sendRating } from "@/components/chat/rating";
 import {
   CopilotChat,
@@ -67,7 +67,6 @@ export default function HomePage() {
   }, []);
   // Story 26: Good and Not good in the same palette, kept on this computer as test data.
   const rate = useCallback((request: RateRequest) => sendRating(threadId, agent.messages, request), [threadId, agent]);
-  const { button: askButton } = useAskAbout(chatRoot, askAbout, rate);
 
   useEffect(() => {
     const subscription = agent.subscribe({
@@ -180,7 +179,7 @@ export default function HomePage() {
             labels={labels}
           />
           </QuoteContext.Provider>
-          {askButton}
+          <AskAboutPalette root={chatRoot} onAsk={askAbout} onRate={rate} />
           <RevealLatestQuestion threadId={threadId} root={chatRoot} />
         </div>
       </main>

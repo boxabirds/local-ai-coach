@@ -12,8 +12,9 @@ import { QUOTABLE, QUOTABLE_ATTR, SELECTED_ATTR, quotable, quoteText } from "@/c
  * line for what was wrong. Nothing else in the chat carries thumbs.
  *
  * A click keeps the palette (the selection) until Escape, a click elsewhere or a second click;
- * pointing shows it while the pointer is on the bubble or the palette, and it goes a moment
- * after the pointer leaves both. Controls inside a bubble keep their own job, and Space never
+ * pointing shows it once the pointer has rested on the bubble for HOVER_SHOW_MS (passing over
+ * the chat shows nothing), keeps it while the pointer is on the bubble or the palette, and puts
+ * it away a moment after the pointer leaves both. It always fades in (coach.css). Controls inside a bubble keep their own job, and Space never
  * selects.
  */
 
@@ -21,6 +22,8 @@ export type Rating = "up" | "down";
 export type RateRequest = { messageId: string; rating: Rating; reason?: string; item: { kind: string; text: string } };
 export type RateResult = { ok: true } | { ok: false; error: string };
 
+/** How long the pointer must rest on an item before its palette appears (it then fades in). */
+export const HOVER_SHOW_MS = 1000;
 /** How long the palette stays after the pointer leaves the bubble and the palette. */
 export const HOVER_HIDE_MS = 300;
 const PALETTE_GAP_PX = 14;
@@ -41,6 +44,11 @@ export function kindOf(el: Element): string {
   if (el.matches(".coach-step__text")) return "step";
   if (el.matches(".coach-bubble")) return "story";
   return "reply";
+}
+
+/** Where the palette sits for an item: its top right, a little above, never off screen. */
+function paletteSpot(rect: DOMRect): { top: number; left: number } {
+  return { top: Math.max(rect.top - PALETTE_GAP_PX, EDGE_PX), left: Math.max(rect.right, EDGE_PX) };
 }
 
 function canHover(): boolean {
@@ -64,6 +72,10 @@ export function useAskAbout(
   const [status, setStatus] = useState<{ el: Element; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const paletteRef = useRef<HTMLDivElement | null>(null);
+  // Pointing shows the palette only once the pointer has rested on one item for HOVER_SHOW_MS.
+  const showTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pending = useRef<Element | null>(null);
   const target = selected ?? hovered;
   const box = placed && placed.el === target ? placed.rect : null;
   const reasonOpen = reasonFor !== null && reasonFor === target;
@@ -93,7 +105,30 @@ export function useAskAbout(
       if (!pinnedRef.current) setHovered(null);
     }, HOVER_HIDE_MS);
   }, [cancelHide]);
-  useEffect(() => cancelHide, [cancelHide]);
+  const cancelShow = useCallback(() => {
+    if (showTimer.current) clearTimeout(showTimer.current);
+    showTimer.current = null;
+    pending.current = null;
+  }, []);
+  const showSoon = useCallback(
+    (el: Element) => {
+      cancelShow();
+      pending.current = el;
+      showTimer.current = setTimeout(() => {
+        showTimer.current = null;
+        pending.current = null;
+        if (!pinnedRef.current) setHovered(el);
+      }, HOVER_SHOW_MS);
+    },
+    [cancelShow],
+  );
+  useEffect(
+    () => () => {
+      cancelHide();
+      cancelShow();
+    },
+    [cancelHide, cancelShow],
+  );
 
   // Coach bubbles become reachable with Tab, and marked so Enter selects rather than goes on.
   useEffect(() => {
@@ -139,14 +174,18 @@ export function useAskAbout(
     const onOver = (event: PointerEvent) => {
       if (!canHover() || !(event.target instanceof Element)) return;
       const el = quotable(event.target, host);
-      if (el) {
-        cancelHide();
-        if (!pinnedRef.current) setHovered(el);
+      if (!el) return;
+      if (el === hovered) {
+        cancelHide(); // back on the item whose palette is showing: keep it
+        return;
       }
+      if (el !== pending.current && !pinnedRef.current) showSoon(el);
     };
     const onOut = (event: PointerEvent) => {
       const to = event.relatedTarget;
-      if (to instanceof Element && (to.closest("[data-ask-button]") || (hovered && hovered.contains(to)))) return;
+      if (to instanceof Element && to.closest("[data-ask-button]")) return;
+      if (to instanceof Node && ((hovered && hovered.contains(to)) || (pending.current && pending.current.contains(to)))) return;
+      cancelShow();
       hideSoon();
     };
     host.addEventListener("click", onClick);
@@ -161,19 +200,29 @@ export function useAskAbout(
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("mousedown", onOutside);
     };
-  }, [root, select, selected, hovered, cancelHide, hideSoon]);
+  }, [root, select, selected, hovered, cancelHide, hideSoon, cancelShow, showSoon]);
 
-  // Keep the palette at the item's top right as the chat scrolls or reflows.
+  // Place the palette once for its item (state, so it can render), then keep it at the item's
+  // top right as the chat scrolls or reflows by moving it directly. Setting state on every
+  // scroll frame redrew the whole page mid-scroll and cut short a new card's smooth scroll.
   useEffect(() => {
     if (!target) return;
-    const place = () => setPlaced(target.isConnected ? { el: target, rect: target.getBoundingClientRect() } : null);
-    const first = requestAnimationFrame(place);
-    window.addEventListener("scroll", place, true);
-    window.addEventListener("resize", place);
+    const first = requestAnimationFrame(() =>
+      setPlaced(target.isConnected ? { el: target, rect: target.getBoundingClientRect() } : null),
+    );
+    const follow = () => {
+      const node = paletteRef.current;
+      if (!node || !target.isConnected) return;
+      const { top, left } = paletteSpot(target.getBoundingClientRect());
+      node.style.top = `${top}px`;
+      node.style.left = `${left}px`;
+    };
+    window.addEventListener("scroll", follow, true);
+    window.addEventListener("resize", follow);
     return () => {
       cancelAnimationFrame(first);
-      window.removeEventListener("scroll", place, true);
-      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", follow, true);
+      window.removeEventListener("resize", follow);
     };
   }, [target]);
 
@@ -232,7 +281,8 @@ export function useAskAbout(
             className="coach-palette"
             data-ask-button
             data-testid="coach-palette"
-            style={{ top: Math.max(box.top - PALETTE_GAP_PX, EDGE_PX), left: Math.max(box.right, EDGE_PX) }}
+            ref={paletteRef}
+            style={paletteSpot(box)}
             onPointerEnter={cancelHide}
             onPointerLeave={() => hideSoon()}
           >
@@ -314,4 +364,21 @@ export function useAskAbout(
       : null;
 
   return { selected, hovered, button: palette, clear: close };
+}
+
+/**
+ * The palette as a component of its own, so its state (pointing, placing, rating) redraws only
+ * itself. Held in the page, every change redrew the page and the chat, and one landing during a
+ * new card's smooth scroll cut that scroll short (story 26).
+ */
+export function AskAboutPalette({
+  root,
+  onAsk,
+  onRate,
+}: {
+  root: RefObject<HTMLElement | null>;
+  onAsk: (text: string) => void;
+  onRate?: (request: RateRequest) => Promise<RateResult>;
+}) {
+  return useAskAbout(root, onAsk, onRate).button;
 }

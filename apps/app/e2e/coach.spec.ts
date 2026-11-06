@@ -17,6 +17,7 @@ const FIGURES = 3; // chapter 0's figures, each a unit of its own (Ceetrix story
 const UNITS = SENTENCES + FIGURES;
 const MAX_PRESSES = 60;
 const SCROLL_SETTLE_MS = 3000;
+const HOVER_SHOW_MS = 1000; // the palette's wait (use-ask-about.tsx)
 const FOOTER_GAP_PX = 16; // at least this much between the Next row and the message box
 const ACCENT = "rgb(29, 78, 216)";
 /** This machine's memory as the probe reports it: Node reads the same source (story 9). */
@@ -422,7 +423,11 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(page.getByTestId("coach-palette")).toHaveCount(0);
     await beat.hover();
     const palette = page.getByTestId("coach-palette");
+    // It waits for the pointer to rest (a second), then fades in.
+    await page.waitForTimeout(HOVER_SHOW_MS / 2);
+    await expect(palette).toHaveCount(0);
     await expect(palette.getByRole("button", { name: "Ask about this" })).toBeVisible();
+    await expect(palette).toHaveCSS("animation-name", "coach-palette-in");
     await palette.getByRole("button", { name: "Not good" }).click();
     const why = palette.getByRole("textbox", { name: "What was wrong?" });
     await expect(why).toBeFocused();

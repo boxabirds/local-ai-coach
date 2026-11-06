@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { useRef } from "react";
-import { HOVER_HIDE_MS, SAVED, useAskAbout, type RateRequest, type RateResult } from "@/hooks/use-ask-about";
+import { HOVER_HIDE_MS, HOVER_SHOW_MS, SAVED, useAskAbout, type RateRequest, type RateResult } from "@/hooks/use-ask-about";
 import { ratingBody, sendRating } from "../rating";
 
 /**
@@ -16,7 +16,10 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+let renders = 0;
+
 function Thread({ onAsk, onRate }: { onAsk: (text: string) => void; onRate?: (r: RateRequest) => Promise<RateResult> }) {
+  renders += 1;
   const root = useRef<HTMLDivElement>(null);
   const { button } = useAskAbout(root, onAsk, onRate);
   return (
@@ -53,13 +56,23 @@ function setup(onRate: (r: RateRequest) => Promise<RateResult> = vi.fn(ok)) {
 }
 
 const point = (testId: string) => fireEvent.pointerOver(screen.getByTestId(testId));
+// Only the timers the delay uses are faked, so the palette's placement (requestAnimationFrame) runs.
+const TIMERS = { toFake: ["setTimeout", "clearTimeout"] } as const;
+const wait = (ms: number) => act(() => vi.advanceTimersByTime(ms));
+/** Rest the pointer on an item long enough for its palette. */
+function rest(testId: string) {
+  vi.useFakeTimers(TIMERS);
+  point(testId);
+  wait(HOVER_SHOW_MS);
+  vi.useRealTimers();
+}
 const palette = () => screen.queryByTestId("coach-palette");
 
 describe("the palette appears on pointing or selecting (story 26)", () => {
   it("TC-01 pointing at a coach reply shows Ask about this, Good and Not good", async () => {
     setup();
     expect(palette()).toBeNull();
-    point("reply");
+    rest("reply");
     expect(await screen.findByTestId("coach-palette")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ask about this" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Good" })).toBeInTheDocument();
@@ -68,7 +81,7 @@ describe("the palette appears on pointing or selecting (story 26)", () => {
 
   it("TC-02 it goes a moment after the pointer leaves the item", async () => {
     setup();
-    point("reply");
+    rest("reply");
     await screen.findByTestId("coach-palette");
     vi.useFakeTimers();
     fireEvent.pointerOut(screen.getByTestId("reply"), { relatedTarget: screen.getByTestId("outside") });
@@ -79,7 +92,7 @@ describe("the palette appears on pointing or selecting (story 26)", () => {
 
   it("TC-03 it stays while the pointer moves onto the palette", async () => {
     setup();
-    point("reply");
+    rest("reply");
     const shown = await screen.findByTestId("coach-palette");
     vi.useFakeTimers();
     fireEvent.pointerOut(screen.getByTestId("reply"), { relatedTarget: shown });
@@ -90,8 +103,51 @@ describe("the palette appears on pointing or selecting (story 26)", () => {
 
   it("TC-04 the learner's own message never shows it", () => {
     setup();
-    point("mine");
+    rest("mine");
     expect(palette()).toBeNull();
+  });
+
+  it("TC-01b it waits until the pointer has rested on the item, then appears", async () => {
+    setup();
+    vi.useFakeTimers(TIMERS);
+    point("reply");
+    wait(HOVER_SHOW_MS - 1);
+    // A frame passes, so a palette that was due would have been placed by now.
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    expect(palette()).toBeNull();
+    wait(1);
+    vi.useRealTimers();
+    expect(await screen.findByTestId("coach-palette")).toBeInTheDocument();
+  });
+
+  it("TC-01c passing over an item on the way somewhere else shows nothing", () => {
+    setup();
+    vi.useFakeTimers(TIMERS);
+    point("reply");
+    wait(HOVER_SHOW_MS / 2);
+    fireEvent.pointerOut(screen.getByTestId("reply"), { relatedTarget: screen.getByTestId("outside") });
+    wait(HOVER_SHOW_MS * 2);
+    expect(palette()).toBeNull();
+  });
+
+  it("TC-01d moving inside one item doesn't restart the wait; moving to another does", async () => {
+    setup();
+    vi.useFakeTimers(TIMERS);
+    point("reply");
+    wait(HOVER_SHOW_MS / 2);
+    point("reply"); // another part of the same item
+    wait(HOVER_SHOW_MS / 2);
+    vi.useRealTimers();
+    expect(await screen.findByRole("button", { name: "Good" })).toBeInTheDocument(); // the reply's, on time
+    vi.useFakeTimers(TIMERS);
+    fireEvent.pointerOut(screen.getByTestId("reply"), { relatedTarget: screen.getByTestId("loose") });
+    point("loose");
+    wait(HOVER_SHOW_MS - 1);
+    expect(palette()).toBeNull(); // the reply's went; the next one waits its own full second
+    wait(1);
+    vi.useRealTimers();
+    expect(await screen.findByRole("button", { name: "Ask about this" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Good" })).toBeNull(); // the loose bubble has no thumbs
   });
 
   it("TC-05 a click keeps it without pointing; Escape closes it", async () => {
@@ -108,10 +164,29 @@ describe("the palette appears on pointing or selecting (story 26)", () => {
   });
 });
 
+describe("the palette follows its item", () => {
+  it("TC-13 scrolling moves the palette without redrawing the page (a redraw cut a card's scroll short)", async () => {
+    setup();
+    const item = screen.getByTestId("reply").closest("[data-testid=\"copilot-assistant-message\"]") as HTMLElement; // the item the palette belongs to
+    let top = 200;
+    item.getBoundingClientRect = () => ({ top, right: 700, left: 100, bottom: top + 40, width: 600, height: 40, x: 100, y: top, toJSON: () => ({}) }) as DOMRect;
+    rest("reply");
+    const shown = await screen.findByTestId("coach-palette");
+    const before = renders;
+    for (const next of [150, 100, 50]) {
+      top = next;
+      fireEvent.scroll(window);
+    }
+    expect(renders).toBe(before);
+    expect(shown.style.top).toBe(`${50 - 14}px`);
+    expect(shown.style.left).toBe("700px");
+  });
+});
+
 describe("rating from the palette", () => {
   it("TC-06 Good rates the turn once, then shows pressed and Saved", async () => {
     const { onRate } = setup();
-    point("reply");
+    rest("reply");
     fireEvent.click(await screen.findByRole("button", { name: "Good" }));
     expect(await screen.findByTestId("coach-rate-status")).toHaveTextContent(SAVED);
     expect(onRate).toHaveBeenCalledExactlyOnceWith({
@@ -127,7 +202,7 @@ describe("rating from the palette", () => {
 
   it("TC-07 Not good opens the reason line; Enter saves it with the reason", async () => {
     const { onRate } = setup();
-    point("step");
+    rest("step");
     fireEvent.click(await screen.findByRole("button", { name: "Not good" }));
     const why = screen.getByRole("textbox", { name: "What was wrong?" });
     expect(why).toHaveFocus();
@@ -142,7 +217,7 @@ describe("rating from the palette", () => {
 
   it("TC-08 Skip saves Not good without a reason", async () => {
     const { onRate } = setup();
-    point("reply");
+    rest("reply");
     fireEvent.click(await screen.findByRole("button", { name: "Not good" }));
     fireEvent.click(screen.getByRole("button", { name: "Skip" }));
     await screen.findByTestId("coach-rate-status");
@@ -152,7 +227,7 @@ describe("rating from the palette", () => {
 
   it("TC-09 Escape in the reason line saves nothing", async () => {
     const { onRate } = setup();
-    point("reply");
+    rest("reply");
     fireEvent.click(await screen.findByRole("button", { name: "Not good" }));
     const why = screen.getByRole("textbox", { name: "What was wrong?" });
     fireEvent.change(why, { target: { value: "never mind" } });
@@ -164,7 +239,7 @@ describe("rating from the palette", () => {
   it("TC-10 a save that fails says so, isn't shown pressed, and keeps the reason", async () => {
     const onRate = vi.fn(() => Promise.resolve<RateResult>({ ok: false, error: "I couldn't save that rating." }));
     setup(onRate);
-    point("reply");
+    rest("reply");
     fireEvent.click(await screen.findByRole("button", { name: "Not good" }));
     const why = screen.getByRole("textbox", { name: "What was wrong?" });
     fireEvent.change(why, { target: { value: "too long" } });
@@ -176,7 +251,7 @@ describe("rating from the palette", () => {
 
   it("TC-10b a save that throws is a failure too", async () => {
     setup(vi.fn(() => Promise.reject(new Error("network"))));
-    point("reply");
+    rest("reply");
     fireEvent.click(await screen.findByRole("button", { name: "Good" }));
     expect(await screen.findByTestId("coach-rate-status")).toHaveTextContent("I couldn't save that rating.");
     expect(screen.getByRole("button", { name: "Good" })).toHaveAttribute("aria-pressed", "false");
@@ -184,21 +259,21 @@ describe("rating from the palette", () => {
 
   it("TC-11 an item outside any coach message shows Ask about this, with no thumbs", async () => {
     setup();
-    point("loose");
+    rest("loose");
     expect(await screen.findByRole("button", { name: "Ask about this" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Good" })).toBeNull();
   });
 
   it("TC-11b with no onRate there are never thumbs", async () => {
     render(<Thread onAsk={vi.fn()} />);
-    point("reply");
+    rest("reply");
     expect(await screen.findByRole("button", { name: "Ask about this" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Not good" })).toBeNull();
   });
 
   it("TC-12 Ask about this still hands the words over from the palette", async () => {
     const { onAsk } = setup();
-    point("reply");
+    rest("reply");
     fireEvent.click(await screen.findByRole("button", { name: "Ask about this" }));
     expect(onAsk).toHaveBeenCalledExactlyOnceWith("A made-up answer from the coach.");
     await waitFor(() => expect(palette()).toBeNull());
