@@ -2,8 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { useState } from "react";
-import { KEYS_URL, ProviderKeysProvider, useProviderKeys } from "./provider-keys";
+import { KEYS_URL, SERVER_URL, ProviderKeysProvider, useProviderKeys, type Server } from "./provider-keys";
 import { ProviderKeysDialog } from "./provider-keys-dialog";
+
+/** A made-up server (story 21 fixtures). */
+const SERVER: Server = { base_url: "https://models.example.test/v1", model: "example-org/example-model" };
+const CHECK_URL = "/api/coach-provider/check";
 
 /** Keys shaped like real ones (story 16 fixtures); never real. */
 const OPENAI = "sk-proj-" + "a1B2c3D4".repeat(6);
@@ -25,10 +29,17 @@ function Harness({ disabled = false }: { disabled?: boolean }) {
  * Answers /api/provider-keys (validation) and /api/coach-keys (saved keys) like the real routes.
  * `where` is "keychain" on a Mac, null elsewhere; `refuse` makes a save fail with the agent's message.
  */
-function serve({ where = null as string | null, saved = false, refuse = null as string | null } = {}) {
-  const state = { saved, where };
+function serve({ where = null as string | null, saved = false, refuse = null as string | null,
+  server = null as Server | null, checkError = null as string | null } = {}) {
+  const state = { saved, where, server };
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     const method = init?.method ?? "GET";
+    if (url === SERVER_URL) {
+      if (method === "POST") state.server = JSON.parse(String(init!.body));
+      if (method === "DELETE") state.server = null;
+      return { ok: true, status: 200, json: async () => ({ server: state.server }) };
+    }
+    if (url === CHECK_URL) return { ok: true, status: 200, json: async () => (checkError ? { ok: false, error: checkError } : { ok: true }) };
     if (url === KEYS_URL) {
       if (method === "POST") {
         if (refuse || !state.where) return { ok: false, status: 422, json: async () => ({ ...state, error: refuse ?? "This computer can't remember keys yet, so I'll keep them for this session only." }) };
@@ -179,5 +190,73 @@ describe("keys kept in this Mac's Keychain (story 16, TC-21)", () => {
     expect(await screen.findByText(/Your Keychain didn't save the keys/)).toBeInTheDocument();
     expect(screen.getByTestId("active")).toHaveTextContent(OPENAI);
     expect(screen.getByLabelText("OpenAI API key")).toHaveValue("");
+  });
+});
+
+describe("any OpenAI-compatible server (story 21, TC-11 to TC-13)", () => {
+  const tick = () => fireEvent.click(screen.getByLabelText("Other OpenAI-compatible server"));
+  const fillServer = (server = SERVER) => {
+    fireEvent.change(screen.getByLabelText("Server address"), { target: { value: ` ${server.base_url} ` } });
+    fireEvent.change(screen.getByLabelText("Model name"), { target: { value: server.model } });
+  };
+  const enterServerKeys = () => {
+    fireEvent.change(screen.getByLabelText("API key for that server"), { target: { value: OPENAI } });
+    fireEvent.change(screen.getByLabelText("Jev API key"), { target: { value: JEV } });
+  };
+
+  it("TC-11: ticking shows the two boxes, renames the key box, and Test waits for both", async () => {
+    serve();
+    await setup();
+    expect(screen.queryByLabelText("Server address")).toBeNull();
+    tick();
+    expect(screen.getByLabelText("Server address")).toBeInTheDocument();
+    expect(screen.getByLabelText("Model name")).toBeInTheDocument();
+    expect(screen.queryByLabelText("OpenAI API key")).toBeNull();
+    enterServerKeys();
+    expect(screen.getByText("Test connection")).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Server address"), { target: { value: SERVER.base_url } });
+    expect(screen.getByText("Test connection")).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Model name"), { target: { value: SERVER.model } });
+    expect(screen.getByText("Test connection")).toBeEnabled();
+  });
+
+  it("TC-12: Test asks the provider check, not provider-keys; a failure is shown and Save stays off", async () => {
+    const { fetchMock } = serve({ checkError: "That server doesn't know that model name." });
+    await setup();
+    tick();
+    fillServer();
+    enterServerKeys();
+    fireEvent.click(screen.getByText("Test connection"));
+    expect(await screen.findByText("That server doesn't know that model name.")).toBeInTheDocument();
+    expect(validationCalls(fetchMock)).toHaveLength(0);
+    const check = fetchMock.mock.calls.find(([url]) => url === CHECK_URL)!;
+    expect(JSON.parse(String(check[1]!.body))).toEqual({ ...SERVER, key: OPENAI, jev: JEV });
+    expect(screen.getByText("Save keys")).toBeDisabled();
+  });
+
+  it("Save keeps the server, and unticking forgets it", async () => {
+    const { state } = serve();
+    await setup();
+    tick();
+    fillServer();
+    enterServerKeys();
+    await testAndSave();
+    await waitFor(() => expect(state.server).toEqual(SERVER));
+    expect(screen.getByTestId("active")).toHaveTextContent(OPENAI);
+    fireEvent.click(screen.getByText("Open keys"));
+    tick();
+    enterKeys();
+    await testAndSave();
+    await waitFor(() => expect(state.server).toBeNull());
+  });
+
+  it("TC-13: a saved server on load shows ticked and filled, with no key", async () => {
+    serve({ where: "keychain", saved: true, server: SERVER });
+    await setup();
+    expect(screen.getByLabelText("Other OpenAI-compatible server")).toBeChecked();
+    expect(screen.getByLabelText("Server address")).toHaveValue(SERVER.base_url);
+    expect(screen.getByLabelText("Model name")).toHaveValue(SERVER.model);
+    expect(screen.getByLabelText("API key for that server")).toHaveValue("");
+    expect(document.body.innerHTML).not.toContain(OPENAI.slice(0, 12));
   });
 });

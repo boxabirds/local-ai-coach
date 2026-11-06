@@ -41,7 +41,7 @@ export default function HomePage() {
     settle(RESTORE_SCROLL_FRAMES);
   }, []);
   usePersistedChat(agent as unknown as PersistableAgent, undefined, scrollToEnd);
-  const { newChat, hasKeys, saved, where, keysOpen, setKeysOpen } = useProviderKeys();
+  const { newChat, hasKeys, saved, where, server, keysOpen, setKeysOpen } = useProviderKeys();
   const { copilotkit } = useCopilotKit();
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
@@ -160,7 +160,9 @@ export default function HomePage() {
               chatDisclaimerText: COACH_STUB
                 ? "Stub coach: no model and no keys."
                 : hasKeys
-                  ? saved
+                  ? server
+                    ? `My answers come from ${server.model} at ${new URL(server.base_url).host}.${saved ? " Your keys are in this Mac's Keychain." : ""}`
+                    : saved
                     ? "I use two hosted services for now. Your keys are in this Mac's Keychain."
                     : "I use two hosted services for now. Your own model stays on your machine."
                   : where === "keychain"

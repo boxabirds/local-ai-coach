@@ -158,6 +158,8 @@ it("submits through the real chat-only page composer and preserves its message",
   fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
   await screen.findByText("Both keys work. Save to start a new chat.");
   fireEvent.click(screen.getByRole("button", { name: "Save keys" }));
+  // Saving finishes when the dialog closes; only then is the chat open to send.
+  await waitFor(() => expect(screen.queryByRole("dialog", { name: "Add API keys to start" })).toBeNull());
   await waitFor(() => expect(screen.getByTestId("runtime-status")).toHaveTextContent("connected"));
   expect(screen.getByRole("textbox")).toHaveValue("Explain bicycle gears");
   expect(runInputs).toHaveLength(0);

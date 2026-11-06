@@ -7,6 +7,8 @@ export type ProviderKeys = { openai: string; jev: string };
 /** What the agent says about saved keys (Ceetrix story 16). `where` is "keychain" on a Mac, else null. */
 export type SavedKeys = { saved: boolean; where: string | null };
 export type SaveResult = { saved: boolean; error?: string };
+/** An OpenAI-compatible server used instead of OpenAI (story 21). Not secret: its key is the OpenAI key's slot. */
+export type Server = { base_url: string; model: string };
 
 type ProviderKeysContextValue = {
   headers: Record<string, string> | undefined;
@@ -18,6 +20,10 @@ type ProviderKeysContextValue = {
   session: number;
   save: (keys: ProviderKeys) => Promise<SaveResult>;
   clear: () => Promise<void>;
+  /** The OpenAI-compatible server in use, or null for OpenAI. */
+  server: Server | null;
+  /** Save a server, or null to go back to OpenAI. Returns the reason if it wasn't saved. */
+  setServer: (next: Server | null) => Promise<string | null>;
   newChat: () => void;
   draft: string;
   setDraft: (value: string) => void;
@@ -27,6 +33,7 @@ type ProviderKeysContextValue = {
 const ProviderKeysContext = createContext<ProviderKeysContextValue | null>(null);
 
 export const KEYS_URL = "/api/coach-keys";
+export const SERVER_URL = "/api/coach-provider";
 
 async function ask(method: "GET" | "POST" | "DELETE", body?: ProviderKeys): Promise<SavedKeys & { error?: string }> {
   const response = await fetch(KEYS_URL, {
@@ -48,6 +55,35 @@ export function ProviderKeysProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState(0);
   const [draft, setDraft] = useState("");
   const [keysOpen, setKeysOpen] = useState(false);
+  const [server, setServerState] = useState<Server | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch(SERVER_URL, { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => live && setServerState(data?.server ?? null))
+      .catch(() => undefined); // no agent yet: OpenAI, as before
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const setServer = async (next: Server | null): Promise<string | null> => {
+    try {
+      const response = await fetch(SERVER_URL, {
+        method: next ? "POST" : "DELETE",
+        headers: next ? { "content-type": "application/json" } : undefined,
+        body: next ? JSON.stringify(next) : undefined,
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) return typeof data?.error === "string" ? data.error : "I couldn't save the server.";
+      setServerState(data?.server ?? null);
+      return null;
+    } catch {
+      return "I couldn't reach my agent to save the server.";
+    }
+  };
 
   useEffect(() => {
     let live = true;
@@ -107,6 +143,8 @@ export function ProviderKeysProvider({ children }: { children: ReactNode }) {
       session,
       save,
       clear,
+      server,
+      setServer,
       newChat, draft, setDraft, keysOpen, setKeysOpen,
     }}>
       {children}

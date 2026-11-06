@@ -8,6 +8,8 @@
  * forwards them. No response ever contains a key.
  */
 
+import { fromTheCoach } from "@/lib/coach-routes";
+
 const AGENT_URL = process.env.COACH_AGENT_URL ?? "http://127.0.0.1:8123";
 const TIMEOUT_MS = 10_000;
 const FORBIDDEN = 403;
@@ -16,13 +18,6 @@ const NOT_OURS = "Only the coach itself can change your keys.";
 const NO_AGENT = "I can't reach my agent, so nothing changed. Check the coach is running.";
 
 const reply = (body: object, status: number) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-
-/** The coach's own page: same origin, and the browser says so. */
-export function fromTheCoach(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  const site = request.headers.get("sec-fetch-site");
-  return origin !== null && origin === new URL(request.url).origin && site === "same-origin";
-}
 
 async function agent(method: "GET" | "POST" | "DELETE", body?: string): Promise<Response> {
   try {

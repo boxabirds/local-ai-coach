@@ -12,7 +12,7 @@ export function KEPT_SENTENCE(saved: boolean, where: string | null): string {
 }
 
 export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () => void; disabled?: boolean }) {
-  const { hasKeys, saved, where, save, clear } = useProviderKeys();
+  const { hasKeys, saved, where, save, clear, server, setServer } = useProviderKeys();
   const dialog = useRef<HTMLDialogElement>(null);
   const request = useRef<AbortController | null>(null);
   const [openai, setOpenai] = useState("");
@@ -21,6 +21,11 @@ export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () 
   const [validated, setValidated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notSaved, setNotSaved] = useState<string | null>(null);
+  // Story 21: any OpenAI-compatible server instead of OpenAI. Its address and model aren't secret.
+  const [other, setOther] = useState(server !== null);
+  const [baseUrl, setBaseUrl] = useState(server?.base_url ?? "");
+  const [model, setModel] = useState(server?.model ?? "");
+  const serverReady = !other || (baseUrl.trim() !== "" && model.trim() !== "");
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
@@ -37,19 +42,27 @@ export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () 
     setError(null);
   };
   const testConnection = async () => {
-    if (pending || disabled || !openai.trim() || !jev.trim()) return;
+    if (pending || disabled || !openai.trim() || !jev.trim() || !serverReady) return;
     const controller = new AbortController();
     request.current = controller;
     setPending(true);
     setValidated(false);
     setError(null);
     try {
-      const response = await fetch("/api/provider-keys", {
-        method: "POST",
-        headers: { "x-openai-api-key": openai.trim(), "x-jev-api-key": jev.trim() },
-        signal: controller.signal,
-        cache: "no-store",
-      });
+      const response = other
+        ? await fetch("/api/coach-provider/check", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ base_url: baseUrl.trim(), model: model.trim(), key: openai.trim(), jev: jev.trim() }),
+            signal: controller.signal,
+            cache: "no-store",
+          })
+        : await fetch("/api/provider-keys", {
+            method: "POST",
+            headers: { "x-openai-api-key": openai.trim(), "x-jev-api-key": jev.trim() },
+            signal: controller.signal,
+            cache: "no-store",
+          });
       const result = await response.json();
       if (controller.signal.aborted) return;
       if (!response.ok || result.ok !== true) {
@@ -72,7 +85,28 @@ export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () 
       <p id="provider-keys-privacy">{KEPT_SENTENCE(saved, where)} They go from this computer straight to each provider, and the usage is charged to your own accounts.</p>
       <p>Saving or clearing keys starts a new chat.</p>
       <form onSubmit={(event) => { event.preventDefault(); void testConnection(); }}>
-        <label htmlFor="provider-openai-key">OpenAI API key</label>
+        <label className="provider-keys-other">
+          <input
+            type="checkbox"
+            checked={other}
+            onChange={(event) => {
+              setOther(event.target.checked);
+              setValidated(false);
+              setError(null);
+            }}
+            disabled={pending || disabled}
+          />{" "}
+          Other OpenAI-compatible server
+        </label>
+        {other && (
+          <>
+            <label htmlFor="provider-base-url">Server address</label>
+            <input id="provider-base-url" type="url" placeholder="https://api.together.ai/v1" maxLength={512} autoComplete="off" spellCheck={false} autoCapitalize="none" value={baseUrl} onChange={(event) => edit(setBaseUrl, event.target.value)} disabled={pending || disabled} />
+            <label htmlFor="provider-model">Model name</label>
+            <input id="provider-model" type="text" placeholder="zai-org/GLM-5.3-Flash" maxLength={512} autoComplete="off" spellCheck={false} autoCapitalize="none" value={model} onChange={(event) => edit(setModel, event.target.value)} disabled={pending || disabled} />
+          </>
+        )}
+        <label htmlFor="provider-openai-key">{other ? "API key for that server" : "OpenAI API key"}</label>
         <input id="provider-openai-key" type="password" maxLength={4096} autoComplete="off" spellCheck={false} autoCapitalize="none" value={openai} onChange={(event) => edit(setOpenai, event.target.value)} disabled={pending || disabled} />
         <label htmlFor="provider-jev-key">Jev API key</label>
         <input id="provider-jev-key" type="password" maxLength={4096} autoComplete="off" spellCheck={false} autoCapitalize="none" value={jev} onChange={(event) => edit(setJev, event.target.value)} disabled={pending || disabled} />
@@ -82,14 +116,23 @@ export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () 
         <div className="provider-keys-actions">
           {hasKeys && <button type="button" disabled={pending || disabled} onClick={() => { void clear().then(onClose); }}>{saved ? "Forget my keys" : "Clear keys"}</button>}
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="submit" disabled={pending || disabled || !openai.trim() || !jev.trim()}>Test connection</button>
+          <button type="submit" disabled={pending || disabled || !openai.trim() || !jev.trim() || !serverReady}>Test connection</button>
           <button
             type="button"
             className="provider-keys-save"
             disabled={!validated || pending || disabled}
             onClick={() => {
               setPending(true);
-              void save({ openai: openai.trim(), jev: jev.trim() }).then((result) => {
+              // The server choice first: if it can't be kept, the keys aren't saved for the wrong server.
+              const choice = other ? { base_url: baseUrl.trim(), model: model.trim() } : null;
+              const changed = JSON.stringify(choice) !== JSON.stringify(server);
+              void (changed ? setServer(choice) : Promise.resolve(null)).then((serverError) => {
+                if (serverError) {
+                  setPending(false);
+                  setNotSaved(serverError);
+                  return;
+                }
+                return save({ openai: openai.trim(), jev: jev.trim() }).then((result) => {
                 setPending(false);
                 // Wipe the typed keys from the form either way; nothing on this page keeps them.
                 setOpenai("");
@@ -97,6 +140,7 @@ export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () 
                 setValidated(false);
                 if (result.error) setNotSaved(result.error);
                 else onClose();
+                });
               });
             }}
           >

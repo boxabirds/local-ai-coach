@@ -31,6 +31,7 @@ from src.coach.tools import COACH_TOOLS
 from src.coach.stub import stub_graph
 from src.coach.stored_keys import StoredKeys, router as keys_router
 from src.coach.turn_log import TurnLog
+from src.coach.server_model import ServerModel, router as server_router
 
 load_dotenv()
 
@@ -40,6 +41,8 @@ agent = create_deep_agent(
     tools=COACH_TOOLS,
     middleware=[
         RequestModelMiddleware(),
+        # Right after upstream's model choice: an OpenAI-compatible server, if the learner chose one (story 21).
+        ServerModel(),
         CopilotKitMiddleware(),
         CoachStateMiddleware(),
         JevVisualizationMiddleware(),
@@ -59,6 +62,7 @@ app.add_middleware(CredentialsMiddleware)
 # on requests from the app's own server (Ceetrix story 16).
 app.add_middleware(StoredKeys)
 app.include_router(keys_router)
+app.include_router(server_router)
 
 
 @app.post("/credentials/validate")
