@@ -9,7 +9,7 @@ const JEV = "k9Z8y7X6".repeat(5);
 function request(method: string, headers: Record<string, string>, body?: object) {
   return new Request(`${APP}/api/coach-keys`, { method, headers: { ...headers, ...(body && { "content-type": "application/json" }) }, body: body ? JSON.stringify(body) : undefined });
 }
-const OURS = { origin: APP, "sec-fetch-site": "same-origin" };
+const OURS = { origin: APP, host: new URL(APP).host, "sec-fetch-site": "same-origin" };
 
 afterEach(() => vi.unstubAllGlobals());
 

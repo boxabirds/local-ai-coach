@@ -11,11 +11,26 @@ const NO_AGENT = "I can't reach my agent, so nothing changed. Check the coach is
 
 export const reply = (body: object, status: number) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
-/** The coach's own page: same origin, and the browser says so. */
+/** The names this computer answers to; any other Host is a site rebound to us, not the coach. */
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/**
+ * The coach's own page: same origin, and the browser says so. Judged against the Host the
+ * browser sent, because Next's dev server reports request.url as localhost whatever address
+ * the page was opened at (a page at 127.0.0.1 was refused every save).
+ */
 export function fromTheCoach(request: Request): boolean {
   const origin = request.headers.get("origin");
   const site = request.headers.get("sec-fetch-site");
-  return origin !== null && origin === new URL(request.url).origin && site === "same-origin";
+  const host = request.headers.get("host");
+  if (origin === null || host === null || site !== "same-origin") return false;
+  let sent: URL;
+  try {
+    sent = new URL(origin);
+  } catch {
+    return false;
+  }
+  return sent.host === host && LOOPBACK_HOSTS.has(sent.hostname) && origin === sent.origin;
 }
 
 /** Ask the agent from the server side, which sends no Origin: that is how the agent knows it's us. */
