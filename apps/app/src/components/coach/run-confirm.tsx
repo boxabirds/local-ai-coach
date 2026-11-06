@@ -31,7 +31,7 @@ export function RunConfirm({ cmd = "", explain, status, respond, result }: RunCo
 
   if (answered !== null) {
     return (
-      <CoachCard label="Run this on your machine?" testId="coach-run-confirm" state="answered">
+      <CoachCard kind="task" label="Run this on your machine?" testId="coach-run-confirm" state="answered">
         {code}
         <AnswerRecord label="You chose:" value={answered ? "Run" : "Cancel"} />
       </CoachCard>
@@ -39,7 +39,7 @@ export function RunConfirm({ cmd = "", explain, status, respond, result }: RunCo
   }
 
   return (
-    <CoachCard label="Run this on your machine?" testId="coach-run-confirm" state={active ? "active" : "plain"} cardRef={cardRef}>
+    <CoachCard kind="task" label="Run this on your machine?" testId="coach-run-confirm" state={active ? "active" : "plain"} cardRef={cardRef}>
       {code}
       {explain && <p className="coach-muted">{explain}</p>}
       <div className="coach-actions" role="group" aria-label="Run or cancel">

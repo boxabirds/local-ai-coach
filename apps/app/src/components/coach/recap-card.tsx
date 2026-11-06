@@ -38,7 +38,7 @@ export function RecapCard({ itemId, question = "", kind = "recap", options, stat
 
   if (answered !== null) {
     return (
-      <CoachCard label={label} testId="coach-recap" state="answered">
+      <CoachCard kind="task" label={label} testId="coach-recap" state="answered">
         {prompt}
         <AnswerRecord label={answered.skipped ? "You skipped it" : "You answered:"} value={answered.skipped ? "" : answered.answer} />
       </CoachCard>
@@ -46,7 +46,7 @@ export function RecapCard({ itemId, question = "", kind = "recap", options, stat
   }
 
   return (
-    <CoachCard label={label} testId="coach-recap" state={active ? "active" : "plain"} cardRef={cardRef}>
+    <CoachCard kind="task" label={label} testId="coach-recap" state={active ? "active" : "plain"} cardRef={cardRef}>
       {prompt}
       {options && options.length > 0 ? (
         <div className="coach-actions" role="group" aria-label={question}>

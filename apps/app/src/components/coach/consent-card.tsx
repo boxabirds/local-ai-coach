@@ -39,14 +39,14 @@ export function ConsentCard({ items = [], historyItem, status, respond, result }
   if (answered) {
     const value = !answered.allow ? "Not now" : answered.history ? "Allowed, with shell history" : "Allowed, without shell history";
     return (
-      <CoachCard label={LABEL} testId="coach-consent" state="answered">
+      <CoachCard kind="task" label={LABEL} testId="coach-consent" state="answered">
         <AnswerRecord label="You chose:" value={value} />
       </CoachCard>
     );
   }
 
   return (
-    <CoachCard label={LABEL} testId="coach-consent" state={active ? "active" : "plain"} cardRef={cardRef}>
+    <CoachCard kind="task" label={LABEL} testId="coach-consent" state={active ? "active" : "plain"} cardRef={cardRef}>
       <p className="coach-muted">{"I'd read only these, and show you each command and the lines I kept:"}</p>
       <ul className="coach-consent__list">
         {items.map((item) => (

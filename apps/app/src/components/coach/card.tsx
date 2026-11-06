@@ -74,7 +74,8 @@ export function useCardFocus<T extends HTMLElement>(active: boolean, align: "sta
     bringIntoView(card, align);
     const target: HTMLElement = primaryRef.current ?? card;
     target.focus({ preventScroll: true });
-    return keepInView(card);
+    // The story (align start) keeps its own Next row in view beat by beat; it isn't held.
+    return align === "nearest" ? keepInView(card) : undefined;
   }, [active, align]);
   return { cardRef, primaryRef };
 }
@@ -89,9 +90,8 @@ export function useArrivalScroll() {
   const cardRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     const card = cardRef.current;
-    if (!card || !isNewestCard(card)) return;
-    bringIntoView(card);
-    return keepInView(card);
+    if (card && isNewestCard(card)) bringIntoView(card);
+    // Not held: only a card waiting for the learner is (story 27).
   }, []);
   return { cardRef };
 }
@@ -114,21 +114,44 @@ export function bringIntoView(card: HTMLElement, align: "start" | "nearest" = "n
 /** What the learner does to scroll for themselves; after any of these the coach stops steering. */
 const OWN_SCROLL = ["wheel", "touchmove", "keydown"] as const;
 
+/** Where the visible chat is, and how far above its bottom a card must stop (the message box). */
+function room(card: HTMLElement): { top: number; bottom: number; height: number } {
+  const scroller = card.closest<HTMLElement>(SCROLLER);
+  if (!scroller) {
+    const height = typeof window === "undefined" ? 0 : window.innerHeight;
+    return { top: 0, bottom: height, height };
+  }
+  const box = scroller.getBoundingClientRect();
+  const clearance = parseFloat(getComputedStyle(scroller).scrollPaddingBottom) || 0;
+  return { top: box.top, bottom: box.bottom - clearance, height: box.height - clearance };
+}
+
 /**
- * A card that grows after it arrives (a figure's drawing loads, a hint opens) is brought back into
- * view each time it grows, so its bottom never ends up under the message box. Stops once the
- * learner scrolls for themselves, or when the card stops waiting. Returns the stop.
+ * Whether the card has left the visible chat: its bottom is under the message box, or (for a card
+ * that fits) its top is above the chat. A card taller than the chat only counts its bottom, where
+ * the controls are.
+ */
+export function outOfView(card: HTMLElement): boolean {
+  const box = card.getBoundingClientRect();
+  const visible = room(card);
+  if (box.bottom > visible.bottom) return true;
+  return box.height <= visible.height && box.top < visible.top;
+}
+
+/**
+ * Story 27: while a card waits for the learner, it is held in view. Anything in the chat changing
+ * size (the coach's words above it still arriving in half-second chunks, its own drawing loading,
+ * a hint opening) brings it back if it has left the visible chat. Released once the learner
+ * scrolls for themselves, a newer card arrives, or the card stops waiting. Returns the release.
  */
 export function keepInView(card: HTMLElement): () => void {
   if (typeof ResizeObserver === "undefined") return () => {};
-  let height = card.getBoundingClientRect().height;
   const observer = new ResizeObserver(() => {
-    const next = card.getBoundingClientRect().height;
-    if (next <= height) return;
-    height = next;
-    if (isNewestCard(card)) bringIntoView(card);
+    if (card.isConnected && isNewestCard(card) && outOfView(card)) bringIntoView(card);
   });
   observer.observe(card);
+  const scroller = card.closest(SCROLLER);
+  if (scroller) Array.from(scroller.children).forEach((child) => observer.observe(child));
   const stop = () => {
     observer.disconnect();
     OWN_SCROLL.forEach((name) => window.removeEventListener(name, stop, true));

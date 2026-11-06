@@ -68,6 +68,11 @@ describe("story card", () => {
     expect(await screen.findByRole("heading", { name: "Chapter 0: The whole game" })).toBeInTheDocument();
   });
 
+  it("the card's name, Story, is for screen readers only (Julian: no labels explaining the UI)", async () => {
+    await openStory();
+    expect(screen.getByText("Story", { selector: ".coach-card__label" })).toHaveClass("coach-sr-only");
+  });
+
   it("TC-10 opens on the first beat with Next focused and the count", async () => {
     await openStory();
     expect(beatsShown()).toBe(1);
@@ -710,5 +715,32 @@ describe("story card while its arguments stream (bug: partial ids fetched)", () 
     rerender(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
     await screen.findByRole("button", { name: "Next" });
     expect(fetchMock).toHaveBeenCalledExactlyOnceWith(STORY_URL("legal-letter"));
+  });
+});
+
+describe("story 27: whatever waits for the learner looks like a task", () => {
+  afterEach(() => cleanup());
+  const ITEMS_27 = ["How much memory this computer has."];
+  const task = (testId: string) => screen.getByTestId(testId);
+
+  it.each([
+    ["TC-01 permission", () => render(<ConsentCard items={ITEMS_27} status="executing" respond={vi.fn()} />), () => render(<ConsentCard items={ITEMS_27} status="complete" result={JSON.stringify({ allow: true, history: false })} />), "coach-consent"],
+    ["TC-02 run this for me", () => render(<RunConfirm cmd="echo made-up" explain="Made up." status="executing" respond={vi.fn()} />), () => render(<RunConfirm cmd="echo made-up" explain="Made up." status="complete" result={JSON.stringify({ confirmed: true })} />), "coach-run-confirm"],
+    ["TC-03 recap", () => render(<RecapCard itemId="x.recap.0" question="Made-up question?" kind="recap" options={["A", "B"]} status="executing" respond={vi.fn()} />), () => render(<RecapCard itemId="x.recap.0" question="Made-up question?" kind="recap" options={["A", "B"]} status="complete" result={JSON.stringify({ answer: "A" })} />), "coach-recap"],
+  ])("%s: the waiting green while it waits, the pale green once answered", (_label, waiting, answered, testId) => {
+    waiting();
+    expect(task(testId)).toHaveClass("coach-card--task", "coach-card--active");
+    cleanup();
+    answered();
+    expect(task(testId)).toHaveClass("coach-card--task");
+    expect(task(testId)).not.toHaveClass("coach-card--active");
+  });
+
+  it("TC-13 the story (it keeps its own Next row in view) is not held", async () => {
+    const observe = vi.fn();
+    vi.stubGlobal("ResizeObserver", class { observe = observe; disconnect() {} unobserve() {} });
+    await openStory();
+    expect(observe).not.toHaveBeenCalledWith(screen.getByTestId("coach-story"));
+    vi.unstubAllGlobals();
   });
 });
