@@ -56,6 +56,28 @@ describe("route table", () => {
     expect(res.status).toBe(400);
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("TC-09b: with rate limiting on, the request past the limit is 429 and reaches no agent", async () => {
+    const LIMIT = 2;
+    vi.resetModules();
+    vi.stubEnv("RATE_LIMIT_ENABLED", "true");
+    vi.stubEnv("RATE_LIMIT_MAX", String(LIMIT));
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const { POST } = await import("@/api/copilotkit");
+      const ask = () =>
+        POST(new Request("http://127.0.0.1/api/copilotkit", { method: "POST", headers: { "x-forwarded-for": "10.0.0.9", "x-openai-api-key": "has a space", "x-jev-api-key": "j" }, body: "{}" }));
+      for (let i = 0; i < LIMIT; i += 1) expect((await ask()).status).toBe(400);
+      const over = await ask();
+      expect(over.status).toBe(429);
+      expect(await over.text()).toBe("Too many requests");
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
 });
 
 describe("static files", () => {
