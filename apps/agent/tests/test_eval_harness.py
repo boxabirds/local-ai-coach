@@ -101,3 +101,19 @@ def test_the_declared_card_tools_match_what_the_app_registers():
     registered = set(re.findall(r'useHumanInTheLoop\(\{\s*name: "([^"]+)"', hook)) | set(re.findall(r'useComponent\(\{\s*name: "([^"]+)"', hook))
     declared = {t.name for t in harness.BROWSER_TOOLS}
     assert declared <= registered, declared - registered
+
+
+def test_usage_keeps_cached_input_and_reasoning_apart():
+    total = {}
+    harness.add_usage(total, {"input_tokens": 1000, "output_tokens": 50, "input_token_details": {"cache_read": 800}, "output_token_details": {"reasoning": 30}})
+    harness.add_usage(total, {"input_tokens": 500, "output_tokens": 10})
+    harness.add_usage(total, None)
+    assert total == {"input": 1500, "output": 60, "cached_input": 800, "reasoning": 30}
+
+
+def test_cost_charges_cached_input_at_its_own_rate():
+    prices = harness.Prices(input=0.15, cached_input=0.03, output=0.5, source="test")
+    tokens = {"input": 1_000_000, "cached_input": 800_000, "output": 100_000}
+    # 200k uncached at 0.15, 800k cached at 0.03, 100k out at 0.5
+    assert prices.cost(tokens) == pytest.approx(0.03 + 0.024 + 0.05)
+    assert prices.cost({"input": 1_000_000, "output": 0}) == pytest.approx(0.15)

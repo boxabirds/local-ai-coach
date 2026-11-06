@@ -51,7 +51,8 @@ def line(event: dict) -> str:
         calls = event.get("tool_calls") or []
         said = "; ".join(f"{c.get('name')}({short(c.get('args'), 100)})" for c in calls) or short(event.get("text"))
         tokens = event.get("tokens") or {}
-        return f"{head} ← model {event.get('model_reported')}  {event.get('ms')} ms  in {tokens.get('input_tokens')} out {tokens.get('output_tokens')}  {said}"
+        cached = (tokens.get("input_token_details") or {}).get("cache_read", 0)
+        return f"{head} ← model {event.get('model_reported')}  {event.get('ms')} ms  in {tokens.get('input_tokens')} ({cached} cached) out {tokens.get('output_tokens')}  {said}"
     if kind == "tool_call":
         return f"{head}   tool {event.get('name')}({short(event.get('args'))})"
     if kind == "tool_result":

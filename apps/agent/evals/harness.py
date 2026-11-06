@@ -43,8 +43,14 @@ class MissingKeys(RuntimeError):
     pass
 
 
+TOGETHER_DEFAULT_BASE = "https://api.together.ai/v1"
+
+
 def load_env() -> dict[str, str]:
-    """The test keys, from apps/agent/.env.test. JEV_API_KEY is accepted for TYPESAFE_API_KEY."""
+    """The test keys, from apps/agent/.env.test (values already in the environment win, so one
+    run can try another model). JEV_API_KEY is accepted for TYPESAFE_API_KEY. With
+    TOGETHER_API_KEY the suite runs on Together (TOGETHER_API_MODEL_NAME, TOGETHER_API_BASE_URL);
+    otherwise on OpenAI with OPENAI_API_KEY."""
     if not ENV_FILE.is_file():
         raise MissingKeys(f"The dispatch suite needs test keys in {ENV_FILE} (OPENAI_API_KEY and TYPESAFE_API_KEY).")
     values: dict[str, str] = {}
@@ -54,11 +60,76 @@ def load_env() -> dict[str, str]:
             continue
         key, _, value = line.partition("=")
         values[key.strip()] = value.strip().strip('"').strip("'")
+    values.update({k: v for k, v in os.environ.items() if k.startswith(("TOGETHER_", "OPENAI_", "LLM_MODEL")) and v})
     if not values.get("TYPESAFE_API_KEY") and values.get("JEV_API_KEY"):
         values["TYPESAFE_API_KEY"] = values["JEV_API_KEY"]
-    if not values.get("OPENAI_API_KEY") or not values.get("TYPESAFE_API_KEY"):
-        raise MissingKeys(f"{ENV_FILE} needs OPENAI_API_KEY and TYPESAFE_API_KEY (or JEV_API_KEY).")
+    if values.get("TOGETHER_API_KEY"):
+        if "/" not in values.get("TOGETHER_API_MODEL_NAME", ""):
+            raise MissingKeys(f"{ENV_FILE}: TOGETHER_API_MODEL_NAME needs Together's full id, with its organisation, for example zai-org/GLM-5.3-Flash.")
+        return values
+    if not values.get("OPENAI_API_KEY"):
+        raise MissingKeys(f"{ENV_FILE} needs TOGETHER_API_KEY and TOGETHER_API_MODEL_NAME, or OPENAI_API_KEY.")
     return values
+
+
+# ------------------------------------------------------------------ tokens and cost
+
+PER_MILLION = 1_000_000
+
+
+def add_usage(total: dict[str, int], usage: dict[str, Any] | None) -> dict[str, int]:
+    """Add one call's usage to a running total, keeping cached input and reasoning output apart:
+    a provider charges cached input at its own, lower rate."""
+    usage = usage or {}
+    details_in = usage.get("input_token_details") or {}
+    details_out = usage.get("output_token_details") or {}
+    for key, value in (("input", usage.get("input_tokens")), ("output", usage.get("output_tokens")),
+                       ("cached_input", details_in.get("cache_read")), ("reasoning", details_out.get("reasoning"))):
+        if isinstance(value, int):
+            total[key] = total.get(key, 0) + value
+    return total
+
+
+@dataclass
+class Prices:
+    """Dollars per million tokens, as the provider lists them."""
+    input: float
+    cached_input: float
+    output: float
+    source: str
+
+    def cost(self, tokens: dict[str, int]) -> float:
+        cached = tokens.get("cached_input", 0)
+        uncached = max(tokens.get("input", 0) - cached, 0)
+        return (uncached * self.input + cached * self.cached_input + tokens.get("output", 0) * self.output) / PER_MILLION
+
+
+def provider_prices(values: dict[str, str]) -> Prices | None:
+    """Together publishes prices per model through its API; OpenAI doesn't, so its cost is unknown here."""
+    if not values.get("TOGETHER_API_KEY"):
+        return None
+    try:
+        import httpx
+
+        base = (values.get("TOGETHER_API_BASE_URL") or TOGETHER_DEFAULT_BASE).rstrip("/")
+        listed = httpx.get(f"{base}/models", headers={"Authorization": f"Bearer {values['TOGETHER_API_KEY']}"}, timeout=30).json()
+        p = next(m for m in listed if m.get("id") == values["TOGETHER_API_MODEL_NAME"])["pricing"]
+        return Prices(float(p["input"]), float(p.get("cached_input", p["input"])), float(p["output"]),
+                      f"Together's listed price for {values['TOGETHER_API_MODEL_NAME']}")
+    except Exception:  # noqa: BLE001 (no price is reported as unknown, never guessed)
+        return None
+
+
+def eval_model(values: dict[str, str]) -> Any:
+    """The model the suite measures: Together's when its key is set, else OpenAI's (src/model.py)."""
+    if values.get("TOGETHER_API_KEY"):
+        from langchain_openai import ChatOpenAI
+
+        return ChatOpenAI(model=values["TOGETHER_API_MODEL_NAME"], api_key=values["TOGETHER_API_KEY"],
+                          base_url=values.get("TOGETHER_API_BASE_URL") or TOGETHER_DEFAULT_BASE)
+    from src.model import build_model
+
+    return build_model()
 
 
 # ------------------------------------------------------------------ the browser's card tools, as declared
@@ -173,12 +244,11 @@ def build_agent(model: Any = None):
     from src.coach.middleware import CoachStateMiddleware
     from src.coach.tools import COACH_TOOLS
     from src.coach.turn_log import TurnLog
-    from src.model import build_model
     from src.prompt import SYSTEM_PROMPT
     from src.skill_backend import SKILL_SOURCES, build_agent_backend
 
     return create_deep_agent(
-        model=model or build_model(), tools=[*COACH_TOOLS, *BROWSER_TOOLS],
+        model=model or eval_model(load_env()), tools=[*COACH_TOOLS, *BROWSER_TOOLS],
         middleware=[CoachStateMiddleware(), TurnLog()],
         skills=SKILL_SOURCES, backend=build_agent_backend, checkpointer=BoundedMemorySaver(max_threads=64),
         system_prompt=SYSTEM_PROMPT,
@@ -209,9 +279,7 @@ def run_turn(agent: Any, history: list[dict[str, Any]], thread: str) -> Decision
                     if not isinstance(m, AIMessage):
                         continue
                     meta = m.response_metadata or meta
-                    for key, value in (m.usage_metadata or {}).items():
-                        if isinstance(value, int):
-                            tokens[key] = tokens.get(key, 0) + value
+                    add_usage(tokens, m.usage_metadata)
                     if isinstance(m.content, str) and m.content:
                         texts.append(m.content)
                     made = [{"name": c["name"], "args": c.get("args", {})} for c in m.tool_calls]
@@ -269,12 +337,31 @@ def score(case: Case, agent: Any) -> CaseResult:
     return CaseResult(case, sum(r["ok"] for r in runs), runs)
 
 
-def save(results: list[CaseResult], folder: Path | None = None) -> Path:
+def case_tokens(result: CaseResult) -> dict[str, int]:
+    total: dict[str, int] = {}
+    for run in result.runs:
+        for key, value in (run.get("tokens") or {}).items():
+            total[key] = total.get(key, 0) + value
+    return total
+
+
+def save(results: list[CaseResult], prices: Prices | None = None, folder: Path | None = None) -> Path:
     folder = folder or RESULTS / time.strftime("%Y-%m-%dT%H%M%S")
     folder.mkdir(parents=True, exist_ok=True)
-    summary = [{"id": r.case.id, "kind": r.case.kind, "note": r.case.note, "passes": r.passes, "runs": r.case.runs,
-                "need": r.case.need, "passed": r.passed} for r in results]
-    (folder / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    summary = []
+    for r in results:
+        tokens = case_tokens(r)
+        summary.append({"id": r.case.id, "kind": r.case.kind, "note": r.case.note, "passes": r.passes, "runs": r.case.runs,
+                        "need": r.case.need, "passed": r.passed, "tokens": tokens,
+                        "cost_usd": round(prices.cost(tokens), 4) if prices else None,
+                        "models": sorted({x.get("model_reported") or "?" for x in r.runs})})
+    totals: dict[str, int] = {}
+    for item in summary:
+        for key, value in item["tokens"].items():
+            totals[key] = totals.get(key, 0) + value
+    run = {"cases": summary, "tokens": totals, "cost_usd": round(prices.cost(totals), 4) if prices else None,
+           "prices": prices.__dict__ if prices else "unknown: this provider doesn't publish prices through its API"}
+    (folder / "summary.json").write_text(json.dumps(run, indent=2), encoding="utf-8")
     for r in results:
         (folder / f"{r.case.id}.json").write_text(json.dumps({"case": r.case.__dict__, "runs": r.runs}, indent=2, default=str), encoding="utf-8")
     return folder
