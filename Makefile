@@ -51,8 +51,8 @@ SMOKE_URL ?= http://127.0.0.1:3000
 smoke: ## Real-browser smoke test of the running coach (make dev): load, API keys, typing, reload. Never types a key
 	cd apps/app && SMOKE_URL=$(SMOKE_URL) npx playwright test -c playwright.smoke.config.ts
 
-evals: ## Dispatch cases against the real model, 5 runs each (ONLY=D-11,D-13 for some; needs apps/agent/.env.test)
-	cd apps/agent && COACH_EVALS=1 COACH_EVALS_ONLY=$(ONLY) uv run pytest evals -q -s -p no:cacheprovider
+evals: ## Dispatch cases against the real model, 5 runs each (ONLY=D-11,D-13 for some; REASONING=low|medium|high; needs apps/agent/.env.test)
+	cd apps/agent && COACH_EVALS=1 COACH_EVALS_ONLY=$(ONLY) $(if $(REASONING),COACH_REASONING_EFFORT=$(REASONING)) uv run pytest evals -q -s -p no:cacheprovider
 
 evals-smoke: ## D-01 to D-06 on the real curriculum (before a release)
 	cd apps/agent && COACH_EVALS=1 COACH_EVALS_SMOKE=1 COACH_EVALS_REAL_CURRICULUM=1 uv run pytest evals -q -s -p no:cacheprovider

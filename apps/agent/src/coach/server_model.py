@@ -46,6 +46,18 @@ FAILURES = {
 BAD_ADDRESS = "The server address needs to start with https:// or http://."
 NO_MODEL = "Add the model's name, as that server writes it."
 
+# How hard the chosen model thinks before it answers. Unset: the provider's default. Measured on
+# Together GLM 5.3 Flash with the coach's context: default 4.5 to 5.6 s a call, mostly hidden
+# reasoning; low 2.1 to 2.5 s. Shared with the evals so a setting is measured before it is used.
+REASONING_ENV = "COACH_REASONING_EFFORT"
+REASONING_LEVELS = ("low", "medium", "high")
+
+
+def reasoning_effort() -> str | None:
+    """The configured effort, or None (the provider's default) when unset or not a known level."""
+    value = os.environ.get(REASONING_ENV, "").strip().lower()
+    return value if value in REASONING_LEVELS else None
+
 
 def _path() -> Path:
     return progress.home() / SETTING_FILE
@@ -130,7 +142,8 @@ class ServerModel(AgentMiddleware):
         from langchain_openai import ChatOpenAI
 
         # stream_usage: a streamed reply carries its token counts only when asked (turn log, story 21).
-        return request.override(model=ChatOpenAI(model=setting["model"], base_url=setting["base_url"], api_key=credentials.openai, stream_usage=True))
+        return request.override(model=ChatOpenAI(model=setting["model"], base_url=setting["base_url"], api_key=credentials.openai,
+                                                 stream_usage=True, reasoning_effort=reasoning_effort()))
 
     def wrap_model_call(self, request, handler):
         return handler(self._model(request))

@@ -126,8 +126,12 @@ def eval_model(values: dict[str, str]) -> Any:
     if values.get("TOGETHER_API_KEY"):
         from langchain_openai import ChatOpenAI
 
+        from src.coach.server_model import reasoning_effort
+
+        # The coach's own setting (COACH_REASONING_EFFORT), so evals measure what the coach would run.
         return ChatOpenAI(model=values["TOGETHER_API_MODEL_NAME"], api_key=values["TOGETHER_API_KEY"],
-                          base_url=values.get("TOGETHER_API_BASE_URL") or TOGETHER_DEFAULT_BASE)
+                          base_url=values.get("TOGETHER_API_BASE_URL") or TOGETHER_DEFAULT_BASE,
+                          reasoning_effort=reasoning_effort())
     from src.model import build_model
 
     return build_model()

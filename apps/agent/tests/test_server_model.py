@@ -139,3 +139,29 @@ def test_tc09_without_a_choice_the_model_is_unchanged():
 def test_tc10_without_credentials_the_model_is_unchanged():
     server_model.save(TOGETHER, MODEL)
     assert run(server_model.ServerModel(), None) == "upstream-openai-model"
+
+
+# ------------------------------------------------------------------ reasoning effort (COACH_REASONING_EFFORT)
+
+@pytest.mark.parametrize("value, expected", [(None, None), ("", None), ("low", "low"), (" HIGH ", "high"), ("medium", "medium")])
+def test_reasoning_effort_comes_from_the_setting(monkeypatch, value, expected):
+    if value is None:
+        monkeypatch.delenv(server_model.REASONING_ENV, raising=False)
+    else:
+        monkeypatch.setenv(server_model.REASONING_ENV, value)
+    server_model.save(TOGETHER, MODEL)
+    assert run(server_model.ServerModel(), (KEY, JEV)).reasoning_effort == expected
+
+
+def test_an_unknown_reasoning_effort_is_ignored_not_sent(monkeypatch):
+    monkeypatch.setenv(server_model.REASONING_ENV, "maximum")
+    server_model.save(TOGETHER, MODEL)
+    assert run(server_model.ServerModel(), (KEY, JEV)).reasoning_effort is None
+
+
+def test_the_evals_use_the_same_setting(monkeypatch):
+    from evals import harness
+
+    monkeypatch.setenv(server_model.REASONING_ENV, "low")
+    model = harness.eval_model({"TOGETHER_API_KEY": KEY, "TOGETHER_API_MODEL_NAME": MODEL})
+    assert model.reasoning_effort == "low"
