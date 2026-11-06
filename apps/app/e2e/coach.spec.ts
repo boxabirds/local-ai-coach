@@ -18,6 +18,7 @@ const UNITS = SENTENCES + FIGURES;
 const MAX_PRESSES = 60;
 const SCROLL_SETTLE_MS = 3000;
 const HOVER_SHOW_MS = 1000; // the palette's wait (use-ask-about.tsx)
+const BUBBLE_GAP_PX = 10; // coach.css --coach-bubble-gap
 const FOOTER_GAP_PX = 16; // at least this much between the Next row and the message box
 const WINDOW = { width: 1280, height: 860 }; // playwright.config.ts
 const SHORT_WINDOW = { width: 1280, height: 700 }; // a laptop: the number card is taller than the chat
@@ -218,6 +219,19 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
 
     // The coach replies, and the card stays answered: it must not reset.
     await expect(page.getByText("Thanks. That's Priya's story, chapter 0.")).toBeVisible();
+    // A written reply is a bubble, and the story's sentences, its question and the reply share one width.
+    const reply = page.locator(".coach-reply").filter({ hasText: "Thanks. That's Priya's story, chapter 0." });
+    await expect(reply).toHaveCSS("background-color", PAPER);
+    const widths = await Promise.all([
+      reply.boundingBox(),
+      page.getByTestId("coach-beat").first().boundingBox(),
+      page.locator(".coach-story__ask").last().boundingBox(),
+    ]);
+    for (const box of widths) expect(Math.abs(box!.width - widths[0]!.width)).toBeLessThanOrEqual(1);
+    // Two replies in a row are apart, like two story sentences.
+    const replies = page.locator(".coach-reply");
+    const [above, below] = await Promise.all([replies.nth(-2).boundingBox(), replies.nth(-1).boundingBox()]);
+    expect(below!.y - (above!.y + above!.height)).toBeGreaterThanOrEqual(BUBBLE_GAP_PX - 1);
     // Story 28, TC-15: a plain reply comes into view, above the message box, not below it.
     await expect
       .poll(async () => {
@@ -247,6 +261,10 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     const firstTask = page.getByTestId("coach-step").last();
     await expect(page.getByTestId("coach-fact").last()).toHaveCSS("background-color", FACT_BG);
     await expect(firstTask).toHaveCSS("background-color", TASK_NOW);
+    // The fact and the task are one width.
+    const factBox = (await page.getByTestId("coach-fact").last().boundingBox())!;
+    const taskBox = (await firstTask.boundingBox())!;
+    expect(Math.abs(factBox.width - taskBox.width)).toBeLessThanOrEqual(1);
     // The hint is a question-mark icon at the end of the step's text, inline with it.
     const hintIcon = firstTask.getByRole("button", { name: "Show a hint" });
     await expect(hintIcon).toHaveCount(1); // the first step has a hint

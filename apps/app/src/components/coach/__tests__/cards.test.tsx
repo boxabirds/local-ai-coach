@@ -11,6 +11,7 @@ import { DEFAULT_STATIONS, TubeMap, nameLines, progressFill } from "../tube-map"
 import { RunConfirm } from "../run-confirm";
 import { RecapCard } from "../recap-card";
 import { ConsentCard } from "../consent-card";
+import { ChoiceCard } from "../choice-card";
 import { FIXTURE_CURRICULUM } from "@/test/fixture-curriculum";
 
 /** Real curriculum content, so the fixtures are the shapes the stub sends. */
@@ -46,7 +47,11 @@ const TOTAL_BEATS = 105;
 async function openStory(respond = vi.fn()) {
   stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
   render(<StoryCard storyId="legal-letter" question="The day after, what did Priya check?" options={OPTIONS} status="executing" respond={respond} />);
-  await screen.findByRole("button", { name: "Next" });
+  const next = await screen.findByRole("button", { name: "Next" });
+  // Ready means its effects have run: Next has the focus, and Space is listened for in the same
+  // step. Pressing Space before then did nothing, and under a loaded test run that gap made story
+  // tests fail at random (TC-19, TC-24, "the newest beat eases in").
+  await waitFor(() => expect(next).toHaveFocus());
   return respond;
 }
 
@@ -754,3 +759,12 @@ describe("story 28: cards focus, only FollowEnd scrolls (TC-14)", () => {
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });
+
+describe("no labels explaining the UI (CLAUDE.md)", () => {
+  afterEach(() => cleanup());
+  it("the choice card's name, Your answers, is for screen readers only (Julian, 2026-11-06)", () => {
+    render(<ChoiceCard stepId="x.4" text="Made-up test" items={["A made-up item"]} options={["Yes", "No"]} status="executing" respond={vi.fn()} />);
+    expect(screen.getByText("Your answers", { selector: ".coach-card__label" })).toHaveClass("coach-sr-only");
+  });
+});
+

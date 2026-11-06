@@ -201,6 +201,7 @@
 :root {
   --coach-footer-gap: 24px;
   --coach-card-max: 720px;
+  --coach-bubble-gap: 10px;
   --coach-palette-fade-ms: 400ms;
   --coach-paper: #ffffff;
   /* "Your turn": the live card and the primary button. Not grey, amber or red. */
@@ -259,15 +260,16 @@
 }
 
 /* The story arrives as separate chat bubbles, one per beat. */
+/* One width for every coach element: bubbles, the story's question, facts and task cards. */
 .coach-story__text,
 .coach-story__ask {
-  max-width: 640px;
+  max-width: var(--coach-card-max);
 }
 
 .coach-story__text {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--coach-bubble-gap);
 }
 
 .coach-bubble {
@@ -275,6 +277,25 @@
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-lg);
   background: var(--coach-paper);
+}
+
+/* The coach's written reply: the same bubble as a story sentence, the same width as a card. */
+.coach-reply {
+  max-width: var(--coach-card-max);
+  /* Two replies in a row keep the same gap as two story sentences. */
+  margin: calc(var(--coach-bubble-gap) / 2) 0;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  background: var(--coach-paper);
+}
+
+.coach-reply :is(p, ul, ol, pre, blockquote, h1, h2, h3, h4):first-child {
+  margin-top: 0;
+}
+
+.coach-reply :is(p, ul, ol, pre, blockquote):last-child {
+  margin-bottom: 0;
 }
 
 .coach-bubble .coach-markdown > :first-child {

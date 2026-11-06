@@ -47,7 +47,7 @@ export function ChoiceCard({ stepId, text = "", items = [], options = [], figure
     return (
       <>
       <FactBubble text={fact} />
-      <CoachCard label="Your answers" testId="coach-choice" state="answered" kind="task">
+      <CoachCard label="Your answers" quietLabel testId="coach-choice" state="answered" kind="task">
         <p className="coach-step__text coach-step__text--done" data-step-id={stepId}>
           {inline(text)}
         </p>
@@ -70,7 +70,7 @@ export function ChoiceCard({ stepId, text = "", items = [], options = [], figure
   return (
     <>
     <FactBubble text={fact} />
-    <CoachCard label="Your answers" testId="coach-choice" state={active ? "active" : "plain"} cardRef={cardRef} kind="task">
+    <CoachCard label="Your answers" quietLabel testId="coach-choice" state={active ? "active" : "plain"} cardRef={cardRef} kind="task">
       {figure && <Figure id={figure} />}
       <p className="coach-step__text" data-step-id={stepId}>
         {inline(text)}

@@ -27,10 +27,7 @@ vi.mock("@copilotkit/react-core/v2", () => ({
 import { useCoachUI, CheckResultParams, RunCheckResult } from "../use-coach-ui";
 import { screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { DEFAULT_STATIONS } from "@/components/coach/tube-map";
 
-/** The station name the app shows before a snapshot: whatever tube-map.tsx says, not a fixed string. */
-const MACHINE = DEFAULT_STATIONS.find((s) => s.id === "machine")!.name;
 
 function Probe() {
   useCoachUI();
@@ -124,11 +121,12 @@ describe("the coach's own tools in plain words (story 10)", () => {
   it("housekeeping is silent and saving is one sentence", async () => {
     const { coachNoteText, QUIET_TOOLS } = await import("@/components/coach/coach-note");
     expect(QUIET_TOOLS.has("run_check") && QUIET_TOOLS.has("user_navigated")).toBe(true);
-    expect(coachNoteText("set_progress", { station_id: "machine", step_id: "machine.2", status: "verified" })).toBe(`Saved: ${MACHINE}, step 2, checked.`);
-    expect(coachNoteText("set_progress", { station_id: "machine", status: "skipped" })).toBe(`Saved: ${MACHINE}, skipped.`);
-    expect(coachNoteText("set_progress", { station_id: "machine", step_id: "machine.1", status: "reported" })).toBe(`Saved: ${MACHINE}, step 1, done, on your word.`);
+    // Saving progress and ending a session are the coach's bookkeeping: no line in the chat
+    // (Julian, 2026-11-06: "Saved: ..., step 3, done, on your word." remove this).
+    expect(QUIET_TOOLS.has("set_progress") && QUIET_TOOLS.has("end_session")).toBe(true);
+    expect(coachNoteText("set_progress", { station_id: "machine", step_id: "machine.2", status: "verified" })).toBeNull();
+    expect(coachNoteText("end_session", {})).toBeNull();
     expect(coachNoteText("probe", { name: "listening" })).toBe("Looked at what is listening on a port.");
-    expect(coachNoteText("end_session", {})).toBe("Saved a note of today's session.");
     expect(coachNoteText("generateSandboxedUi", {})).toBeNull();
   });
 

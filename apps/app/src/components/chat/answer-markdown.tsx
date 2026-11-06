@@ -32,7 +32,9 @@ export function AnswerMarkdown(
   }, [content]);
 
   return (
-    <div ref={host} className="answer-markdown">
+    // A written reply sits in a bubble, like the story's sentences; a message that is only cards
+    // has no words and no bubble (Julian, 2026-11-06).
+    <div ref={host} className={content.trim() ? "answer-markdown coach-reply" : "answer-markdown"}>
       <CopilotChatAssistantMessage.MarkdownRenderer {...props} content={content} />
       <div ref={layer} className="answer-chunk-layer" aria-hidden="true" />
     </div>
