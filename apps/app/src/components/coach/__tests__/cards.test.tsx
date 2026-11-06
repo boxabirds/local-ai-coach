@@ -166,7 +166,7 @@ describe("story card", () => {
     expect(screen.getByRole("button", { name: OPTIONS[2] })).toBeInTheDocument();
   });
 
-  it("TC-41 an answer responds once, then the card collapses to a record of the answer", async () => {
+  it("TC-41 an answer responds once; the story stays, every bubble, with the answer under it", async () => {
     const respond = await openStory();
     fireEvent.click(screen.getByRole("button", { name: "Show the rest" }));
     fireEvent.click(screen.getByRole("button", { name: OPTIONS[1] }));
@@ -174,6 +174,7 @@ describe("story card", () => {
     expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "answered");
     expect(screen.getByTestId("coach-record")).toHaveTextContent(`Chapter 0: The whole game. You answered: ${OPTIONS[1]}`);
     for (const option of OPTIONS) expect(screen.queryByRole("button", { name: option })).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("coach-beat")).toHaveLength(TOTAL_BEATS);
   });
 
   it("TC-21 an answered card ignores the keys", async () => {
@@ -181,7 +182,7 @@ describe("story card", () => {
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="complete" result={JSON.stringify({ read: true, answer: OPTIONS[0] })} />);
     await screen.findByTestId("coach-record");
     expect(press(" ").defaultPrevented).toBe(false);
-    expect(screen.queryByTestId("coach-beat")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
   });
 
   it("TC-22 a loading or failed card ignores the keys", async () => {
@@ -218,10 +219,11 @@ describe("story card", () => {
     expect(screen.getAllByTestId("coach-beat")[0]).not.toHaveClass("coach-beat--new");
   });
 
-  it("TC-41c a collapsed story can be read again", async () => {
+  it("TC-41c an answered story keeps every bubble, also after a reload", async () => {
     stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="complete" result={JSON.stringify({ read: true, answer: OPTIONS[0] })} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Read it again" }));
+    await screen.findByTestId("coach-record");
+
     expect(screen.getByRole("heading", { name: "Chapter 0: The whole game" })).toBeInTheDocument();
     // Read again uses the same bubbles as reading: one per sentence, all shown.
     const bubbles = screen.getAllByTestId("coach-beat");
@@ -249,7 +251,9 @@ describe("story card", () => {
       </>,
     );
     await screen.findByRole("button", { name: "Next" });
-    expect(fetchMock).toHaveBeenCalledOnce();
+    // The answered card draws the story's figures too; those are other fetches.
+    const storyFetches = fetchMock.mock.calls.filter(([url]) => String(url).includes("/story/"));
+    expect(storyFetches).toHaveLength(1);
   });
 
   it("TC-42c a failed fetch is not cached, so the next card retries", async () => {

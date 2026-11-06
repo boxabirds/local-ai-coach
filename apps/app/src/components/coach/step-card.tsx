@@ -74,25 +74,27 @@ export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false,
       {figure && <Figure id={figure} />}
       <p className="coach-step__text" data-step-id={stepId}>
         {inline(text)}
+        {hint && (
+          <>
+            {" "}
+            <button
+              type="button"
+              className="coach-hint-icon"
+              aria-expanded={hintOpen}
+              aria-label="Show a hint"
+              title="Show a hint"
+              onClick={() => setHintOpen((open) => !open)}
+            >
+              <HintIcon />
+            </button>
+          </>
+        )}
       </p>
+      {hint && hintOpen && <p className="coach-hint__text">{inline(hint)}</p>}
       {where === "sandbox" && (
         <p className="coach-muted" data-testid="coach-sandbox-slot">
           The practice terminal opens here.
         </p>
-      )}
-      {hint && (
-        <div className="coach-hint">
-          <button
-            type="button"
-            className="coach-link"
-            aria-expanded={hintOpen}
-            aria-label="Show a hint"
-            onClick={() => setHintOpen((open) => !open)}
-          >
-            ?
-          </button>
-          {hintOpen && <p className="coach-hint__text">{inline(hint)}</p>}
-        </div>
       )}
       <div className="coach-actions" role="group" aria-label="What did you do?">
         {actions.map((action) => (
@@ -110,5 +112,16 @@ export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false,
       </div>
     </CoachCard>
     </>
+  );
+}
+
+/** A question mark in a circle, drawn in the text's own colour; the button carries its name. */
+function HintIcon() {
+  return (
+    <svg className="coach-hint-icon__svg" viewBox="0 0 16 16" width="1em" height="1em" aria-hidden="true" focusable="false">
+      <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.1 6.2a2 2 0 1 1 2.9 1.8c-.6.3-1 .8-1 1.5v.3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="8" cy="11.9" r="0.9" fill="currentColor" />
+    </svg>
   );
 }

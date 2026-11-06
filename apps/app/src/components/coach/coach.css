@@ -11,7 +11,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 720px;
+  max-width: var(--coach-card-max);
 }
 
 /* The one card waiting for the learner. */
@@ -47,7 +47,8 @@
 
 /* A fact: something to know before the task, in a pale yellow bubble led by a light bulb. */
 .coach-fact {
-  max-width: 640px;
+  /* As wide as the task card under it. */
+  max-width: var(--coach-card-max);
   margin: 12px 0 0;
   padding: 10px 14px;
   border: 1px solid var(--coach-fact-edge);
@@ -169,10 +170,26 @@
   cursor: pointer;
 }
 
-.coach-hint {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
+/* The hint is a question-mark icon at the end of the step's text (inline, not a link). */
+.coach-hint-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  padding: 2px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--coach-accent);
+  font-size: 1.05em;
+  line-height: 1;
+  vertical-align: -0.2em;
+  cursor: pointer;
+}
+
+.coach-hint-icon:hover,
+.coach-hint-icon[aria-expanded="true"] {
+  background: var(--coach-accent-soft);
 }
 
 .coach-hint__text {
@@ -183,6 +200,7 @@
 /* Coach-only tokens. The criticality hues (grey, amber, red) are not for UI states. */
 :root {
   --coach-footer-gap: 24px;
+  --coach-card-max: 720px;
   --coach-palette-fade-ms: 400ms;
   --coach-paper: #ffffff;
   /* "Your turn": the live card and the primary button. Not grey, amber or red. */

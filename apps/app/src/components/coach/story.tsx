@@ -124,7 +124,6 @@ function title(text: string): string {
 export function StoryCard({ storyId, question, options = [], status, respond, result }: StoryCardProps) {
   const [load, setLoad] = useState<Load>({ state: "loading" });
   const [chosen, setChosen] = useState<string | null>(null);
-  const [reopened, setReopened] = useState(false);
   const [shown, setShown] = useState(1);
   const [animate, setAnimate] = useState(false);
   const answered = parseResult<{ answer?: string }>(result)?.answer ?? chosen;
@@ -192,16 +191,16 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
     respond(JSON.stringify({ read: true, answer: option }));
   };
 
+  // Answered, the story stays as it was read, every bubble, with the answer under it: folding
+  // it away read as the conversation being wiped (Julian, 2026-11-06).
   if (answered) {
     return (
-      <CoachCard label="Story" testId="coach-story" state="answered">
-        <AnswerRecord label={load.state === "ready" ? `${title(load.text)}. You answered:` : "You answered:"} value={answered} />
-        {load.state === "ready" && (
-          <button type="button" className="coach-link" aria-expanded={reopened} onClick={() => setReopened((open) => !open)}>
-            {reopened ? "Hide the story" : "Read it again"}
-          </button>
-        )}
-        {reopened && load.state === "ready" && <StoryBubbles units={beats} shown={beats.length} />}
+      <CoachCard label="Story" testId="coach-story" state="answered" variant="thread">
+        {load.state === "ready" && <StoryBubbles units={beats} shown={beats.length} />}
+        <div className="coach-story__ask">
+          {question && <p className="coach-question">{question}</p>}
+          <AnswerRecord label={load.state === "ready" ? `${title(load.text)}. You answered:` : "You answered:"} value={answered} />
+        </div>
       </CoachCard>
     );
   }

@@ -71,9 +71,10 @@ export function useCardFocus<T extends HTMLElement>(active: boolean, align: "sta
   useEffect(() => {
     const card = cardRef.current;
     if (!active || !card || !isNewestCard(card)) return;
-    card.scrollIntoView?.({ block: align, behavior: "smooth" });
+    bringIntoView(card, align);
     const target: HTMLElement = primaryRef.current ?? card;
     target.focus({ preventScroll: true });
+    return keepInView(card);
   }, [active, align]);
   return { cardRef, primaryRef };
 }
@@ -88,9 +89,52 @@ export function useArrivalScroll() {
   const cardRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     const card = cardRef.current;
-    if (card && isNewestCard(card)) card.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    if (!card || !isNewestCard(card)) return;
+    bringIntoView(card);
+    return keepInView(card);
   }, []);
   return { cardRef };
+}
+
+const SCROLLER = ".reader-scroll-view";
+
+/**
+ * Bring a card into view. One that fits is shown whole; one taller than the chat's visible area
+ * is aligned by its bottom, where the instruction and the controls are, so the thing to do is
+ * on screen and the learner scrolls up for the rest. Aligning its top left the controls under
+ * the message box (Julian, 2026-11-06).
+ */
+export function bringIntoView(card: HTMLElement, align: "start" | "nearest" = "nearest"): void {
+  const scroller = card.closest(SCROLLER);
+  const room = scroller ? scroller.clientHeight : typeof window === "undefined" ? 0 : window.innerHeight;
+  const tooTall = room > 0 && card.getBoundingClientRect().height > room;
+  card.scrollIntoView?.({ block: tooTall && align === "nearest" ? "end" : align, behavior: "smooth" });
+}
+
+/** What the learner does to scroll for themselves; after any of these the coach stops steering. */
+const OWN_SCROLL = ["wheel", "touchmove", "keydown"] as const;
+
+/**
+ * A card that grows after it arrives (a figure's drawing loads, a hint opens) is brought back into
+ * view each time it grows, so its bottom never ends up under the message box. Stops once the
+ * learner scrolls for themselves, or when the card stops waiting. Returns the stop.
+ */
+export function keepInView(card: HTMLElement): () => void {
+  if (typeof ResizeObserver === "undefined") return () => {};
+  let height = card.getBoundingClientRect().height;
+  const observer = new ResizeObserver(() => {
+    const next = card.getBoundingClientRect().height;
+    if (next <= height) return;
+    height = next;
+    if (isNewestCard(card)) bringIntoView(card);
+  });
+  observer.observe(card);
+  const stop = () => {
+    observer.disconnect();
+    OWN_SCROLL.forEach((name) => window.removeEventListener(name, stop, true));
+  };
+  OWN_SCROLL.forEach((name) => window.addEventListener(name, stop, { capture: true, passive: true }));
+  return stop;
 }
 
 /** True when no coach card comes after this one in the page. */

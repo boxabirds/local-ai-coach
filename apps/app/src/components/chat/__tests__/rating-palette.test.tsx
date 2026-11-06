@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { useRef } from "react";
+import { Profiler, useRef } from "react";
 import { HOVER_HIDE_MS, HOVER_SHOW_MS, SAVED, useAskAbout, type RateRequest, type RateResult } from "@/hooks/use-ask-about";
 import { ratingBody, sendRating } from "../rating";
 
@@ -17,9 +17,11 @@ afterEach(() => {
 });
 
 let renders = 0;
+const countRender = () => {
+  renders += 1;
+};
 
 function Thread({ onAsk, onRate }: { onAsk: (text: string) => void; onRate?: (r: RateRequest) => Promise<RateResult> }) {
-  renders += 1;
   const root = useRef<HTMLDivElement>(null);
   const { button } = useAskAbout(root, onAsk, onRate);
   return (
@@ -51,7 +53,11 @@ const ok = (): Promise<RateResult> => Promise.resolve({ ok: true });
 
 function setup(onRate: (r: RateRequest) => Promise<RateResult> = vi.fn(ok)) {
   const onAsk = vi.fn();
-  render(<Thread onAsk={onAsk} onRate={onRate} />);
+  render(
+    <Profiler id="thread" onRender={countRender}>
+      <Thread onAsk={onAsk} onRate={onRate} />
+    </Profiler>,
+  );
   return { onAsk, onRate };
 }
 

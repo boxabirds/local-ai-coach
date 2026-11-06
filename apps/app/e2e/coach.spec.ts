@@ -19,6 +19,8 @@ const MAX_PRESSES = 60;
 const SCROLL_SETTLE_MS = 3000;
 const HOVER_SHOW_MS = 1000; // the palette's wait (use-ask-about.tsx)
 const FOOTER_GAP_PX = 16; // at least this much between the Next row and the message box
+const WINDOW = { width: 1280, height: 860 }; // playwright.config.ts
+const SHORT_WINDOW = { width: 1280, height: 700 }; // a laptop: the number card is taller than the chat
 const ACCENT = "rgb(29, 78, 216)";
 /** This machine's memory as the probe reports it: Node reads the same source (story 9). */
 const MEMORY_GB = Math.round(totalmem() / 1024 ** 3);
@@ -197,10 +199,9 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(page.getByRole("button", { name: "Next" })).toHaveCount(0);
     await shot(page, "03-story-answered");
 
-    await page.getByRole("button", { name: "Read it again" }).click();
+    // Answering keeps the whole story on screen: nothing folds away.
     await expect(page.getByTestId("coach-beat")).toHaveCount(UNITS);
     await expect(page.getByTestId("coach-figure")).toHaveCount(FIGURES);
-    await page.getByRole("button", { name: "Hide the story" }).click();
     expect(progress().stations.d_legal.status).toBe("read");
   });
 
@@ -214,6 +215,20 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     const firstTask = page.getByTestId("coach-step").last();
     await expect(page.getByTestId("coach-fact").last()).toHaveCSS("background-color", FACT_BG);
     await expect(firstTask).toHaveCSS("background-color", TASK_NOW);
+    // The hint is a question-mark icon at the end of the step's text, inline with it.
+    const hintIcon = firstTask.getByRole("button", { name: "Show a hint" });
+    await expect(hintIcon).toHaveCount(1); // the first step has a hint
+    const text = (await firstTask.locator(".coach-step__text").boundingBox())!;
+    const icon = (await hintIcon.boundingBox())!;
+    expect(icon.y).toBeGreaterThanOrEqual(text.y);
+    expect(icon.y + icon.height).toBeLessThanOrEqual(text.y + text.height + 1);
+    await hintIcon.click();
+    await expect(hintIcon).toHaveAttribute("aria-expanded", "true");
+    await shot(page, "03b-step-hint");
+    await hintIcon.click();
+    await claim.focus();
+    // A shorter window, as on a laptop: the number card with its drawing is taller than the chat.
+    await page.setViewportSize(SHORT_WINDOW);
     await claim.click();
     // Once answered, the same task is the paler green.
     await expect(page.locator('[data-testid="coach-step"][data-state="answered"]').last()).toHaveCSS("background-color", TASK_PAST);
@@ -222,6 +237,17 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(number).toBeFocused();
     // Story 7: the number step shows the room and the warehouse above its text.
     await expect(page.getByTestId("coach-number").getByTestId("coach-figure")).toHaveAttribute("data-figure", "room-and-warehouse");
+    // Its drawing loads after the card arrived and makes it taller (here, taller than the chat);
+    // the part to act on, the box and Check it, ends up above the message box, not under it
+    // (Julian, 2026-11-06).
+    await expect
+      .poll(async () => {
+        const check = await page.getByTestId("coach-number").last().getByRole("button", { name: "Check it" }).boundingBox();
+        const input = await page.getByTestId("copilot-chat-input").boundingBox();
+        return check !== null && input !== null && check.y >= 0 && check.y + check.height <= input.y;
+      }, { timeout: SCROLL_SETTLE_MS })
+      .toBe(true);
+    await page.setViewportSize(WINDOW);
     // Story 9: the drive's number first, as a learner might.
     await page.keyboard.type(String(DRIVE_GB));
     await page.keyboard.press("Enter");
