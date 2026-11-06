@@ -131,4 +131,12 @@ describe("the coach's own tools in plain words (story 10)", () => {
     expect(coachNoteText("end_session", {})).toBe("Saved a note of today's session.");
     expect(coachNoteText("generateSandboxedUi", {})).toBeNull();
   });
+
+  it("the agent framework's own file and planning tools are silent (read_file showed as a raw row)", async () => {
+    const { QUIET_TOOLS } = await import("@/components/coach/coach-note");
+    for (const name of ["read_file", "ls", "glob", "grep", "write_file", "edit_file", "write_todos", "task", "execute"]) {
+      expect(QUIET_TOOLS.has(name), name).toBe(true);
+    }
+    expect(QUIET_TOOLS.has("generateSandboxedUi")).toBe(false);
+  });
 });

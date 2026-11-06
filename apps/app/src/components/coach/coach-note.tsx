@@ -10,7 +10,10 @@ import { DEFAULT_STATIONS } from "./tube-map";
 
 /** Housekeeping: the learner already sees the result (the card, the check card). */
 // user_navigated records a detour the learner can already see in the chat (story 19).
-export const QUIET_TOOLS = new Set(["run_check", "user_navigated"]);
+// The agent framework's own tools (deepagents: reading its skills, planning) are the coach's
+// working-out, not something the learner did; they showed as a raw "read_file" row.
+const FRAMEWORK_TOOLS = ["read_file", "ls", "glob", "grep", "write_file", "edit_file", "write_todos", "task", "execute"];
+export const QUIET_TOOLS = new Set(["run_check", "user_navigated", ...FRAMEWORK_TOOLS]);
 
 const STATUS_WORDS: Record<string, string> = {
   read: "read",
