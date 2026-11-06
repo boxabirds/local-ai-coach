@@ -80,7 +80,7 @@ describe("story card", () => {
     expect(screen.getByTestId("coach-beat-count")).toHaveTextContent(`1 of ${TOTAL_BEATS}`);
     expect(screen.getByText("or press Space")).toBeInTheDocument();
     expect(screen.queryByText("The day after, what did Priya check?")).not.toBeInTheDocument();
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
+    expect(scrollIntoView).not.toHaveBeenCalled(); // story 28: only FollowEnd scrolls the chat
     expect(screen.getByTestId("coach-story")).toHaveAttribute("data-state", "active");
   });
 
@@ -94,14 +94,13 @@ describe("story card", () => {
     expect(screen.getByTestId("coach-story")).toHaveClass("coach-card--thread");
   });
 
-  it("TC-26 each step scrolls the Next row into view, and the question box at the end", async () => {
+  it("TC-26 each step adds its beat at the end, and the question box comes last, with no scrolling of its own (story 28)", async () => {
     await openStory();
-    scrollIntoView.mockClear();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(scrollIntoView.mock.contexts.at(-1)).toBe(screen.getByTestId("coach-story-footer"));
+    expect(screen.getByTestId("coach-story-footer").previousElementSibling).toContainElement(screen.getAllByTestId("coach-beat").at(-1)!);
     fireEvent.click(screen.getByRole("button", { name: "Show the rest" }));
-    const ask = screen.getByText("The day after, what did Priya check?").parentElement;
-    expect(scrollIntoView.mock.contexts.at(-1)).toBe(ask);
+    expect(screen.getByRole("button", { name: OPTIONS[0] })).toHaveFocus();
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("TC-11 Next shows the next beat", async () => {
@@ -322,10 +321,10 @@ describe("step card", () => {
     expect(respond).toHaveBeenCalledOnce();
   });
 
-  it("TC-46b an active step scrolls into view and focuses I did it", () => {
+  it("TC-46b an active step focuses I did it without scrolling (TC-14, story 28)", () => {
     render(<StepCard {...props} hasDoIt status="executing" respond={vi.fn()} />);
     expect(screen.getByRole("button", { name: "I did it" })).toHaveFocus();
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
+    expect(scrollIntoView).not.toHaveBeenCalled();
     expect(screen.getByTestId("coach-step")).toHaveAttribute("data-state", "active");
   });
 
@@ -375,12 +374,12 @@ describe("number card", () => {
 });
 
 describe("check result", () => {
-  it("TC-50b a new check result scrolls into view but leaves focus where it was", () => {
+  it("TC-50b a new check result leaves focus where it was and never scrolls", () => {
     render(<input aria-label="Message box" />);
     const box = screen.getByLabelText("Message box");
     box.focus();
     render(<CheckResult stationId="machine" stepId="machine.2" passed evidence={SAMPLE} note={NOTE} />);
-    expect(scrollIntoView).toHaveBeenCalledExactlyOnceWith({ block: "nearest", behavior: "smooth" });
+    expect(scrollIntoView).not.toHaveBeenCalled();
     expect(box).toHaveFocus();
   });
 
@@ -391,9 +390,8 @@ describe("check result", () => {
         <TubeMap />
       </>,
     );
-    // Only the newest card (the map) scrolls; the older check result stays put.
-    expect(scrollIntoView).toHaveBeenCalledOnce();
-    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByTestId("coach-map"));
+    // No card scrolls the chat (story 28); FollowEnd alone does.
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("TC-50d an older step card does not take focus from the newest one", () => {
@@ -405,9 +403,8 @@ describe("check result", () => {
     );
     const claims = screen.getAllByRole("button", { name: "I did it" });
     expect(claims[1]).toHaveFocus();
-    // Only the newest card scrolls; the older one never runs its focus effect.
-    expect(scrollIntoView).toHaveBeenCalledOnce();
-    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getAllByTestId("coach-step")[1]);
+    // The older one never runs its focus effect, and neither scrolls (story 28).
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("TC-50 shows the verdict and note, evidence hidden", () => {
@@ -736,11 +733,24 @@ describe("story 27: whatever waits for the learner looks like a task", () => {
     expect(task(testId)).not.toHaveClass("coach-card--active");
   });
 
-  it("TC-13 the story (it keeps its own Next row in view) is not held", async () => {
+  it("TC-13 the story sets up no scroll observer of its own (story 28: FollowEnd scrolls)", async () => {
     const observe = vi.fn();
     vi.stubGlobal("ResizeObserver", class { observe = observe; disconnect() {} unobserve() {} });
     await openStory();
     expect(observe).not.toHaveBeenCalledWith(screen.getByTestId("coach-story"));
     vi.unstubAllGlobals();
+  });
+});
+
+describe("story 28: cards focus, only FollowEnd scrolls (TC-14)", () => {
+  afterEach(() => cleanup());
+
+  it("the number and permission cards take the focus without scrolling the chat", () => {
+    render(<NumberCard prompt="Made-up prompt" unit="GB" platform="mac" status="executing" respond={vi.fn()} />);
+    expect(screen.getByLabelText("Memory in GB")).toHaveFocus();
+    cleanup();
+    render(<ConsentCard items={["Made-up item."]} status="executing" respond={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Allow" })).toHaveFocus();
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 });

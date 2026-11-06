@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CoachCard, useArrivalScroll } from "./card";
+import { CoachCard } from "./card";
 
 /**
  * The V1 line of the map: the story's destination and the three lessons, in
@@ -242,7 +242,7 @@ export function TubeMap({ stations = DEFAULT_STATIONS, focus }: { stations?: Map
   const list = (stations.length ? stations : DEFAULT_STATIONS).map((station) =>
     station.criticality ? station : { ...station, criticality: DEFAULT_CRITICALITY[station.id] },
   );
-  const { cardRef } = useArrivalScroll();
+  const cardRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const opener = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);

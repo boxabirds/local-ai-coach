@@ -128,11 +128,10 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   const [animate, setAnimate] = useState(false);
   const answered = parseResult<{ answer?: string }>(result)?.answer ?? chosen;
   const active = status === "executing" && Boolean(respond) && !answered && load.state === "ready";
-  const { cardRef, primaryRef } = useCardFocus<HTMLButtonElement>(active, "start");
+  const { cardRef, primaryRef } = useCardFocus<HTMLButtonElement>(active);
   const beats = useMemo(() => (load.state === "ready" ? storySentences(load.text) : []), [load]);
   const asking = shown >= beats.length;
   const newestBeat = useRef<HTMLDivElement | null>(null);
-  const footer = useRef<HTMLDivElement | null>(null);
   const firstAnswer = useRef<HTMLButtonElement | null>(null);
 
   const next = useCallback(() => {
@@ -145,28 +144,8 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   };
   useContinueKeys(active && !asking, next);
 
-  // After each beat, bring the Next row into view (the new beat sits just above it);
-  // at the question, bring the answers into view. The first answer then has the focus.
-  useEffect(() => {
-    if (!active || shown <= 1) return;
-    const target = footer.current ?? newestBeat.current?.parentElement?.nextElementSibling ?? newestBeat.current;
-    target?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-  }, [active, shown]);
-  // A beat can grow after it arrives (a figure's drawing loads after its beat):
-  // bring the Next row back into view each time the newest beat changes size.
-  useEffect(() => {
-    const beat = newestBeat.current;
-    if (!active || asking || shown <= 1 || !beat || typeof ResizeObserver === "undefined") return;
-    let lastHeight = beat.getBoundingClientRect().height;
-    const observer = new ResizeObserver(() => {
-      const height = beat.getBoundingClientRect().height;
-      if (height <= lastHeight) return;
-      lastHeight = height;
-      footer.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-    });
-    observer.observe(beat);
-    return () => observer.disconnect();
-  }, [active, asking, shown]);
+  // No scrolling here: each new beat lands at the end of the chat, and FollowEnd keeps the end in
+  // view (story 28). At the question, the first answer takes the focus.
   useEffect(() => {
     if (active && asking && shown > 1) firstAnswer.current?.focus({ preventScroll: true });
   }, [active, asking, shown]);
@@ -235,7 +214,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
               </div>
             </div>
           ) : (
-            <div className="coach-story__footer" ref={footer} data-testid="coach-story-footer">
+            <div className="coach-story__footer" data-testid="coach-story-footer">
               <button ref={primaryRef} type="button" className="coach-button coach-button--primary" disabled={!active} onClick={next}>
                 Next
               </button>

@@ -21,6 +21,7 @@ import {
 import { useExampleSuggestions } from "@/hooks";
 import { useCoachUI } from "@/hooks/use-coach-ui";
 import { usePersistedChat, type PersistableAgent } from "@/hooks/use-persisted-chat";
+import { FollowEnd, type FollowAgent } from "@/components/chat/follow-end-view";
 import { newThreadId } from "@/lib/chat-store";
 
 /** Shown while the browser refuses to keep the conversation (story 22). */
@@ -29,9 +30,6 @@ const NOT_KEPT = "I can't keep this conversation in this browser, so a reload wi
 const MESSAGE_VIEW = { assistantMessage: { markdownRenderer: AnswerMarkdown }, userMessage: { messageRenderer: QuotedUserText } };
 /** The page redraws when a run starts or stops, not per streamed token (story 22). */
 const PAGE_UPDATES = [UseAgentUpdate.OnRunStatusChanged];
-const MESSAGE_UPDATES = [UseAgentUpdate.OnMessagesChanged];
-/** Frames to keep pinning the end while restored cards finish laying out. */
-const RESTORE_SCROLL_FRAMES = 10;
 
 export default function HomePage() {
   useCoachUI();
@@ -40,17 +38,8 @@ export default function HomePage() {
   // so the restored conversation lands in the agent copy the chat actually renders.
   const [threadId] = useState(newThreadId);
   const { agent } = useAgent({ threadId, updates: PAGE_UPDATES });
-  // A restored conversation opens at its end, where the learner left off.
-  const scrollToEnd = useCallback(() => {
-    const settle = (frames: number) =>
-      requestAnimationFrame(() => {
-        const scroller = chatRoot.current?.querySelector<HTMLElement>(".reader-scroll-view");
-        if (scroller) scroller.scrollTop = scroller.scrollHeight;
-        if (frames > 0) settle(frames - 1);
-      });
-    settle(RESTORE_SCROLL_FRAMES);
-  }, []);
-  const { kept } = usePersistedChat(agent as unknown as PersistableAgent, undefined, scrollToEnd);
+  // A restored conversation opens at its end: FollowEnd starts out following (story 28).
+  const { kept } = usePersistedChat(agent as unknown as PersistableAgent);
   const { newChat, hasKeys, where, keysOpen, setKeysOpen } = useProviderKeys();
   const { copilotkit } = useCopilotKit();
   const [error, setError] = useState<string | null>(null);
@@ -180,39 +169,10 @@ export default function HomePage() {
           />
           </QuoteContext.Provider>
           <AskAboutPalette root={chatRoot} onAsk={askAbout} onRate={rate} />
-          <RevealLatestQuestion threadId={threadId} root={chatRoot} />
+          {/* Story 28: the one thing that scrolls the chat. */}
+          <FollowEnd root={chatRoot} agent={agent as unknown as FollowAgent} />
         </div>
       </main>
     </div>
   );
-}
-
-/**
- * Brings a newly asked question into view. It is the only part of the page that needs every
- * message change, so it lives apart and redraws alone while an answer streams (story 22).
- */
-function RevealLatestQuestion({ threadId, root: chatRoot }: { threadId: string; root: React.RefObject<HTMLDivElement | null> }) {
-  const { agent } = useAgent({ threadId, updates: MESSAGE_UPDATES });
-  const latestQuestion = agent.messages.filter((message) => message.role === "user").at(-1)?.id;
-
-  // Move only when a question is submitted. Streamed text and growing visuals
-  // must never take scroll ownership from the reader.
-  useEffect(() => {
-    if (!latestQuestion || !chatRoot.current) return;
-    const root = chatRoot.current;
-    const revealQuestion = () => {
-      const question = Array.from(root.querySelectorAll<HTMLElement>('[data-testid="copilot-user-message"]'))
-        .find((element) => element.dataset.messageId === latestQuestion);
-      if (!question) return false;
-      question.scrollIntoView?.({ block: "start", behavior: "instant" });
-      return true;
-    };
-    if (revealQuestion()) return;
-    const observer = new MutationObserver(() => {
-      if (revealQuestion()) observer.disconnect();
-    });
-    observer.observe(root, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [latestQuestion, chatRoot]);
-  return null;
 }

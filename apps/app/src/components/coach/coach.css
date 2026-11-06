@@ -329,9 +329,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  /* Room between the Next row and the message box, also when it is scrolled into view. */
+  /* Room between the Next row and the message box. */
   margin-bottom: var(--coach-footer-gap);
-  scroll-margin-bottom: var(--coach-footer-gap);
   font-size: 13px;
   color: var(--text-tertiary);
 }

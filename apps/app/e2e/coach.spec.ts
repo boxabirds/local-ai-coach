@@ -61,13 +61,18 @@ async function inViewport(page: Page, testId: string) {
   expect(box!.y + box!.height).toBeLessThanOrEqual(VIEWPORT.height);
 }
 
-/** Starts clean: a browser of its own, no kept conversation. */
 /** Type into the message box and send, as a learner does once the conversation has started. */
 async function ask(page: Page, text: string) {
   await page.getByTestId("copilot-chat-textarea").fill(text);
   await page.getByTestId("copilot-chat-textarea").press("Enter");
 }
 
+/** How far the chat is from its end, in pixels (story 28: FollowEnd keeps it at the end). */
+const fromEnd = (page: Page) =>
+  page.locator(".reader-scroll-view").evaluate((el) => el.scrollHeight - el.clientHeight - el.scrollTop);
+const END_THRESHOLD_PX = 48; // follow-end.ts
+
+/** Starts clean: a browser of its own, no kept conversation. */
 test("home: the coach, the stub badge and the three starters, no demo", async () => {
   const { browser, page } = await openBrowser();
   try {
@@ -206,6 +211,14 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
 
     // The coach replies, and the card stays answered: it must not reset.
     await expect(page.getByText("Thanks. That's Priya's story, chapter 0.")).toBeVisible();
+    // Story 28, TC-15: a plain reply comes into view, above the message box, not below it.
+    await expect
+      .poll(async () => {
+        const reply = await page.getByText("Thanks. That's Priya's story, chapter 0.").boundingBox();
+        const input = await page.getByTestId("copilot-chat-input").boundingBox();
+        return reply !== null && input !== null && reply.y >= 0 && reply.y + reply.height <= input.y;
+      }, { timeout: SCROLL_SETTLE_MS })
+      .toBe(true);
     await page.waitForTimeout(1000);
     await expect(page.getByTestId("coach-record")).toContainText(ANSWER);
     await expect(page.getByRole("button", { name: "Next" })).toHaveCount(0);
@@ -422,6 +435,24 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     const last = page.getByTestId("copilot-assistant-message").last();
     const box = (await last.boundingBox())!;
     expect(box.y + box.height).toBeLessThanOrEqual(VIEWPORT.height);
+    // Story 28, TC-20: the chat itself is at its end.
+    expect(await fromEnd(page)).toBeLessThanOrEqual(END_THRESHOLD_PX);
+
+    // Story 28, TC-19: scrolled up to reread, new content arriving leaves the reader where they are;
+    // acting (Space) brings the chat back to its end.
+    await page.locator(".reader-scroll-view").hover();
+    await page.mouse.wheel(0, -4000);
+    await expect.poll(() => fromEnd(page)).toBeGreaterThan(END_THRESHOLD_PX);
+    const reading = await page.locator(".reader-scroll-view").evaluate((el) => el.scrollTop);
+    await page.getByTestId("copilot-assistant-message").last().evaluate((el) => {
+      const more = document.createElement("div");
+      more.style.height = "400px"; // stands in for words arriving while the learner reads
+      el.append(more);
+    });
+    await page.waitForTimeout(300);
+    expect(await page.locator(".reader-scroll-view").evaluate((el) => el.scrollTop)).toBe(reading);
+    await page.keyboard.press("Space");
+    await expect.poll(() => fromEnd(page)).toBeLessThanOrEqual(END_THRESHOLD_PX);
 
     // No reserved toolbar space: a one-line user message and a card-only message stay compact.
     const userBlock = (await page.getByTestId("copilot-user-message").first().boundingBox())!;

@@ -116,6 +116,8 @@ The check card for the real coach is drawn from `run_check`'s own result (`useRe
 
 One file, `apps/app/src/hooks/use-coach-ui.tsx`, replaces `use-generative-ui-examples.tsx` and registers everything. Components are plain React under `components/coach/`, with no CopilotKit imports inside them, so they survive the V2 move.
 
+**Scrolling** (Ceetrix story 28) has one owner, `FollowEnd` (`components/chat/follow-end-view.tsx`): the chat follows its end while the learner is at the end, leaves them alone once they scroll up to reread, and follows again when they act (a button in the chat, Space or Enter, a message sent, a card answered) or scroll back down. Cards only take focus (`preventScroll`); none scrolls. A test fails if any other app code moves the chat.
+
 | Registration | Hook | Zod params (from the model) | Component behaviour | Resumes the agent with |
 | --- | --- | --- | --- | --- |
 | `story` | `useHumanInTheLoop` | `{ story_id: string }` | Renders `stories/<id>.md` fetched from the agent (`/curriculum/story/<id>`), one question at the end with three options | `{ read: true, answer: string }` |
