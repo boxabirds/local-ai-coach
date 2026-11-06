@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Local AI Coach">
+  <title>Zero to one: a coach's arrow from 0 to 1</title>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="6" cy="17" rx="3" ry="4"/>
+    <path d="M15 15 L18 13 V21 M15 21 H21"/>
+    <path d="M5 9 C6 3 14 2 18 7"/>
+  </g>
+  <path d="M15 8 L21 9 L19 3 Z" fill="currentColor"/>
+</svg>

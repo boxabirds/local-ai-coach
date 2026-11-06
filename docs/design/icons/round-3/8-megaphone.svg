@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Local AI Coach">
+  <title>Megaphone: the coach calling out the next step</title>
+  <path d="M3 9 H8 L15 4 V20 L8 15 H3 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M7 15 L8.5 20.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M18.5 8.5 C20 10.5 20 13.5 18.5 15.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</svg>

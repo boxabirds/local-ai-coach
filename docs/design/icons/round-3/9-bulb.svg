@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Local AI Coach">
+  <title>Bulb: an idea</title>
+  <path d="M9 17 C9 14 5 12.5 5 9 A7 7 0 0 1 19 9 C19 12.5 15 14 15 17 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M9 20.5 H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M12 13 V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</svg>

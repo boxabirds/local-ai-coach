@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Local AI Coach">
+  <title>Summit: the destination you're heading for, flag planted</title>
+  <path d="M1 22 L9 10 L12 13 L15 9 L23 22 Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+  <path d="M15 9 V2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M15 2 L20 3.5 L15 5 Z" fill="currentColor"/>
+</svg>
