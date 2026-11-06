@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Local AI Coach">
+  <title>Whistle: the coach</title>
+  <mask id="m"><rect width="24" height="24" fill="#fff"/><circle cx="9" cy="14.5" r="2.2" fill="#000"/></mask>
+  <g fill="currentColor" mask="url(#m)"><circle cx="9" cy="14.5" r="6.5"/><rect x="9" y="8" width="13" height="5" rx="1"/></g>
+</svg>
