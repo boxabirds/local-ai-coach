@@ -19,7 +19,7 @@ A lesson (in your context, under the curriculum) has station, why, mnem, recap a
 
 ## Worked example: machine.2
 
-The check kind: real, probe memory, compare typed, toleranceGb 1. Call show_next_step(machine, machine.2); it shows a number card with the step text. When it answers {"value": 16}, call run_check(machine, machine.2). It reads the 16 from the card itself, so never pass the number. If it says permission is needed, call consent_card with the items it gives you, then run_check again. Passed: set_progress(machine, verified, step_id machine.2). Not yet: the note already holds the hint; say it briefly and show_next_step(machine, machine.2) again.
+The check kind: real, probe memory, compare typed, toleranceGb 1. Call show_next_step(machine, machine.2); it shows a number card with the step text. When it answers {"value": 16}, call run_check(machine, machine.2). It reads the 16 from the card itself, so never pass the number. If it says permission is needed, call consent_card with the items it gives you, then run_check again. Passed: set_progress(machine, verified, step machine.2). Not yet: the note already holds the hint; say it briefly and show_next_step(machine, machine.2) again.
 
 ## Worked example: machine.4
 

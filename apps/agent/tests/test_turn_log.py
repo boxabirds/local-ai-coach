@@ -41,7 +41,7 @@ def run_turn(script: list[AIMessage], text: str = "What can my computer do?") ->
 
 
 def test_tc10_a_turn_with_a_tool_call_writes_every_event_with_thread_and_time():
-    run_turn([call("set_progress", {"station_id": "machine", "status": "read"}, "c1"), AIMessage(content="Done.")])
+    run_turn([call("set_progress", {"station": "machine", "status": "read"}, "c1"), AIMessage(content="Done.")])
     kinds = [e["event"] for e in events()]
     assert kinds == ["model_request", "model_response", "tool_call", "tool_result", "model_request", "model_response"]
     for event in events():

@@ -103,7 +103,7 @@ def test_tc13_a_practice_terminal_check_waits_for_step_five(machine):
 
 
 def test_tc14_verified_with_a_passing_check_for_that_step():
-    result = tools.set_progress.func("machine", "verified", runtime=runtime(check_result(PASSED), call_id="p1"), step_id="machine.2")
+    result = tools.set_progress.func("machine", "verified", runtime=runtime(check_result(PASSED), call_id="p1"), step="machine.2")
     assert isinstance(result, Command)
     record = progress.load(progress.home())
     assert record["steps"]["machine.2"]["status"] == "verified" and record["stations"]["machine"]["status"] == "verified"
@@ -119,23 +119,23 @@ def test_tc14_verified_with_a_passing_check_for_that_step():
     (check_result(PASSED), None),
 ])
 def test_tc15_verified_without_a_passing_check_for_that_step_is_refused(thread, step):
-    out = tools.set_progress.func("machine", "verified", runtime=runtime(thread), step_id=step)
+    out = tools.set_progress.func("machine", "verified", runtime=runtime(thread), step=step)
     assert out.startswith("Refused: verified needs a passing run_check")
     assert not (progress.home() / "progress.json").exists()
 
 
 def test_tc15_a_newer_failing_check_outranks_an_older_pass():
     thread = [*check_result(PASSED, call_id="r1"), *check_result({**PASSED, "passed": False}, call_id="r2")]
-    assert tools.set_progress.func("machine", "verified", runtime=runtime(thread), step_id="machine.2").startswith("Refused")
+    assert tools.set_progress.func("machine", "verified", runtime=runtime(thread), step="machine.2").startswith("Refused")
 
 
 def test_tc16_downgrade_refused_skip_recorded_and_bad_input_refused():
-    tools.set_progress.func("machine", "reported", runtime=runtime(), step_id="machine.1")
+    tools.set_progress.func("machine", "reported", runtime=runtime(), step="machine.1")
     before = (progress.home() / "progress.json").read_bytes()
-    out = tools.set_progress.func("machine", "read", runtime=runtime(), step_id="machine.1")
+    out = tools.set_progress.func("machine", "read", runtime=runtime(), step="machine.1")
     assert out.startswith("Not changed: machine is already reported")
     assert (progress.home() / "progress.json").read_bytes() == before
-    assert isinstance(tools.set_progress.func("machine", "skipped", runtime=runtime(), step_id="machine.3"), Command)
+    assert isinstance(tools.set_progress.func("machine", "skipped", runtime=runtime(), step="machine.3"), Command)
     assert progress.load(progress.home())["steps"]["machine.3"]["status"] == "skipped"
     assert tools.set_progress.func("machine", "assisted", runtime=runtime()).startswith("status must be one of")
     assert tools.set_progress.func("nowhere", "reported", runtime=runtime()) == "No station 'nowhere' in V1."
@@ -146,7 +146,7 @@ def test_tc16_a_failed_write_is_reported_and_nothing_recorded(monkeypatch):
         raise OSError(28, "No space left on device")
 
     monkeypatch.setattr(progress.os, "replace", boom)
-    out = tools.set_progress.func("machine", "reported", runtime=runtime(), step_id="machine.1")
+    out = tools.set_progress.func("machine", "reported", runtime=runtime(), step="machine.1")
     assert out == "I couldn't save progress (No space left on device). Nothing was recorded."
     assert not (progress.home() / "progress.json").exists()
 

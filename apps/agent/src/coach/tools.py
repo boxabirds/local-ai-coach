@@ -76,8 +76,9 @@ def _terms(station_id: str) -> list[dict[str, Any]]:
 
 
 @tool
-def run_check(station_id: str, step_id: str, runtime: ToolRuntime) -> str:
-    """Run a step's check. For a real check it looks at this computer (after permission) and the result is shown to the learner as it is. For an ask check it returns the rubric for you to judge."""
+def run_check(station: str, step: str, runtime: ToolRuntime) -> str:
+    """Run a step's check (station and step are ids, as in show_next_step). For a real check it looks at this computer (after permission) and the result is shown to the learner as it is. For an ask check it returns the rubric for you to judge."""
+    station_id, step_id = station, step
     step = _step(station_id, step_id)
     if step is None:
         return f"No step {step_id!r} in {station_id!r}."
@@ -116,8 +117,11 @@ def run_check(station_id: str, step_id: str, runtime: ToolRuntime) -> str:
 
 
 @tool
-def set_progress(station_id: str, status: str, runtime: ToolRuntime, step_id: str | None = None, note: str | None = None) -> Command | str:
-    """Record progress. status is read (story), reported (the learner says they did it), verified (only after a passing run_check for that step) or skipped. Progress only moves up, except to skipped."""
+def set_progress(station: str, status: str, runtime: ToolRuntime, step: str | None = None, note: str | None = None) -> Command | str:
+    """Record progress for a step (station and step are ids, as in show_next_step). status is read (a story: give its station, no step), reported (the learner says they did the step), verified (only after a passing run_check for that step) or skipped (always with the step they skipped). Progress only moves up, except to skipped."""
+    station_id, step_id = station, step
+    if status == progress.SKIPPED and step_id is None:
+        return "Refused: say which step was skipped (step), so the rest of the station isn't marked skipped too."
     if station_id not in curriculum.v1_stations():
         return f"No station {station_id!r} in V1."
     if status not in MODEL_STATUSES:

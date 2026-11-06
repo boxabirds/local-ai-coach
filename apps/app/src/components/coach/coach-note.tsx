@@ -39,7 +39,10 @@ function place(stationId?: string, stepId?: string): string {
 export function coachNoteText(name: string, args: Record<string, unknown> = {}): string | null {
   if (name === "set_progress") {
     const status = STATUS_WORDS[String(args.status)] ?? String(args.status ?? "");
-    return `Saved: ${place(args.station_id as string, args.step_id as string | undefined)}, ${status}.`;
+    // station and step since story 19; station_id and step_id in conversations from before it.
+    const station = (args.station ?? args.station_id) as string;
+    const step = (args.step ?? args.step_id) as string | undefined;
+    return `Saved: ${place(station, step)}, ${status}.`;
   }
   if (name === "probe") return `Looked at ${PROBE_WORDS[String(args.name)] ?? "this computer"}.`;
   if (name === "end_session") return "Saved a note of today's session.";

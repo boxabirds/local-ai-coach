@@ -118,8 +118,8 @@
  ],
  "expect_tool": "run_check",
  "expect_args": {
-  "station_id": "machine",
-  "step_id": "machine.2"
+  "station": "machine",
+  "step": "machine.2"
  },
  "must_not": []
 }

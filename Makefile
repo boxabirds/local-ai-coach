@@ -46,8 +46,8 @@ release: ## Build the tester release: make release VERSION=0.1.0 (writes dist/)
 release-test: ## Build, install from scratch and run the browser suite against the install (downloads ~100 MB)
 	COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_release.py
 
-evals: ## Dispatch cases against the real model, 5 runs each (needs apps/agent/.env.test; costs tokens)
-	cd apps/agent && COACH_EVALS=1 uv run pytest evals -q -s -p no:cacheprovider
+evals: ## Dispatch cases against the real model, 5 runs each (ONLY=D-11,D-13 for some; needs apps/agent/.env.test)
+	cd apps/agent && COACH_EVALS=1 COACH_EVALS_ONLY=$(ONLY) uv run pytest evals -q -s -p no:cacheprovider
 
 evals-smoke: ## D-01 to D-06 on the real curriculum (before a release)
 	cd apps/agent && COACH_EVALS=1 COACH_EVALS_SMOKE=1 COACH_EVALS_REAL_CURRICULUM=1 uv run pytest evals -q -s -p no:cacheprovider

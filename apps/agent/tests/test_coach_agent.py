@@ -87,8 +87,8 @@ def test_tc23_number_permission_check_and_verified_through_the_real_graph(monkey
     machine = Machine()
     monkeypatch.setattr(tools, "RUN", machine)
     agent, model = agent_with([
-        call("run_check", {"station_id": "machine", "step_id": "machine.2"}, "rc1"),
-        call("set_progress", {"station_id": "machine", "status": "verified", "step_id": "machine.2"}, "sp1"),
+        call("run_check", {"station": "machine", "step": "machine.2"}, "rc1"),
+        call("set_progress", {"station": "machine", "status": "verified", "step": "machine.2"}, "sp1"),
         AIMessage(content="Your number checks out. Now the test."),
     ])
     config = {"configurable": {"thread_id": "tc23"}}
@@ -111,7 +111,7 @@ def test_tc24_verified_before_any_check_is_refused_and_nothing_is_written(monkey
     machine = Machine()
     monkeypatch.setattr(tools, "RUN", machine)
     agent, _ = agent_with([
-        call("set_progress", {"station_id": "machine", "status": "verified", "step_id": "machine.2"}, "sp1"),
+        call("set_progress", {"station": "machine", "status": "verified", "step": "machine.2"}, "sp1"),
         AIMessage(content="Let me check first."),
     ])
     config = {"configurable": {"thread_id": "tc24"}}
@@ -126,7 +126,7 @@ def test_tc24_no_probe_runs_before_the_permission_answer(monkeypatch):
     machine = Machine()
     monkeypatch.setattr(tools, "RUN", machine)
     agent, _ = agent_with([
-        call("run_check", {"station_id": "machine", "step_id": "machine.2"}, "rc1"),
+        call("run_check", {"station": "machine", "step": "machine.2"}, "rc1"),
         AIMessage(content="I need your permission first."),
     ])
     config = {"configurable": {"thread_id": "tc24b"}}

@@ -129,3 +129,26 @@ def test_tc04_the_step_route_serves_a_step_and_records_it_shown():
     assert progress.load(progress.home())["events"][-1] == {**progress.load(progress.home())["events"][-1], "event": "step_shown", "step": step["id"]}
     assert client.get("/curriculum/step/machine/machine.99").status_code == 404
     assert client.get("/curriculum/step/nowhere/x.1").status_code == 404
+
+
+# ------------------------------------------------------------------ one naming, and skips that stay on the step (D-11)
+
+def test_run_check_and_set_progress_take_station_and_step_like_the_other_tools():
+    for t in (tools.run_check, tools.set_progress, tools.chapter_ended):
+        assert "station" in t.args
+    assert "step" in tools.run_check.args and "step" in tools.set_progress.args
+    assert not {"station_id", "step_id"} & set(tools.run_check.args) | ({"station_id", "step_id"} & set(tools.set_progress.args))
+
+
+def test_a_skip_without_its_step_is_refused_and_nothing_is_written():
+    out = tools.set_progress.func("machine", "skipped", runtime=Runtime())
+    assert out.startswith("Refused: say which step")
+    assert not (progress.home() / "progress.json").exists()
+
+
+def test_a_passing_check_is_found_under_either_argument_name():
+    from langchain_core.messages import AIMessage, ToolMessage
+    verdict = '{"passed": true, "checked": true}'
+    for args in ({"station": "machine", "step": "machine.2"}, {"station_id": "machine", "step_id": "machine.2"}):
+        messages = [AIMessage(content="", tool_calls=[{"id": "r", "name": "run_check", "args": args, "type": "tool_call"}]), ToolMessage(content=verdict, tool_call_id="r")]
+        assert thread.passing_check(messages, "machine.2") is not None

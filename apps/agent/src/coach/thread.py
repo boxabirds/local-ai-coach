@@ -72,7 +72,8 @@ def passing_check(messages: list[BaseMessage], step_id: str) -> dict[str, Any] |
     """The newest run_check result for this step, if it passed."""
     found = None
     for args, verdict in results(messages, "run_check"):
-        if args.get("step_id") == step_id and isinstance(verdict, dict):
+        # step (story 19) or step_id (threads from before it)
+        if (args.get("step") or args.get("step_id")) == step_id and isinstance(verdict, dict):
             found = verdict
     return found if found and found.get("passed") is True and found.get("checked") is True else None
 

@@ -123,8 +123,8 @@
      "id": "r1",
      "name": "run_check",
      "args": {
-      "station_id": "machine",
-      "step_id": "machine.2"
+      "station": "machine",
+      "step": "machine.2"
      }
     }
    ]
@@ -159,8 +159,8 @@
      "id": "p1",
      "name": "set_progress",
      "args": {
-      "station_id": "machine",
-      "step_id": "machine.2",
+      "station": "machine",
+      "step": "machine.2",
       "status": "verified"
      }
     }
@@ -202,8 +202,8 @@
      "id": "p3",
      "name": "set_progress",
      "args": {
-      "station_id": "machine",
-      "step_id": "machine.3",
+      "station": "machine",
+      "step": "machine.3",
       "status": "reported"
      }
     }
@@ -249,8 +249,8 @@
      "id": "r4",
      "name": "run_check",
      "args": {
-      "station_id": "machine",
-      "step_id": "machine.4"
+      "station": "machine",
+      "step": "machine.4"
      }
     }
    ]
@@ -277,8 +277,8 @@
      "id": "p4",
      "name": "set_progress",
      "args": {
-      "station_id": "machine",
-      "step_id": "machine.4",
+      "station": "machine",
+      "step": "machine.4",
       "status": "verified"
      }
     }

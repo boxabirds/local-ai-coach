@@ -123,8 +123,8 @@
      "id": "r1",
      "name": "run_check",
      "args": {
-      "station_id": "machine",
-      "step_id": "machine.2"
+      "station": "machine",
+      "step": "machine.2"
      }
     }
    ]
@@ -159,8 +159,8 @@
      "id": "p1",
      "name": "set_progress",
      "args": {
-      "station_id": "machine",
-      "step_id": "machine.2",
+      "station": "machine",
+      "step": "machine.2",
       "status": "verified"
      }
     }
@@ -197,8 +197,8 @@
  ],
  "expect_tool": "set_progress",
  "expect_args": {
-  "station_id": "machine",
-  "step_id": "machine.3",
+  "station": "machine",
+  "step": "machine.3",
   "status": "skipped"
  }
 }

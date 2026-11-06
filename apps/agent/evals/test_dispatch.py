@@ -40,7 +40,17 @@ def agent():
     print(f"  cost: ${prices.cost(totals):.4f} at {prices.source}" if prices else "  cost: unknown (no published price for this provider)")
 
 
-@pytest.mark.parametrize("case", [c for c in CASES if os.environ.get("COACH_EVALS_SMOKE") != "1" or c.id in SMOKE], ids=lambda c: c.id)
+# COACH_EVALS_ONLY=D-11,D-13 runs just those cases (make evals ONLY=D-11,D-13).
+ONLY = {c.strip() for c in os.environ.get("COACH_EVALS_ONLY", "").split(",") if c.strip()}
+
+
+def chosen(case) -> bool:
+    if ONLY:
+        return case.id in ONLY
+    return os.environ.get("COACH_EVALS_SMOKE") != "1" or case.id in SMOKE
+
+
+@pytest.mark.parametrize("case", [c for c in CASES if chosen(c)], ids=lambda c: c.id)
 def test_dispatch(case, agent):
     result = harness.score(case, agent)
     RESULTS.append(result)

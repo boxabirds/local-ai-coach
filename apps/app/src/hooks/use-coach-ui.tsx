@@ -121,7 +121,8 @@ const SandboxEventParams = z.object({ step_id: z.string(), event: z.record(z.str
 /** Tools whose calls show the upstream reasoning card, so nothing the coach does is silent. */
 const SILENT_TOOLS = new Set<string>(["run_check"]);
 
-const RunCheckParams = z.object({ station_id: z.string(), step_id: z.string() });
+// station and step since story 19; the old names stay accepted for conversations from before it.
+const RunCheckParams = z.object({ station: z.string().optional(), step: z.string().optional(), station_id: z.string().optional(), step_id: z.string().optional() });
 
 type RunCheckVerdict = z.infer<typeof CheckResultParams>;
 
