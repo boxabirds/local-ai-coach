@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Local AI Coach">
+  <title>Prompt bubble: the coach talking you through the terminal</title>
+  <mask id="m"><rect width="24" height="24" fill="#fff"/><path d="M5.6 6.6 L9.6 10.2 L5.6 13.8" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="11.6" y="11.6" width="7" height="3" rx="0.8" fill="#000"/></mask>
+  <g fill="currentColor" mask="url(#m)"><rect x="0.8" y="1.8" width="22.4" height="16.6" rx="4"/><path d="M4.8 17 L4.8 23 L11.4 17 Z"/></g>
+</svg>

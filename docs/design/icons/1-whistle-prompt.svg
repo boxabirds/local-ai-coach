@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Local AI Coach">
+  <title>Whistle prompt: a coach's whistle with a terminal prompt in its barrel</title>
+  <mask id="m"><rect width="24" height="24" fill="#fff"/><path d="M5.6 9.6 L9.8 13.6 L5.6 17.6" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></mask>
+  <g fill="currentColor" mask="url(#m)"><circle cx="9" cy="13.6" r="9"/><rect x="9" y="4.6" width="14.5" height="7.6" rx="1.8"/></g>
+</svg>
