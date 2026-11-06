@@ -133,12 +133,12 @@ describe("Figure component (TC-23)", () => {
     serve("where-words-go");
     render(
       <>
-        <button type="button">Go on</button>
+        <button type="button">Next</button>
         <Figure id="where-words-go" />
       </>,
     );
     await screen.findByTestId("coach-figure");
-    const goOn = screen.getByRole("button", { name: "Go on" });
+    const goOn = screen.getByRole("button", { name: "Next" });
     goOn.focus();
     const choice = screen.getByRole("button", { name: "Last year" });
     const pressed = fireEvent.mouseDown(choice);

@@ -17,6 +17,7 @@ const FIGURES = 3; // chapter 0's figures, each a unit of its own (Ceetrix story
 const UNITS = SENTENCES + FIGURES;
 const MAX_PRESSES = 60;
 const SCROLL_SETTLE_MS = 3000;
+const FOOTER_GAP_PX = 16; // at least this much between the Next row and the message box
 const ACCENT = "rgb(29, 78, 216)";
 /** This machine's memory as the probe reports it: Node reads the same source (story 9). */
 const MEMORY_GB = Math.round(totalmem() / 1024 ** 3);
@@ -68,6 +69,8 @@ test("home: the coach, the stub badge and the three starters, no demo", async ()
       await expect(page.getByRole("button", { name: starter })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: /GitHub/ })).toHaveCount(0);
+    // The start box has the focus, so the learner can just type.
+    await expect(page.getByTestId("copilot-chat-textarea")).toBeFocused();
     await shot(page, "01-home");
   } finally {
     await browser.close();
@@ -97,7 +100,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
   test("story: one sentence per bubble, Space to go on, and the answer sticks", async () => {
     await page.getByRole("button", { name: "Read Priya's story" }).click();
 
-    const goOn = page.getByRole("button", { name: "Go on" });
+    const goOn = page.getByRole("button", { name: "Next" });
     await expect(goOn).toBeFocused();
     await expect(page.getByTestId("coach-beat")).toHaveCount(1);
     await expect(page.getByTestId("coach-beat-count")).toHaveText(`1 of ${UNITS}`);
@@ -109,11 +112,17 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await page.waitForTimeout(500); // smooth scroll settles
     await inViewport(page, "coach-story-footer");
 
-    // The Go on row never overhangs the bubbles.
+    // The Next row starts with the bubbles and ends at the message box's right edge; the count and
+    // Show the rest share a centre line; and there is room between the row and the box.
     const bubble = (await page.getByTestId("coach-beat").last().boundingBox())!;
     const footer = (await page.getByTestId("coach-story-footer").boundingBox())!;
-    expect(footer.x).toBeGreaterThanOrEqual(bubble.x - 1);
-    expect(footer.x + footer.width).toBeLessThanOrEqual(bubble.x + bubble.width + 1);
+    const box = (await page.getByTestId("copilot-chat-input").boundingBox())!;
+    expect(Math.abs(footer.x - bubble.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(footer.x + footer.width - (box.x + box.width))).toBeLessThanOrEqual(1);
+    const count = (await page.getByTestId("coach-beat-count").boundingBox())!;
+    const rest = (await page.getByRole("button", { name: "Show the rest" }).boundingBox())!;
+    expect(Math.abs(count.y + count.height / 2 - (rest.y + rest.height / 2))).toBeLessThanOrEqual(1);
+    expect(box.y - (footer.y + footer.height)).toBeGreaterThanOrEqual(FOOTER_GAP_PX);
     await shot(page, "02-story-reading");
 
     // Story 8, TC-18: ask about a sentence while reading, then keep reading.
@@ -133,11 +142,11 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(sent).toContainText("What does that mean?");
     await expect(page.getByText(/^You asked about “/)).toBeVisible();
     await expect(inputQuote).toHaveCount(0);
-    // The story card still works: Go on advances it.
+    // The story card still works: Next advances it.
     const beatsBefore = await page.getByTestId("coach-beat").count();
-    await page.getByRole("button", { name: "Go on" }).click();
+    await page.getByRole("button", { name: "Next" }).click();
     await expect(page.getByTestId("coach-beat")).toHaveCount(beatsBefore + 1);
-    await page.getByRole("button", { name: "Go on" }).focus();
+    await page.getByRole("button", { name: "Next" }).focus();
 
     // Story 7, TC-24: the first figure arrives right after its sentence, as a unit of its own.
     // Wait on the figure's beat, which is there before the drawing has loaded.
@@ -152,7 +161,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(figure.locator("svg").getByText("Tuesday: the letter stays on her network.")).toBeVisible();
     await expect(figure.getByRole("button", { name: "Tuesday" })).toHaveAttribute("aria-pressed", "true");
     await page.waitForTimeout(500);
-    // The figure grows once its drawing loads; the Go on row must come back into view (the scroll is smooth).
+    // The figure grows once its drawing loads; the Next row must come back into view (the scroll is smooth).
     await expect
       .poll(async () => {
         const box = await page.getByTestId("coach-story-footer").boundingBox();
@@ -161,14 +170,14 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
       .toBe(true);
     await shot(page, "02b-figure-tuesday");
 
-    // Choosing redraws it and records nothing; the focus stays on Go on (TC-27).
+    // Choosing redraws it and records nothing; the focus stays on Next (TC-27).
     const before = progressRaw();
     await figure.getByRole("button", { name: "Last year" }).click();
     await expect(figure.locator("svg").getByText("Last year: the letter left her network.")).toBeVisible();
     await expect(figure.getByTestId("coach-figure-result")).toHaveText("Last year: the letter left her network.");
     await expect(figure.locator("svg").getByText("Tuesday: the letter stays on her network.")).toBeHidden();
     expect(progressRaw()).toBe(before);
-    await expect(page.getByRole("button", { name: "Go on" })).toBeFocused();
+    await expect(page.getByRole("button", { name: "Next" })).toBeFocused();
     await shot(page, "02c-figure-last-year");
     const shownBefore = await beats.count();
     await page.keyboard.press("Space");
@@ -184,7 +193,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(page.getByText("Thanks. That's Priya's story, chapter 0.")).toBeVisible();
     await page.waitForTimeout(1000);
     await expect(page.getByTestId("coach-record")).toContainText(ANSWER);
-    await expect(page.getByRole("button", { name: "Go on" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Next" })).toHaveCount(0);
     await shot(page, "03-story-answered");
 
     await page.getByRole("button", { name: "Read it again" }).click();

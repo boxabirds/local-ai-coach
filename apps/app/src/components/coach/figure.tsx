@@ -7,7 +7,7 @@ import { defaultChoices, parseWhen, resultText, sanitiseSvg, visible, type Choic
  * One figure from the curriculum (Ceetrix story 7): a drawing, a row of choices
  * under it and a caption. Choosing redraws it; nothing is recorded or sent. The
  * figure never takes the keyboard focus from the story: a mouse click on a
- * choice leaves the focus where it was, so Space still means Go on.
+ * choice leaves the focus where it was, so Space still means Next.
  */
 
 export const FIGURE_URL = (id: string) => `/api/curriculum/figure/${encodeURIComponent(id)}`;
@@ -101,7 +101,7 @@ export function Figure({ id }: { id: string }) {
                 type="button"
                 className="coach-button coach-figure__choice"
                 aria-pressed={on}
-                // A mouse click keeps the focus where it was (Go on); the keyboard can still tab here.
+                // A mouse click keeps the focus where it was (Next); the keyboard can still tab here.
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => setChoices((now) => ({ ...now, [control.name]: option.value }))}
               >

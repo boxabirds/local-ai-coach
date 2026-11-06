@@ -46,7 +46,7 @@ const TOTAL_BEATS = 105;
 async function openStory(respond = vi.fn()) {
   stubFetch(Promise.resolve(new Response(STORY, { status: 200 })));
   render(<StoryCard storyId="legal-letter" question="The day after, what did Priya check?" options={OPTIONS} status="executing" respond={respond} />);
-  await screen.findByRole("button", { name: "Go on" });
+  await screen.findByRole("button", { name: "Next" });
   return respond;
 }
 
@@ -68,10 +68,10 @@ describe("story card", () => {
     expect(await screen.findByRole("heading", { name: "Chapter 0: The whole game" })).toBeInTheDocument();
   });
 
-  it("TC-10 opens on the first beat with Go on focused and the count", async () => {
+  it("TC-10 opens on the first beat with Next focused and the count", async () => {
     await openStory();
     expect(beatsShown()).toBe(1);
-    expect(screen.getByRole("button", { name: "Go on" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Next" })).toHaveFocus();
     expect(screen.getByTestId("coach-beat-count")).toHaveTextContent(`1 of ${TOTAL_BEATS}`);
     expect(screen.getByText("or press Space")).toBeInTheDocument();
     expect(screen.queryByText("The day after, what did Priya check?")).not.toBeInTheDocument();
@@ -81,7 +81,7 @@ describe("story card", () => {
 
   it("TC-25 each beat is its own bubble and the story has no card frame while reading", async () => {
     await openStory();
-    fireEvent.click(screen.getByRole("button", { name: "Go on" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
     const beats = screen.getAllByTestId("coach-beat");
     expect(beats).toHaveLength(2);
     for (const beat of beats) expect(beat).toHaveClass("coach-bubble");
@@ -89,19 +89,19 @@ describe("story card", () => {
     expect(screen.getByTestId("coach-story")).toHaveClass("coach-card--thread");
   });
 
-  it("TC-26 each step scrolls the Go on row into view, and the question box at the end", async () => {
+  it("TC-26 each step scrolls the Next row into view, and the question box at the end", async () => {
     await openStory();
     scrollIntoView.mockClear();
-    fireEvent.click(screen.getByRole("button", { name: "Go on" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(scrollIntoView.mock.contexts.at(-1)).toBe(screen.getByTestId("coach-story-footer"));
     fireEvent.click(screen.getByRole("button", { name: "Show the rest" }));
     const ask = screen.getByText("The day after, what did Priya check?").parentElement;
     expect(scrollIntoView.mock.contexts.at(-1)).toBe(ask);
   });
 
-  it("TC-11 Go on shows the next beat", async () => {
+  it("TC-11 Next shows the next beat", async () => {
     await openStory();
-    fireEvent.click(screen.getByRole("button", { name: "Go on" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(beatsShown()).toBe(2);
     expect(screen.getByTestId("coach-beat-count")).toHaveTextContent(`2 of ${TOTAL_BEATS}`);
     expect(screen.getAllByTestId("coach-beat")[1]).toHaveTextContent(/^Then I'm going to ask you why the ending matters\.$/);
@@ -139,9 +139,9 @@ describe("story card", () => {
     expect(beatsShown()).toBe(2);
   });
 
-  it("TC-18 Space on Go on steps exactly once", async () => {
+  it("TC-18 Space on Next steps exactly once", async () => {
     await openStory();
-    const goOn = screen.getByRole("button", { name: "Go on" });
+    const goOn = screen.getByRole("button", { name: "Next" });
     const event = press(" ", goOn);
     expect(event.defaultPrevented).toBe(false); // the button's own click handles it
     fireEvent.click(goOn); // what the browser does next for Space on a focused button
@@ -152,7 +152,7 @@ describe("story card", () => {
     await openStory();
     for (let i = 1; i < TOTAL_BEATS; i += 1) press(" ");
     expect(beatsShown()).toBe(TOTAL_BEATS);
-    expect(screen.queryByRole("button", { name: "Go on" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
     expect(screen.getByText("The day after, what did Priya check?")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: OPTIONS[0] })).toHaveFocus();
     press(" ");
@@ -194,7 +194,7 @@ describe("story card", () => {
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
     await screen.findByRole("alert");
     expect(press(" ").defaultPrevented).toBe(false);
-    expect(screen.queryByRole("button", { name: "Go on" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
   });
 
   it("TC-23 the key listener goes when the card does", async () => {
@@ -248,7 +248,7 @@ describe("story card", () => {
         <StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />
       </>,
     );
-    await screen.findByRole("button", { name: "Go on" });
+    await screen.findByRole("button", { name: "Next" });
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
@@ -262,7 +262,7 @@ describe("story card", () => {
     await screen.findByRole("alert");
     unmount();
     render(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
-    expect(await screen.findByRole("button", { name: "Go on" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Next" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -704,7 +704,7 @@ describe("story card while its arguments stream (bug: partial ids fetched)", () 
     rerender(<StoryCard storyId="legal-letter" status="inProgress" />);
     expect(fetchMock).not.toHaveBeenCalled();
     rerender(<StoryCard storyId="legal-letter" question="Q" options={OPTIONS} status="executing" respond={vi.fn()} />);
-    await screen.findByRole("button", { name: "Go on" });
+    await screen.findByRole("button", { name: "Next" });
     expect(fetchMock).toHaveBeenCalledExactlyOnceWith(STORY_URL("legal-letter"));
   });
 });

@@ -182,6 +182,7 @@
 
 /* Coach-only tokens. The criticality hues (grey, amber, red) are not for UI states. */
 :root {
+  --coach-footer-gap: 24px;
   --coach-paper: #ffffff;
   /* "Your turn": the live card and the primary button. Not grey, amber or red. */
   --coach-accent: #1d4ed8;
@@ -227,10 +228,11 @@
   --crit-red: #f87171;
 }
 
-/* A card that is really a run of chat messages (the story): no frame of its own. */
+/* A card that is really a run of chat messages (the story): no frame of its own. It spans the
+   chat column, so its Next row lines up with the message box; the bubbles keep their width. */
 .coach-card--thread,
 .coach-card--thread.coach-card--active {
-  max-width: 640px;
+  max-width: none;
   padding: 0;
   border: 0;
   background: transparent;
@@ -238,6 +240,11 @@
 }
 
 /* The story arrives as separate chat bubbles, one per beat. */
+.coach-story__text,
+.coach-story__ask {
+  max-width: 640px;
+}
+
 .coach-story__text {
   display: flex;
   flex-direction: column;
@@ -299,6 +306,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  /* Room between the Next row and the message box, also when it is scrolled into view. */
+  margin-bottom: var(--coach-footer-gap);
+  scroll-margin-bottom: var(--coach-footer-gap);
   font-size: 13px;
   color: var(--text-tertiary);
 }
@@ -311,8 +321,9 @@
 }
 
 .coach-story__footer .coach-link {
+  align-self: center;
   font-size: 13px;
-  line-height: 1;
+  line-height: inherit;
 }
 
 .coach-markdown p,
@@ -753,3 +764,4 @@ dialog .coach-map-lightbox__title {
   font-size: 1.125rem;
   font-weight: 600;
 }
+

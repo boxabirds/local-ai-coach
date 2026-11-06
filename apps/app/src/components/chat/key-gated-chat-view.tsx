@@ -1,8 +1,9 @@
 "use client";
 
 import { CopilotChatView } from "@copilotkit/react-core/v2";
-import type { ComponentProps } from "react";
+import { useMemo, type ComponentProps } from "react";
 import { useDraft, useProviderKeys } from "./provider-keys";
+import { ChatStartContext, glideToChat } from "./chat-start";
 
 /**
  * The stub coach (apps/agent/src/coach/stub.py) needs no keys. Set
@@ -28,7 +29,12 @@ function KeyGatedChatViewComponent(props: ComponentProps<typeof CopilotChatView>
   const { hasKeys, setKeysOpen } = useProviderKeys();
   const { draft, setDraft } = useDraft();
   const open = COACH_STUB || hasKeys;
+  const welcome = (props.messages?.length ?? 0) === 0;
+  // The first message glides the start box down into the message box.
+  const send = (action: () => void) => (welcome ? glideToChat(action) : action());
+  const start = useMemo(() => ({ welcome }), [welcome]);
   return (
+    <ChatStartContext.Provider value={start}>
       <CopilotChatView
         {...props}
         inputValue={draft}
@@ -39,8 +45,10 @@ function KeyGatedChatViewComponent(props: ComponentProps<typeof CopilotChatView>
             setKeysOpen(true);
             return;
           }
-          setDraft("");
-          props.onSubmitMessage?.(value);
+          send(() => {
+            setDraft("");
+            props.onSubmitMessage?.(value);
+          });
         }}
         onSelectSuggestion={(suggestion, index) => {
           if (!open) {
@@ -48,10 +56,13 @@ function KeyGatedChatViewComponent(props: ComponentProps<typeof CopilotChatView>
             setKeysOpen(true);
             return;
           }
-          setDraft("");
-          props.onSelectSuggestion?.(suggestion, index);
+          send(() => {
+            setDraft("");
+            props.onSelectSuggestion?.(suggestion, index);
+          });
         }}
       />
+    </ChatStartContext.Provider>
   );
 }
 

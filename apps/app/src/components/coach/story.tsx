@@ -146,7 +146,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   };
   useContinueKeys(active && !asking, next);
 
-  // After each beat, bring the Go on row into view (the new beat sits just above it);
+  // After each beat, bring the Next row into view (the new beat sits just above it);
   // at the question, bring the answers into view. The first answer then has the focus.
   useEffect(() => {
     if (!active || shown <= 1) return;
@@ -154,7 +154,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
     target?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [active, shown]);
   // A beat can grow after it arrives (a figure's drawing loads after its beat):
-  // bring the Go on row back into view each time the newest beat changes size.
+  // bring the Next row back into view each time the newest beat changes size.
   useEffect(() => {
     const beat = newestBeat.current;
     if (!active || asking || shown <= 1 || !beat || typeof ResizeObserver === "undefined") return;
@@ -238,7 +238,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
           ) : (
             <div className="coach-story__footer" ref={footer} data-testid="coach-story-footer">
               <button ref={primaryRef} type="button" className="coach-button coach-button--primary" disabled={!active} onClick={next}>
-                Go on
+                Next
               </button>
               <span>or press Space</span>
               <span className="coach-story__progress">
