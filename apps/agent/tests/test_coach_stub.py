@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import os
 import socket
 import subprocess
@@ -495,6 +496,23 @@ def test_s7_tc17_figure_endpoint_serves_words_choices_and_svg(client, figure_id)
     assert set(body) == {"id", "title", "alt", "caption", "controls", "svg"}
     assert body["id"] == figure_id and body["controls"]
     assert body["svg"] == (curriculum.root() / "figures" / f"{figure_id}.svg").read_text(encoding="utf-8")
+
+
+def test_s7_tc17b_a_figure_without_a_caption_still_loads(client, monkeypatch, tmp_path):
+    """The caption is optional (the three-stations figure dropped its own): the figure must load,
+    not fail with a 500 that the learner sees as "I couldn't load this picture"."""
+    copy = tmp_path / "curriculum"
+    shutil.copytree(REPO / "fixtures" / "curriculum", copy)
+    figures = json.loads((copy / "figures.json").read_text(encoding="utf-8"))
+    figure_id = figures["figures"][0]["id"]
+    del figures["figures"][0]["caption"]
+    (copy / "figures.json").write_text(json.dumps(figures), encoding="utf-8")
+    monkeypatch.setenv("COACH_CURRICULUM", str(copy))
+    response = client.get(f"/curriculum/figure/{figure_id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert "caption" not in body
+    assert body["id"] == figure_id and body["controls"] and body["svg"]
 
 
 @pytest.mark.parametrize("figure_id", ["nope", "legal-letter", "..%2Ffigures", "print"])

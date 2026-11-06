@@ -130,7 +130,9 @@ def story_markdown(story_id: str) -> str | None:
     return None
 
 
-FIGURE_FIELDS = ("id", "title", "alt", "caption", "controls")
+FIGURE_FIELDS = ("id", "title", "alt", "controls")
+# Optional: a figure may have no caption (the app then draws none).
+FIGURE_OPTIONAL = ("caption",)
 
 
 @lru_cache(maxsize=None)
@@ -145,4 +147,5 @@ def figure(figure_id: str) -> dict[str, Any] | None:
     if entry is None:
         return None
     svg = (folder / "figures" / f"{entry['id']}.svg").read_text(encoding="utf-8")
-    return {**{key: entry[key] for key in FIGURE_FIELDS}, "svg": svg}
+    optional = {key: entry[key] for key in FIGURE_OPTIONAL if key in entry}
+    return {**{key: entry[key] for key in FIGURE_FIELDS}, **optional, "svg": svg}
