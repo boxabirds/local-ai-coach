@@ -9,7 +9,7 @@ This is an investigation. Nothing here is built yet.
 | Piece | Today | Size today |
 |---|---|---|
 | The agent (Python 3.12: FastAPI, LangGraph, deepagents, LangChain) | `uv run uvicorn` from the repo | 109 MB of packages, plus Python itself |
-| The app (Next.js) | `next dev` or `next start` from the repo | 1.3 GB of `node_modules` for development; a production build is 148 MB but still needs Node and its runtime packages |
+| The app (React page and its server) | `make serve`: `Bun.build` then `bun server.ts` (story 31) | one executable from `bun build --compile` (61 MB, 26 MB compressed with the page) plus the built page; no Node, no `node_modules` |
 | The learner's files | `~/.local-ai-coach/` (progress, ratings, logs) | small |
 | Keys | the login Keychain, through `/usr/bin/security` | none |
 | Probes | `lsof`, `ps`, `tailscale` and friends, all on the Mac already | none |
@@ -26,19 +26,19 @@ Nothing needs admin rights; everything runs as the learner, on 127.0.0.1.
 ## Three ways to build it
 
 ### 1. A small launcher app around today's stack
-A `.app` whose executable is a short program that, on first launch, uses a bundled `uv` to install Python and the agent's packages into `~/Library/Application Support/Local AI Coach/`, then starts the agent and `next start`, and opens the browser. Node also has to be bundled. Needs the internet on first launch (for Python packages), unless they are bundled too.
+A `.app` whose executable is a short program that, on first launch, uses a bundled `uv` to install Python and the agent's packages into `~/Library/Application Support/Local AI Coach/`, then starts the agent and the web server, and opens the browser. Node also has to be bundled. Needs the internet on first launch (for Python packages), unless they are bundled too.
 - For: no migration.
 - Against: two runtimes to bundle (Node and Python), a large download, many moving parts.
 
 ### 2. The same launcher after the Bun migration (recommended)
-With the app moved off Next.js (see the CopilotKit check: its runtime has a plain `Request` to `Response` handler, and 12 of our 13 routes need no change), `bun build --compile` turns the whole web side (server, routes, CopilotKit runtime, built page) into **one executable file** with no Node and no `node_modules`. The app bundle then holds:
+Done in story 31: `bun build --compile` turns the web server (routes and the CopilotKit runtime) into **one executable file** with no Node and no `node_modules`; the built page is a folder of static files beside it. The app bundle then holds:
 - `coach-web` (the Bun binary),
 - the agent's source and lockfile, plus the `uv` binary,
 - a launcher that runs `uv sync` once (it fetches a standalone Python 3.12 and the locked packages into Application Support), then starts both on free ports bound to 127.0.0.1, opens the page, and shows a menu-bar icon with Open and Quit.
 
 Later, Python can be bundled too (a relocatable standalone Python with the packages preinstalled), so the first launch needs no internet. That makes the download bigger.
 - For: one runtime fewer, a much smaller app, and the web side becomes a single file that is easy to sign.
-- Against: needs the Bun migration first.
+- Against: none left; the Bun migration is done.
 
 ### 3. A desktop shell (Tauri or Electron)
 Tauri (a native webview plus "sidecar" processes) or Electron (bundles Chromium) give a real window instead of a browser tab. Both still have to ship and start the agent as a sidecar. Electron adds a whole browser. Tauri adds a Rust toolchain to the build.
@@ -58,7 +58,7 @@ The release script builds the `.app`, signs it, optionally notarises it, and wra
 
 ## Order, if Julian goes ahead
 
-1. The Bun migration (its own proposal and story; the styling proof first).
+1. ~~The Bun migration~~ (done, story 31).
 2. The launcher and a `.dmg` for friendly testers, unsigned, with the Open Anyway paragraph.
 3. Signing and notarisation, once it goes beyond friendly testers.
 4. Bundled Python for offline install, if testers have trouble with the first launch.
@@ -82,5 +82,5 @@ Two things differ from Cutaway:
 
 1. ~~Browser tab (launcher) or a real window (Tauri)?~~ Browser tab for the first version (Julian, 2026-11-06).
 2. ~~Unsigned for the first testers, or a Developer ID from the start?~~ Signed and notarised from the start, with macscreencap's pipeline (Julian, 2026-11-06).
-3. The Bun migration, and with it retiring the two V1 rules (upstream stack unchanged; the do-not-touch runtime route).
+3. ~~The Bun migration?~~ Done (Julian, 2026-11-06; story 31). The release already ships the web side as one Bun executable per platform.
 4. ~~The icon?~~ `docs/design/icons/round-4/14-chip-tick.svg` for now (Julian, 2026-11-06). It is the browser tab's icon (`apps/app/public/icon.svg`, black on light tabs, white on dark), and will be the menu-bar and app icon when the launcher is built.

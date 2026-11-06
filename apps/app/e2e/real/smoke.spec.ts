@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
  * It never types a key and never sends a message, so it costs nothing and changes nothing.
  */
 const DIALOG_MS = 5_000;
-const LOAD_MS = 180_000; // next dev compiles the page on its first visit
+const LOAD_MS = 180_000; // generous: the agent's first reply after a start can be slow
 
 test("the real page loads, API keys opens, typing works, and a reload keeps saved-key state", async ({ page }) => {
   const errors: string[] = [];

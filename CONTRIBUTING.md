@@ -39,15 +39,15 @@ git clone https://github.com/<your-GitHub-username>/OpenGenerativeUI
 
 ## Step 3: Prepare the development environment
 
-This is a **Turborepo monorepo** with a Next.js frontend and a LangGraph Python agent.
+This is a **Turborepo monorepo** with a React page served by Bun and a LangGraph Python agent.
 
 ### 1) Install Prerequisites
 
-- Node.js 20.x or later
+- Node.js 20.x or later (for pnpm; Bun is installed with the dependencies)
 - pnpm v9.x installed globally (`npm i -g pnpm@^9`)
 - Python 3.11+ (for the agent)
 
-> **Windows users:** Enable **Developer Mode** (Settings > System > For developers > Developer Mode → On) to allow symlink creation. This is required for Next.js standalone builds and pnpm to work correctly.
+> The coach runs on macOS and Linux.
 
 ### 2) Install Dependencies and Set Up
 
@@ -75,7 +75,7 @@ make dev      # Start all services (frontend + agent + mcp)
 Or run services individually:
 
 ```bash
-make dev-app    # Next.js frontend on http://localhost:3000
+make dev-app    # the page and its Bun server on http://127.0.0.1:3000
 make dev-agent  # LangGraph agent on http://localhost:8123
 make dev-mcp    # MCP server
 ```
@@ -117,7 +117,7 @@ The project has two main areas you can contribute to:
 
 | Area | Location | Tech |
 |------|----------|------|
-| **Frontend** | `apps/app/` | Next.js 16, React 19, Tailwind CSS 4, CopilotKit v2 |
+| **Frontend** | `apps/app/` | React 19 built and served by Bun, Tailwind CSS 4, CopilotKit v2 |
 | **Agent** | `apps/agent/` | LangGraph, Python, CopilotKit middleware |
 
 ## Step 6: Add the changes that are ready to be committed
@@ -187,7 +187,7 @@ docs(readme): update architecture diagram
 
 ### Scopes:
 
-- **app**: Changes to the Next.js frontend (`apps/app/`)
+- **app**: Changes to the page or its server (`apps/app/`)
 - **agent**: Changes to the LangGraph agent (`apps/agent/`)
 - **readme**: Documentation changes
 

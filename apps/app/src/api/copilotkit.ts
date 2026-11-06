@@ -1,7 +1,7 @@
 /**
  * The chat's CopilotKit endpoint (story 31): the same runtime, single-route mode and base path
- * as upstream's Next.js route, through CopilotKit's own framework-free endpoint, which is what
- * upstream's Next helper wrapped. No telemetry: the coach sends nothing anywhere.
+ * as upstream's route, through CopilotKit's own framework-free endpoint, which is what
+ * upstream's framework helper wrapped. No telemetry: the coach sends nothing anywhere.
  */
 import { CopilotRuntime, ExperimentalEmptyAdapter } from "@copilotkit/runtime";
 import { createCopilotEndpointSingleRoute } from "@copilotkit/runtime/v2";

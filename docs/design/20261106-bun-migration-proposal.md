@@ -40,8 +40,17 @@ Spike, done before this proposal: `Bun.build` bundles the whole page (14 MB of J
 
 1. ~~Move off Next.js?~~ Yes, to Bun (Julian, 2026-11-06).
 2. Package manager: this keeps pnpm. Moving to `bun install` is a separate change to the lockfile.
-3. Bun version: the build uses the installed 1.2.17. A newer Bun would allow on-the-fly page bundling in development; upgrading is a deliberate dependency change.
+3. Bun version: 1.2.17, the installed one, now pinned as a dev dependency (pnpm had pulled in 1.4.4 as the Tailwind plugin's peer; pinning stopped that silent upgrade). A newer Bun would allow on-the-fly page bundling in development; upgrading is a deliberate dependency change.
 
-## Done
+## Done (story 31, 2026-11-06)
 
-(filled in as the work lands)
+- The page: `apps/app/build.ts` (`Bun.build`, `bun-plugin-tailwind` 0.1.2), 3.5 s against Next's minute. `src/web/` holds index.html, main.tsx, app.tsx, providers.tsx, the CSS and the icon.
+- The server: `apps/app/server.ts` on 127.0.0.1, routes in `src/server/routes.ts` (same 13 paths), handlers moved unchanged to `src/api/`, static files with no path out of the web folder. `make serve`, `make dev` (rebuild on change, reload by hand), `make dev-stub`, Playwright and CI use it.
+- CopilotKit: `src/api/copilotkit.ts` calls `createCopilotEndpointSingleRoute`. The inert `launch-telemetry.ts` and PostHog are gone.
+- Release: one archive per platform with `bin/coach-web` from `bun build --compile` (26 MB for darwin-arm64, 28 MB for darwin-x64; linux-x64 cross-compiles too). `install.sh` fetches no Node.
+- Removed: the framework and its lint config, `next.config.ts`, `postcss.config.mjs`, the unused upstream `public/` files, `.dockerignore`, `.chalk/` (upstream review notes about deleted files), and three upstream guides that described hosting, PostHog and the framework (`docs/deployment.md`, `docs/telemetry.md`, `docs/bring-to-your-app.md`). `CLAUDE.md`, `docs/design.md`, `docs/architecture.md`, `README.md`, `CONTRIBUTING.md`, `TESTERS.md` and the Mac install proposal describe Bun.
+- One comment changed in `packages/design-system/src/index.ts` (on the do-not-touch list): it named the old framework.
+- Lint: `typescript-eslint`, `react`, `react-hooks` and the same six `jsx-a11y` rules as before; the full accessibility set is a separate change. Type check (`pnpm --filter @repo/app typecheck`) now covers the tests too, which turned up seven type errors in test files, fixed.
+- Guard: `apps/app/src/__tests__/no-next.test.ts` fails on any tracked file or lockfile entry that brings the framework back. This file is exempt: it records what was removed.
+- Tests: 573 vitest, 10 `bun test` (real server and build), 785 pytest, the browser suite 4 of 4 runs, the release test 31 of 31 including the real build, install and browser run.
+- Found on the way, not caused by the move: the release test's browser run used the shipped curriculum while the suite expects the frozen test one (story 13), and TC-14 looked for a progress file the suite's Restart coach case archives (story 23). Both fixed in the test.

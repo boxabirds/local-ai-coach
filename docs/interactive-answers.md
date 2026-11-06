@@ -45,4 +45,4 @@ The ordered streaming contract and sandbox rules are documented in [Architecture
 
 The source repository is now `CopilotKit/OpenIntelligentUI`. Package names, runtime options, activity/event names, and deployment service names retain their established identifiers. Product copy changes should not break those integration surfaces.
 
-Use the [launch workflow](deployment.md#verification-and-launch) to verify the experience. A passing build, a working provider-backed conversation, and a deployed service are different states and should be reported separately.
+A passing build, a working provider-backed conversation, and a deployed service are different states and should be reported separately.

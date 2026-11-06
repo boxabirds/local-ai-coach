@@ -57,7 +57,7 @@ This starts the frontend, agent, and MCP development processes. Open the [app](h
 4. Ask a follow-up with changed assumptions. It should produce a new answer without requiring an earlier output to be patched.
 5. Try a current-data request. Without a relevant source tool, the assistant should explain the limitation or use clearly labeled inputs, not invent live data.
 
-A health response confirms process availability; only a real prompt tests provider authentication and generation. See [Verification and launch](deployment.md#verification-and-launch) for the broader checks.
+A health response confirms process availability; only a real prompt tests provider authentication and generation.
 
 ```bash
 make dev-app

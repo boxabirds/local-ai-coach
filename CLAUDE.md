@@ -4,7 +4,8 @@ This repo is a fork of CopilotKit/OpenIntelligentUI, kept as shipped, with a coa
 
 ## What V1 is
 
-- The upstream stack runs unchanged: Python LangGraph agent on :8123, CopilotKit runtime route, Next.js chat, hosted OpenAI `chat-latest`, hosted Jev via TypeSafe. Both hosted providers stay in V1. Do not replace them.
+- The upstream stack runs unchanged except the web side: Python LangGraph agent on :8123, the CopilotKit runtime, hosted OpenAI `chat-latest`, hosted Jev via TypeSafe. Both hosted providers stay in V1. Do not replace them.
+- The web side is Bun (story 31): `apps/app/build.ts` builds the page from `src/web/index.html` with `Bun.build`, `apps/app/server.ts` serves it and the routes (`src/server/routes.ts`, handlers in `src/api/`) with `Bun.serve` on 127.0.0.1. Bun is pinned in the lockfile. `apps/app/src/__tests__/no-next.test.ts` fails if the old framework comes back.
 - Scope: Priya's story (chapter 0), What can my computer do? (was Know your machine), Local chat, Is my chat app talking to anyone else? (was Prove it stays local). macOS and Linux. Nothing else.
 - The local story is a model on a machine the learner owns, reached over their own network or their tailnet (Tailscale). Not "wifi off": that framing is gone from the taxonomy, the chapters and the design. The proof reads where the chat app's bytes go (`connections` probe: loopback, private or tailnet only; `tailnet` probe: `tailscale status --json` to match a tailnet address to a machine the learner owns). The PoC's reference setup is the model on a second machine over Tailscale; the check also passes with the model on the laptop itself.
 - Everything we add lives in new files: `apps/agent/src/coach/`, `apps/agent/skills/{coach-playbook,step-contract,evidence-rules}/`, `apps/app/src/hooks/use-coach-ui.tsx`, `apps/app/src/components/coach/`, `curriculum/`.
@@ -21,7 +22,7 @@ Start step 1 in plan mode and show the plan before writing code.
 
 ## Files you do not touch
 
-`apps/app/src/components/generative-ui/open-generative-ui/`, `apps/app/src/lib/sandbox/prompt-bridge.tsx`, `apps/app/src/lib/copilotkit-runtime-options.ts`, `apps/app/src/app/api/copilotkit/route.ts`, `apps/agent/src/credentials.py`, `apps/agent/src/model.py`, `apps/agent/src/visualization_router.py`, `packages/design-system/`. Upstream fixes merge into these; our code goes around them.
+`apps/app/src/components/generative-ui/open-generative-ui/`, `apps/app/src/lib/sandbox/prompt-bridge.tsx`, `apps/app/src/lib/copilotkit-runtime-options.ts`, `apps/agent/src/credentials.py`, `apps/agent/src/model.py`, `apps/agent/src/visualization_router.py`, `packages/design-system/`. Upstream fixes merge into these; our code goes around them.
 
 ## Hard rules
 
@@ -61,7 +62,7 @@ Code tests never assert curriculum content (wording, counts, labels): they use m
 - `generateSandboxedUi` parameter order: `initialHeight`, `placeholderMessages`, `css`, `html`, `jsFunctions`, `jsExpressions`. Styles only in `css`. JS channels are classic scripts: no top-level await.
 - Use the validated `sendPrompt` / `openLink` sandbox bridge, never raw postMessage. Preserve preview isolation and incremental streaming.
 - Label sample data as sample. Never imply a mock form authenticates.
-- Checks: `pnpm install`, `pnpm test`, `uv run --directory apps/agent pytest`, `pnpm lint`, `pnpm build`. A rendered chat shell does not prove generation works.
+- Checks: `pnpm install`, `pnpm test` (vitest, then `bun test` for the server), `pnpm --filter @repo/app typecheck`, `uv run --directory apps/agent pytest`, `pnpm lint`, `pnpm build`, and `pnpm test:e2e` in `apps/app`. A rendered chat shell does not prove generation works.
 - Keep secrets out of source, logs and screenshots.
 
 ## Where things are

@@ -112,4 +112,3 @@ Add to your `.mcp.json`:
 ## Next Steps
 
 - [Architecture](architecture.md) — How MCP fits into the overall system
-- [Deployment](deployment.md) — Deploy the MCP server alongside other services

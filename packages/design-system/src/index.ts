@@ -1,5 +1,5 @@
 // OpenIntelligentUI design system: theme tokens, SVG classes, form styles,
-// and the CDN import map shared by the Next.js app and the MCP server.
+// and the CDN import map shared by the coach's page and the MCP server.
 
 // ─── Theme Variables ─────────────────────────────────────────────────
 export const THEME_CSS = `

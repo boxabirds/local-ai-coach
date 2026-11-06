@@ -2,7 +2,7 @@
 
 **Answers you can interact with**, by [CopilotKit](https://copilotkit.ai). The agent chooses text, native components, or custom interactive answers to help people understand, compare, and make tools.
 
-Local prerequisites: Node.js 22+, pnpm 9+, Python 3.12+, uv, an OpenAI key for the default `chat-latest` answer model, and a TypeSafe key for Jev visualization routing. `claude-*` overrides use Anthropic instead of OpenAI.
+Local prerequisites: Node.js 22+ (for pnpm; Bun comes with the dependencies), pnpm 9+, Python 3.12+, uv, an OpenAI key for the default `chat-latest` answer model, and a TypeSafe key for Jev visualization routing. `claude-*` overrides use Anthropic instead of OpenAI.
 
 | Guide                                                | Description                                            |
 | ---------------------------------------------------- | ------------------------------------------------------ |
@@ -10,9 +10,6 @@ Local prerequisites: Node.js 22+, pnpm 9+, Python 3.12+, uv, an OpenAI key for t
 | [Product and agent behavior](interactive-answers.md) | Response selection, examples, evidence, and follow-ups |
 | [Visualization routing](visualization-routing.md) | Jev, A2UI tables, charts, diagrams, and maps |
 | [Architecture](architecture.md)                      | Agent, runtime, streaming renderer, and sandbox        |
-| [Deployment](deployment.md)                          | Configuration and launch verification                  |
-| [Telemetry](telemetry.md)                            | What usage data is sent and how to turn it off         |
-| [Bring to your app](bring-to-your-app.md)            | Adopt the integration patterns                         |
 | [Agent state](agent-state.md)                        | Shared state examples                                  |
 | [Generative UI](generative-ui.md)                    | Native component examples                              |
 | [Agent tools](agent-tools.md)                        | Python tool examples                                   |

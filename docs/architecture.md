@@ -6,7 +6,7 @@ Open Generative UI combines a Python agent with a CopilotKit runtime and a brows
 
 | Location                  | Responsibility                                            |
 | ------------------------- | --------------------------------------------------------- |
-| `apps/app/`               | Next.js frontend and `/api/copilotkit` runtime route      |
+| `apps/app/`               | React page built by Bun, and the Bun server with the `/api/copilotkit` runtime route |
 | `apps/agent/`             | FastAPI, LangGraph, Deep Agent, tools, prompt, and skills |
 | `apps/mcp/`               | Optional standalone MCP resources and HTML assembler      |
 | `packages/design-system/` | Shared theme, SVG classes, and form styles                |
@@ -18,7 +18,7 @@ Node packages use pnpm/Turborepo. The Python agent uses uv.
 ```text
 User prompt or chat starter suggestion
   → CopilotKit chat / agent run
-  → Next.js /api/copilotkit
+  → Bun server /api/copilotkit
   → LangGraphHttpAgent → FastAPI agent
   → model + applicable tools and skills
   → text, native component, or generateSandboxedUi
@@ -61,9 +61,10 @@ The MCP server exposes skills, prompts, and `assemble_document`. The assembler r
 ## Key implementation files
 
 - Agent: `apps/agent/main.py`, `src/model.py`, `src/prompt.py`, `src/query.py`, `skills/`.
-- Runtime: `apps/app/src/app/api/copilotkit/route.ts`, `src/lib/copilotkit-runtime-options.ts`.
+- Server: `apps/app/server.ts` (Bun.serve on 127.0.0.1), routes in `src/server/routes.ts`, handlers in `src/api/`.
+- Runtime: `apps/app/src/api/copilotkit.ts`, `src/lib/copilotkit-runtime-options.ts`.
+- Page: `apps/app/src/web/` (index.html, app.tsx, providers.tsx), built by `apps/app/build.ts`.
 - Renderer: `apps/app/src/components/generative-ui/open-generative-ui/`.
 - Host bridge: `apps/app/src/lib/sandbox/`.
 - MCP assembly: `apps/mcp/src/server.ts`, `src/renderer.ts`.
 
-See [Deployment](deployment.md) for runtime configuration and operational limits.

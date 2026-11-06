@@ -165,7 +165,7 @@ The agent can run without shared provider keys. Visitors must then supply both k
 
 ## How it works
 
-The Python Deep Agent uses a task-first system prompt and focused skills. CopilotKit carries the agent stream to the Next.js app. Native components handle supported structured tasks; `generateSandboxedUi` streams custom HTML, CSS, and JavaScript into an isolated iframe.
+The Python Deep Agent uses a task-first system prompt and focused skills. CopilotKit carries the agent stream to the page. Native components handle supported structured tasks; `generateSandboxedUi` streams custom HTML, CSS, and JavaScript into an isolated iframe.
 
 Custom UI parameters must arrive in this order:
 
@@ -174,7 +174,7 @@ Custom UI parameters must arrive in this order:
 Local controls run inside the sandbox. A user-clicked follow-up can send selected values through the validated host bridge and start another agent turn. Prior outputs remain separate conversation artifacts; there is no cross-call patch API. See [Product and agent behavior](docs/interactive-answers.md) and [Architecture](docs/architecture.md).
 
 ```text
-apps/app/                Next.js + CopilotKit frontend
+apps/app/                React + CopilotKit page and its Bun server
 apps/agent/              Python Deep Agent + FastAPI
 apps/mcp/                Optional standalone MCP server
 packages/design-system/  Shared theme, SVG, and form styles
@@ -192,7 +192,7 @@ make lint
 make build
 ```
 
-The [launch workflow](docs/deployment.md#verification-and-launch) includes browser checks and a real provider smoke test. Tests and builds alone do not verify model access or a deployment.
+`make smoke` runs a real-browser check of the running coach. Tests and builds alone do not verify model access.
 
 ## Standalone MCP
 
@@ -205,9 +205,7 @@ See the [MCP server guide](apps/mcp/README.md) for HTTP, stdio, and Docker confi
 Built with CopilotKit. The `openGenerativeUI` runtime API and `generateSandboxedUi` tool power the streaming experience.
 
 - [Documentation index](docs/README.md)
-- [Bring these patterns to your app](docs/bring-to-your-app.md)
 - [Source repository](https://github.com/CopilotKit/OpenIntelligentUI)
-- [Telemetry and how to turn it off](docs/telemetry.md)
 
 ## Contributing
 
