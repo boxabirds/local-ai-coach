@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { GOAL_URL, MAP_URL, NOT_LOADED, NOT_SAVED, WholeMap, type WholeMapData } from "../whole-map";
-import { MAX_ZOOM, MIN_ZOOM, centreOn, fitView, linkPath, pan, toMap, zoomAt, zoomOf } from "../whole-map-view";
+import { MAX_ZOOM, MIN_ZOOM, centreOn, fitView, pan, toMap, zoomAt, zoomOf } from "../whole-map-view";
 
 /**
  * The whole map (Ceetrix story 29, TC-16 to TC-22). A small made-up map shaped like the agent's
@@ -46,11 +46,6 @@ describe("the view", () => {
     expect(centreOn(view, { x: 0, y: 0 })).toEqual({ x: -200, y: -200, w: 400, h: 400 });
   });
 
-  it("draws spline links as curves and anything else as lines", () => {
-    expect(linkPath([[0, 0], [1, 1], [2, 2], [3, 3]])).toBe("M0 0 C1 1 2 2 3 3");
-    expect(linkPath([[0, 0], [5, 5]])).toBe("M0 0 L5 5");
-    expect(linkPath([[0, 0]])).toBe("");
-  });
 });
 
 // ---------------------------------------------------------------- the dialog
@@ -70,7 +65,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const box = (x: number, y: number) => ({ x, y, w: 120, h: 28 });
+const spot = (x: number, y: number, label: string[], dest = false) => ({ x, y, dest, label });
 
 /** Made-up stations: start -> middle -> far (a destination), side -> far, alone (a destination). */
 function made(overrides: Partial<WholeMapData> = {}): WholeMapData {
@@ -85,11 +80,18 @@ function made(overrides: Partial<WholeMapData> = {}): WholeMapData {
     layout: {
       width: 600,
       height: 300,
-      stations: { start: box(0, 0), middle: box(200, 0), side: box(200, 100), far: box(400, 50), alone: box(0, 200) },
+      stations: {
+        start: spot(90, 70, ["Made-up start"]),
+        middle: spot(212, 70, ["Made-up middle"]),
+        side: spot(212, 140, ["Made-up side"]),
+        far: spot(500, 70, ["Made-up far"], true),
+        alone: spot(500, 200, ["Made-up alone"], true),
+      },
       edges: [
-        { from: "start", to: "middle", points: [[120, 14], [200, 14]] },
-        { from: "middle", to: "far", points: [[320, 14], [400, 64]] },
-        { from: "side", to: "far", points: [[320, 114], [400, 64]] },
+        { from: "start", to: "middle", kind: "track", area: "trunk", d: "M90 70 L212 70" },
+        { from: "middle", to: "far", kind: "link", area: "text", d: "M212 70 L500 70" },
+        { from: "side", to: "far", kind: "link", area: "text", d: "M212 140 L500 70" },
+        { from: "start", to: "side", kind: "better", area: "models", d: "M90 70 L212 140" },
       ],
     },
     current: "middle",
@@ -124,7 +126,7 @@ describe("the whole map", () => {
     serve(made());
     await open();
     for (const id of ["start", "middle", "side", "far", "alone"]) expect(station(id)).toBeInTheDocument();
-    expect(document.querySelectorAll(".coach-whole-map__link")).toHaveLength(3);
+    expect(document.querySelectorAll(".coach-whole-map__link")).toHaveLength(4);
     expect(station("start")).toHaveAttribute("data-covered", "true");
     expect(station("start")).not.toHaveClass("coach-whole-map__station--faint");
     expect(station("side")).toHaveClass("coach-whole-map__station--faint");
@@ -163,7 +165,8 @@ describe("the whole map", () => {
     for (const id of ["middle", "side", "far"]) expect(station(id)).toHaveAttribute("data-route", "true");
     expect(station("alone")).not.toHaveAttribute("data-route");
     expect(within(station("far")).getByTestId("coach-whole-map-goal")).toBeInTheDocument();
-    expect(document.querySelectorAll('.coach-whole-map__link[data-route="true"]')).toHaveLength(3);
+    expect(document.querySelectorAll('.coach-whole-map__link[data-route="true"]')).toHaveLength(3); // start->middle (joins from a covered station), middle->far, side->far
+    expect(document.querySelector('[data-kind="better"]')).not.toHaveAttribute("data-route");
     // The goal's panel lists the way there, in order, so it can be read at any zoom.
     const steps = within(screen.getByTestId("coach-whole-map-route")).getAllByRole("button").map((b) => b.textContent);
     expect(steps).toEqual(["Made-up middle", "Made-up side", "Made-up far"]);
@@ -261,6 +264,68 @@ describe("a reached goal", () => {
     fireEvent.click(station("alone"));
     expect(screen.getByTestId("coach-whole-map-reached")).toBeInTheDocument();
     expect(screen.queryByTestId("coach-whole-map-route")).toBeNull();
+  });
+});
+
+describe("story 30: the tube map in the coach's style", () => {
+  it("TC-09 stations take the coach's shape for their criticality, filled when covered, faint otherwise", async () => {
+    serve(made());
+    await open();
+    const dot = (id: string) => station(id).querySelector(".coach-whole-map__dot")!;
+    expect(dot("start")).toHaveClass("coach-crit--grey", "coach-whole-map__dot--covered");
+    expect(dot("middle")).toHaveClass("coach-crit--amber");
+    expect(dot("side")).toHaveClass("coach-crit--red");
+    expect(dot("side")).not.toHaveClass("coach-whole-map__dot--covered");
+    expect(dot("far")).toHaveClass("coach-crit--none");
+    expect(station("side")).toHaveClass("coach-whole-map__station--faint");
+    expect(station("far")).toHaveClass("coach-whole-map__station--dest");
+  });
+
+  it("TC-10 a track carries its area's line colour; a better-with link is dotted", async () => {
+    serve(made());
+    await open();
+    const track = document.querySelector('[data-kind="track"]') as SVGPathElement;
+    expect(track).toHaveClass("coach-whole-map__link--track");
+    expect(track.getAttribute("style")).toContain("--map-line-trunk");
+    expect(document.querySelector('[data-kind="better"]')).toHaveClass("coach-whole-map__link--better");
+    expect(document.querySelectorAll('[data-kind="link"]')).toHaveLength(2);
+  });
+
+  it("TC-11 every name sits on a plate", async () => {
+    serve(made());
+    await open();
+    expect(screen.getAllByTestId("coach-whole-map-plate")).toHaveLength(5);
+    for (const id of ["start", "far"]) expect(within(station(id)).getByTestId("coach-whole-map-plate")).toBeInTheDocument();
+  });
+
+  it("TC-12 nothing explains the map in words: only names, You are here and the controls", async () => {
+    serve(made());
+    await open();
+    const svgText = Array.from(document.querySelectorAll(".coach-whole-map__svg text")).map((t) => t.textContent);
+    expect(svgText.sort()).toEqual(["Made-up alone", "Made-up far", "Made-up middle", "Made-up side", "Made-up start", "You are here"].sort());
+    const outside = screen.getByTestId("coach-whole-map").textContent!.replace(document.querySelector(".coach-whole-map__svg")!.textContent!, "");
+    expect(outside.replace(/\s+/g, "")).toBe("+−FitClose");
+  });
+
+  it("TC-13 a layout in the old format can't be drawn and says so", async () => {
+    const old = made();
+    (old.layout as unknown as { stations: Record<string, unknown> }).stations = { start: { x: 1, y: 2, w: 3, h: 4 } };
+    serve(old);
+    render(<WholeMap onClose={vi.fn()} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(NOT_LOADED);
+  });
+});
+
+describe("the view stays on the map", () => {
+  it("never moves past an edge into blank space; a view bigger than the map is centred", async () => {
+    const { clampView, EDGE_MARGIN } = await import("../whole-map-view");
+    const map = { x: 0, y: 0, w: 1000, h: 4000 };
+    // You are here in the top-right corner: the view is pulled back onto the map.
+    expect(clampView({ x: 700, y: -300, w: 800, h: 600 }, map)).toEqual({ x: 1000 + EDGE_MARGIN - 800, y: -EDGE_MARGIN, w: 800, h: 600 });
+    // Inside the map it stays where it is.
+    expect(clampView({ x: 100, y: 1000, w: 800, h: 600 }, map)).toEqual({ x: 100, y: 1000, w: 800, h: 600 });
+    // Wider than the map: centred across it.
+    expect(clampView({ x: -900, y: 0, w: 3000, h: 600 }, map).x).toBe(500 - 1500);
   });
 });
 

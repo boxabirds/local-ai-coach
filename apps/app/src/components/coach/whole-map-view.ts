@@ -62,24 +62,6 @@ export function toMap(view: View, frame: Size, screen: Point): Point {
 }
 
 /**
- * An SVG path through a link's points. The layout draws splines: after the start, points come in
- * threes (two control points and an end) for each curve; anything else is drawn as straight lines.
- */
-export function linkPath(points: readonly (readonly [number, number])[]): string {
-  if (points.length < 2) return "";
-  const [start, ...rest] = points;
-  const move = `M${start[0]} ${start[1]}`;
-  if (rest.length % 3 === 0) {
-    const curves: string[] = [];
-    for (let i = 0; i < rest.length; i += 3) {
-      curves.push(`C${rest[i][0]} ${rest[i][1]} ${rest[i + 1][0]} ${rest[i + 1][1]} ${rest[i + 2][0]} ${rest[i + 2][1]}`);
-    }
-    return `${move} ${curves.join(" ")}`;
-  }
-  return `${move} ${rest.map(([x, y]) => `L${x} ${y}`).join(" ")}`;
-}
-
-/**
  * The first view: names at their real size (one map unit to one pixel), centred on where the
  * learner is. Fitting all of it at once made every name unreadable; Fit is a press away.
  */
@@ -108,5 +90,20 @@ export function frameBoxes(boxes: readonly Box[], frame: Size, fitted: View): Vi
   const view = fitView(bounds, frame);
   if (zoomOf(view, fitted) <= MAX_ZOOM) return view;
   return zoomAt(view, 1, { x: bounds.x + bounds.w / 2, y: bounds.y + bounds.h / 2 }, fitted);
+}
+
+/** How far past its edge the map may be moved, in map units. */
+export const EDGE_MARGIN = 40;
+
+/**
+ * Keep the view on the map: never panned or zoomed out into blank space past its edges. A view
+ * wider (or taller) than the map is centred on it in that direction.
+ */
+export function clampView(view: View, map: Box, margin = EDGE_MARGIN): View {
+  const axis = (start: number, size: number, from: number, extent: number) => {
+    if (size >= extent + 2 * margin) return from + extent / 2 - size / 2;
+    return Math.min(Math.max(start, from - margin), from + extent + margin - size);
+  };
+  return { ...view, x: axis(view.x, view.w, map.x, map.w), y: axis(view.y, view.h, map.y, map.h) };
 }
 

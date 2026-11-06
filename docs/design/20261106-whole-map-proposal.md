@@ -42,3 +42,7 @@ All of the above, through `make check` (MAP_LAYOUT passes for both curricula). T
 
 Also: links not on the route are faint; tapping a station highlights the links into and out of it; each station's whole row is its tap target.
 
+## Story 30: the tube map (2026-11-06)
+
+Julian supplied his original design, `curriculum/local-ai-tube-map.html`, and set the rule: the app is the reference for style. So the generator now ports that file's layout (one coloured track per area, stations by prerequisite depth, forks onto branch rows, octilinear links, destinations in a column on the right, names on plates) and elkjs is gone. The coach draws it in its own style: the grey circle, amber diamond and red triangle, filled when covered and at half strength otherwise, with no paragraph, legend, row labels or footer, and no hardware-zone fill. The area colours are the HTML's, as coach tokens with dark values. The HTML file itself is out of date (older names, its own ring style) and is not used by the app.
+

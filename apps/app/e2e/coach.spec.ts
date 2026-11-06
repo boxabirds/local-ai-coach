@@ -558,6 +558,10 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(map).toBeVisible();
     await expect(map.locator("[data-station]")).toHaveCount(fixture.stations.length);
     await expect(map.getByTestId("coach-whole-map-here")).toHaveText("You are here");
+    // Story 30, TC-14: a tube map: each area's track in its own colour, every name on a plate.
+    const trackColours = await map.locator('[data-kind="track"]').evaluateAll((paths) => new Set(paths.map((p) => getComputedStyle(p).stroke)).size);
+    expect(trackColours).toBeGreaterThan(3);
+    await expect(map.getByTestId("coach-whole-map-plate")).toHaveCount(fixture.stations.length);
     await shot(page, "09-whole-map");
     await map.locator(`[data-station="${destination}"]`).click();
     await map.getByRole("button", { name: "Make this my goal" }).click();

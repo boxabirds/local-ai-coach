@@ -1,0 +1,229 @@
+<title>Local AI Tube Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: a wide scrolling map on top, a station card and a journey planner beneath. Tube-poster palette: ink on paper, line colours by goal, criticality as ring weight. */
+:root{
+  --bg:#f6f4ee; --paper:#ffffff; --ink:#1e2126; --ink-2:#5a5e66; --ink-3:#9a9ea6; --rule:#d9d6cc;
+  --accent:#1f5fbf; --amber:#d08a1a; --red:#c8382d; --grey:#8e9199; --zone2:#cfcbc0; --zone3:#6b6f78;
+  --l-trunk:#2b2f36; --l-models:#7a5cc4; --l-text:#1f5fbf; --l-docs:#1d8f7a; --l-in:#c25c8a; --l-out:#d9792a; --l-code:#4d8a2b; --l-agents:#b8322a; --l-build:#8a6a3a; --l-net:#2f7f9e; --l-ops:#6b7280; --l-govern:#8d5a9e;
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif; --font-body:"Figtree",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#14161a; --paper:#1d2026; --ink:#ebe9e2; --ink-2:#a9adb5; --ink-3:#6f737b; --rule:#30343b;
+  --accent:#6ea0f0; --amber:#e3a63a; --red:#ef6b5e; --grey:#7c8089; --zone2:#4a4f58; --zone3:#9aa0aa;
+  --l-trunk:#cfd3da; --l-models:#a98bf0; --l-text:#6ea0f0; --l-docs:#3fc2a7; --l-in:#e784b2; --l-out:#f09a4e; --l-code:#7fc257; --l-agents:#f06a60; --l-build:#c9a26a; --l-net:#5fb6d6; --l-ops:#a3a9b3; --l-govern:#c48ad3;
+  color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#14161a; --paper:#1d2026; --ink:#ebe9e2; --ink-2:#a9adb5; --ink-3:#6f737b; --rule:#30343b;
+  --accent:#6ea0f0; --amber:#e3a63a; --red:#ef6b5e; --grey:#7c8089; --zone2:#4a4f58; --zone3:#9aa0aa;
+  --l-trunk:#cfd3da; --l-models:#a98bf0; --l-text:#6ea0f0; --l-docs:#3fc2a7; --l-in:#e784b2; --l-out:#f09a4e; --l-code:#7fc257; --l-agents:#f06a60; --l-build:#c9a26a; --l-net:#5fb6d6; --l-ops:#a3a9b3; --l-govern:#c48ad3;
+  color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;
+  padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px}
+h1{font-family:var(--font-display);font-weight:600;font-size:38px;letter-spacing:.01em;margin:0;line-height:1;text-wrap:balance}
+header p{margin:0;color:var(--ink-2);max-width:60ch}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+label.sel{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+select{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink)}
+button.ghost{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--rule);border-radius:6px;background:transparent;color:var(--ink-2);cursor:pointer}
+button.ghost:hover,button.ghost:focus-visible{border-color:var(--ink-3);color:var(--ink);outline:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-2);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--paper);border:2.5px solid var(--grey)}
+.legend i.a{border-color:var(--amber)} .legend i.r{border-color:var(--red);border-width:4px}
+.legend i.x{border:3px solid var(--ink);width:12px;height:18px;border-radius:9px}
+.legend i.d{border:3px solid var(--ink);width:18px;height:18px}
+.legend i.z1{background:var(--paper);border-color:var(--ink-3)} .legend i.z2{background:var(--zone2);border-color:var(--ink-3)} .legend i.z3{background:var(--zone3);border-color:var(--ink-3)}
+.legend .lg{font:inherit;font-size:12.5px;color:var(--ink-2);background:none;border:1px solid transparent;border-radius:6px;padding:2px 6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.legend .lg:hover,.legend .lg[aria-pressed=true]{border-color:var(--rule);color:var(--ink)}
+.legend .sep{width:1px;height:16px;background:var(--rule)}
+.mapbox{background:var(--paper);border:1px solid var(--rule);border-radius:10px;overflow-x:auto;overflow-y:hidden}
+svg{display:block;width:100%;height:auto;font-family:var(--font-body);touch-action:none;user-select:none;cursor:grab}
+.stn{cursor:pointer}
+svg.panning{cursor:grabbing}
+.zoomgrp{display:inline-flex;gap:4px}
+.hint{font-size:12.5px;color:var(--ink-3)}
+.stn{cursor:pointer}
+.stn text{font-size:11.5px;fill:var(--ink);pointer-events:none}
+.stn .plate{pointer-events:none}
+.stn text.sub{font-size:10px;fill:var(--ink-3)}
+.stn circle{transition:r .15s}
+.stn:hover circle.core{r:9}
+.stn.dim{opacity:.35;filter:saturate(.15)}
+.stn:focus:not(:focus-visible){outline:none}
+.search{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);min-width:220px}
+.stn.sel circle.core{stroke-width:4}
+.stn.dest text{font-family:var(--font-display);font-size:14px;font-weight:600}
+.edge.cross{opacity:.55}
+.edge.opt{opacity:.5}
+.edge.dim{opacity:.18;filter:saturate(.15)}
+.edge.hot{opacity:1}
+.edge.opt.hot{stroke:var(--accent)}
+.edge.same.hot{opacity:1}
+.rowlabel{font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.zone{font-size:10px;fill:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+.below{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px}
+@media (max-width:760px){.below{grid-template-columns:1fr}}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;min-width:0}
+.card h2{font-family:var(--font-display);font-weight:600;font-size:26px;margin:0 0 2px;line-height:1.1}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px}
+.pill{font-size:11.5px;padding:2px 9px;border-radius:999px;border:1px solid var(--rule);color:var(--ink-2);letter-spacing:.03em}
+.pill.line{color:var(--paper);border-color:transparent}
+.pill.c0{background:color-mix(in srgb,var(--grey) 18%,transparent)} .pill.c1{background:color-mix(in srgb,var(--amber) 22%,transparent)} .pill.c2{background:color-mix(in srgb,var(--red) 22%,transparent);color:var(--ink)}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;margin:0}
+dt{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);padding-top:3px}
+dd{margin:0}
+dd a,.plan a{color:var(--accent);text-decoration:none;cursor:pointer}
+dd a:hover,.plan a:hover{text-decoration:underline}
+.empty{color:var(--ink-2)}
+.plan ol{margin:8px 0 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.plan li{display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;font-size:14px}
+.plan li i{width:12px;height:12px;border-radius:50%;background:var(--paper);border:2.5px solid var(--grey);display:inline-block}
+.plan li i.c1{border-color:var(--amber)} .plan li i.c2{border-color:var(--red);border-width:3.5px}
+.plan li small{color:var(--ink-3);font-variant-numeric:tabular-nums}
+.plan .sum{color:var(--ink-2);font-size:13.5px;margin-top:10px}
+footer{color:var(--ink-3);font-size:12.5px}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Local AI tube map</h1>
+  <p>Read each track left to right: every station requires the one before it, and where a track forks both branches require the station at the fork. A link that curves between rows is the same kind of requirement, coloured by the area it leads into. Dotted means better with, not required. Destinations on the right are things you can make. Ring weight is how much has to be in your head rather than in a script: thin, press go; medium, know what it does but not how to fix it (it rarely breaks); thick, understand it, because its failures are silent or costly. Draft placements, not measured facts.</p>
+</header>
+
+<div class="controls">
+  <input class="search" id="search" type="search" placeholder="Search stations" aria-label="Search stations">
+  <button class="ghost" id="clear" type="button">Clear focus</button>
+  <span class="zoomgrp"><button class="ghost" id="zin" type="button" aria-label="Zoom in">+</button><button class="ghost" id="zout" type="button" aria-label="Zoom out">&minus;</button><button class="ghost" id="zreset" type="button">Reset view</button></span>
+  <span class="hint">Click a station to focus everything it builds on. Drag to pan. Shift + scroll, or pinch, to zoom.</span>
+  <div class="legend">
+    <button class="lg" data-crit="0" title="A script does it; you need not know what happened"><i></i> press go</button><button class="lg" data-crit="1" title="Know what it does and why it is there, not how to fix it; it rarely goes wrong"><i class="a"></i> know what it does</button><button class="lg" data-crit="2" title="Understand it well enough to tell when it is wrong; the failure is silent or costly"><i class="r"></i> must understand</button><span><i class="d"></i> destination</span>
+    <span class="sep"></span>
+    <button class="lg" data-zone="1"><i class="z1"></i> zone 1: any laptop</button><button class="lg" data-zone="2"><i class="z2"></i> zone 2: 24 to 32 GB GPU or 32 GB+ unified</button><button class="lg" data-zone="3"><i class="z3"></i> zone 3: 128 GB unified or multi-GPU</button><span><svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 4"/></svg> better with</span>
+  </div>
+</div>
+
+<div class="mapbox"><svg id="map" role="img"><title>Local AI tube map</title></svg></div>
+
+<div class="below">
+  <section class="card" id="station" aria-live="polite">
+    <h2>Pick a station</h2>
+    <p class="empty">Click any station on the map. Everything it builds on stays sharp; the rest fades.</p>
+  </section>
+  <section class="card plan" id="plan">
+    <h2>Journey planner</h2>
+    <p class="empty">Click a station or destination to list every station on the way, in order, with its ring.</p>
+  </section>
+</div>
+<footer>Station fill shows the hardware zone; ring weight shows how much must be in your head. Click a legend item to show only those stations. Model classes from the October 2026 capability map and will date.</footer>
+</div>
+
+<script type="module">
+// id, name, line, needs, crit(0 grey 1 amber 2 red), zone, unlocks, proof, skipped, head, dest?
+const CRIT={'press go':0,'know what it does':1,'must understand':2};
+const data=await (await fetch('stations.json')).json();
+const LINES=data.areas.map(a=>[a.id,a.name,'--l-'+a.id]);
+const S=data.stations.map(n=>[n.id,n.name,n.area,[...n.needs,...n.betterWith.map(x=>'?'+x)],CRIT[n.inYourHead],n.zone,n.unlocks,n.proof,n.ifSkipped,n.headNote,n.destination?1:0]);
+const byId=Object.fromEntries(S.map(s=>[s[0],s]));
+const F=s=>({id:s[0],name:s[1],line:s[2],needs:s[3].filter(x=>x[0]!=='?'),opt:s[3].filter(x=>x[0]==='?').map(x=>x.slice(1)),crit:s[4],zone:s[5],unlocks:s[6],proof:s[7],skipped:s[8],head:s[9],dest:!!s[10]});
+const N=S.map(F);
+const node=Object.fromEntries(N.map(n=>[n.id,n]));
+// depth = longest prerequisite chain
+const depth={};const dep=id=>{if(depth[id]!=null)return depth[id];const n=node[id];depth[id]=n.needs.length?1+Math.max(...n.needs.map(dep)):0;return depth[id]};
+N.forEach(n=>dep(n.id));
+// dependents, for interchange detection
+const dependents={};N.forEach(n=>n.needs.forEach(p=>(dependents[p]=dependents[p]||[]).push(n.id)));
+N.forEach(n=>{const ls=new Set((dependents[n.id]||[]).map(d=>node[d].line));ls.delete(n.line);n.inter=ls.size>0});
+// layout: row per line, column slots ascending
+const X0=170,DX=122,Y0=70,SUB=70,GAP=30;
+// Each row is a track: a station requires the station to its left on the same track. A station with no same-area prerequisite starts a new track; a second child of the same parent forks onto a new track below.
+let yCursor=Y0;const lineTop={};
+LINES.forEach(([l])=>{const row=N.filter(n=>n.line===l&&!n.dest).sort((a,b)=>depth[a.id]-depth[b.id]);lineTop[l]=yCursor;let sub=0;const taken={};
+ row.forEach(n=>{n.col=depth[n.id];const parent=n.needs.map(p=>node[p]).filter(p=>p.line===l)[0];
+  if(parent&&!taken[parent.id]){n.sub=parent.sub;taken[parent.id]=true}else{n.sub=sub++}
+  n.x=X0+n.col*DX;n.y=yCursor+n.sub*SUB;n.parent=parent?parent.id:null});
+ yCursor+=Math.max(1,sub)*SUB+GAP});
+const maxStnCol=Math.max(...N.filter(n=>!n.dest).map(n=>n.col));const DCOL=maxStnCol+1.6;
+const dests=N.filter(n=>n.dest).sort((a,b)=>LINES.findIndex(x=>x[0]===a.line)-LINES.findIndex(x=>x[0]===b.line));
+const span=yCursor-GAP-Y0-SUB;dests.forEach((n,i)=>{n.col=DCOL;n.x=X0+DCOL*DX;n.y=Y0+(dests.length>1?i*span/(dests.length-1):0)});
+const H=yCursor;const svgW=X0+(DCOL+1)*DX+90;
+const svg=document.getElementById('map');svg.setAttribute('viewBox',`0 0 ${svgW} ${H}`);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const ns='http://www.w3.org/2000/svg';const el=(t,a={},parent=svg)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);parent.appendChild(e);return e};
+const gL=el('g',{id:'lines'}),gR=el('g',{id:'routes'}),gS=el('g',{id:'stations'});
+// zone bands (column ranges are a rough read: zone shown per station in the card)
+LINES.forEach(([l,name,v])=>{const t=el('text',{x:20,y:lineTop[l]+4,class:'rowlabel',fill:`var(${v})`});t.textContent=name});
+const dh=el('text',{x:X0+DCOL*DX,y:Y0-40,class:'rowlabel','text-anchor':'middle',fill:'var(--ink)'});dh.textContent='Destinations';
+// track: thick, along a row, or forking down to a branch row; connector: thin, between areas
+// Octilinear routing: horizontal out of the station, a vertical channel just past its column, 45-degree chamfers, horizontal into the target.
+const outIdx={};N.forEach(n=>{const outs=[...n.needs,...n.opt].map(()=>0);});
+const channel={};N.forEach(n=>[...n.needs,...n.opt].forEach(p=>(channel[p]=channel[p]||[]).push(n.id)));
+Object.values(channel).forEach(list=>list.sort((x,y)=>node[x].y-node[y].y));
+const octo=(a,b)=>{if(a.y===b.y)return `M${a.x} ${a.y} L${b.x} ${b.y}`;
+ const list=channel[a.id]||[];const k=list.indexOf(b.id);const off=(k-(list.length-1)/2)*5;
+ const c=12,dir=b.y>a.y?1:-1;const xv=a.x+DX*0.5+off;
+ // lane: the free band under the labels of the row above the target (going down) or under the target's own labels (going up)
+ const lane=dir>0?b.y-22:b.y+46;const sw=dir>0?1:0;
+ if(Math.abs(lane-a.y)<=2*c)return `M${a.x} ${a.y} L${b.x-c} ${a.y} A${c} ${c} 0 0 ${sw} ${b.x} ${a.y+dir*c} L${b.x} ${b.y}`;
+ return `M${a.x} ${a.y} L${xv-c} ${a.y} A${c} ${c} 0 0 ${sw} ${xv} ${a.y+dir*c} L${xv} ${lane-dir*c} A${c} ${c} 0 0 ${1-sw} ${xv+c} ${lane} L${b.x-c} ${lane} A${c} ${c} 0 0 ${sw} ${b.x} ${lane+dir*c} L${b.x} ${b.y}`};
+const trackPath=octo,crossPath=octo;
+N.forEach(n=>n.needs.forEach(p=>{const a=node[p],b=n;const same=a.line===b.line&&!b.dest;const col=`var(${LINES.find(x=>x[0]===b.line)[2]})`;
+ el('path',{d:same?trackPath(a,b):crossPath(a,b),class:'edge '+(same?'same':'cross'),'data-from':p,'data-to':n.id,fill:'none',stroke:col,'stroke-width':same?6:4,'stroke-linecap':'round','stroke-linejoin':'round'},gL)}));
+N.forEach(n=>n.opt.forEach(p=>el('path',{d:crossPath(node[p],n),class:'edge cross opt','data-from':p,'data-to':n.id,fill:'none',stroke:'var(--ink-3)','stroke-width':1.4,'stroke-dasharray':'2 4','stroke-linecap':'round'},gL)));
+N.forEach(n=>{const g=el('g',{class:'stn'+(n.dest?' dest':''),'data-id':n.id,tabindex:0,role:'button'},gS);
+ const lc=`var(${LINES.find(x=>x[0]===n.line)[2]})`;const cc=n.crit===2?'var(--red)':n.crit===1?'var(--amber)':'var(--grey)';
+ if(n.crit>0)el('circle',{cx:n.x,cy:n.y,r:n.dest?15:n.crit===2?12:10.5,fill:'none',stroke:cc,'stroke-width':n.crit===2?3.5:2.5},g);
+ if(n.dest){el('circle',{class:'core',cx:n.x,cy:n.y,r:9,fill:'var(--paper)',stroke:'var(--ink)','stroke-width':3.5},g)}
+ else el('circle',{class:'core',cx:n.x,cy:n.y,r:6.5,fill:n.zone===3?'var(--zone3)':n.zone===2?'var(--zone2)':'var(--paper)',stroke:lc,'stroke-width':3},g);
+ if(n.dest){const t=el('text',{x:n.x+20,y:n.y+5,'text-anchor':'start'},g);t.textContent=n.name}
+ else{const words=n.name.split(' ');let l1=n.name,l2='';if(n.name.length>15){const mid=Math.ceil(words.length/2);l1=words.slice(0,mid).join(' ');l2=words.slice(mid).join(' ')}
+ const t=el('text',{x:n.x,y:n.y+22,'text-anchor':'middle'},g);t.textContent=l1;
+ if(l2){const t2=el('text',{x:n.x,y:n.y+33,'text-anchor':'middle'},g);t2.textContent=l2}}
+ g.addEventListener('click',()=>showRoute(n.id));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showRoute(n.id)}});
+});
+// Beck-style label plates: an opaque rounded box behind each label so track never runs through text
+document.querySelectorAll('.stn').forEach(g=>{const ts=[...g.querySelectorAll('text')];if(!ts.length)return;let x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;ts.forEach(t=>{const b=t.getBBox();x1=Math.min(x1,b.x);y1=Math.min(y1,b.y);x2=Math.max(x2,b.x+b.width);y2=Math.max(y2,b.y+b.height)});
+ const r=document.createElementNS(ns,'rect');r.setAttribute('x',x1-4);r.setAttribute('y',y1-1);r.setAttribute('width',x2-x1+8);r.setAttribute('height',y2-y1+2);r.setAttribute('rx',4);r.setAttribute('fill','var(--paper)');r.setAttribute('stroke','var(--ink)');r.setAttribute('stroke-width','0.8');r.setAttribute('class','plate');g.insertBefore(r,ts[0])});
+const critWord=['press go','know what it does','must understand'];
+function ancestors(id){const seen=new Set();const walk=i=>node[i].needs.forEach(p=>{if(!seen.has(p)){seen.add(p);walk(p)}});walk(id);return seen}
+function showStation(id){const n=node[id];document.querySelectorAll('.stn.sel').forEach(e=>e.classList.remove('sel'));document.querySelector(`.stn[data-id="${id}"]`).classList.add('sel');
+ const ln=LINES.find(x=>x[0]===n.line);const needs=(n.needs.length?n.needs.map(p=>`<a data-go="${p}">${node[p].name}</a>`).join(', '):'Nothing')+(n.opt.length?`<br><span class="empty">Better with: </span>`+n.opt.map(p=>`<a data-go="${p}">${node[p].name}</a>`).join(', '):'');
+ const leads=(dependents[id]||[]).map(d=>`<a data-go="${d}">${node[d].name}</a>`).join(', ')||'Nothing yet';
+ document.getElementById('station').innerHTML=`<h2>${n.name}</h2><div class="meta"><span class="pill line" style="background:var(${ln[2]})">${ln[1]}${n.dest?', destination':''}</span><span class="pill c${n.crit}">${critWord[n.crit]}</span><span class="pill">Zone ${n.zone}</span></div>
+ <dl><dt>Unlocks</dt><dd>${n.unlocks}</dd><dt>Needs</dt><dd>${needs}</dd><dt>Proof</dt><dd>${n.proof}</dd><dt>If skipped</dt><dd>${n.skipped}</dd><dt>In your head</dt><dd>${n.head}</dd><dt>Leads to</dt><dd>${leads}</dd></dl>`;
+ document.querySelectorAll('#station a[data-go]').forEach(a=>a.addEventListener('click',()=>showRoute(a.dataset.go)));}
+function focusSet(set){document.querySelectorAll('.stn,.edge').forEach(e=>e.classList.remove('dim','hot'));if(!set)return;
+ document.querySelectorAll('.stn').forEach(e=>{if(!set.has(e.dataset.id))e.classList.add('dim')});
+ document.querySelectorAll('.edge').forEach(e=>e.classList.add(set.has(e.dataset.from)&&set.has(e.dataset.to)?'hot':'dim'))}
+function showRoute(id){focusSet(null);if(!id){document.getElementById('plan').innerHTML='<h2>Journey planner</h2><p class="empty">Click a station or destination to list every station on the way, in order, with its ring.</p>';return}
+ const set=ancestors(id);set.add(id);focusSet(set);
+ const order=[...set].sort((a,b)=>depth[a]-depth[b]||a.localeCompare(b));const red=order.filter(s=>node[s].crit===2).length;const zone=Math.max(...order.map(s=>node[s].zone));
+ document.getElementById('plan').innerHTML=`<h2>${node[id].name}</h2><ol>${order.map(s=>`<li><i class="c${node[s].crit}"></i><a data-go="${s}">${node[s].name}</a><small>zone ${node[s].zone}</small></li>`).join('')}</ol><p class="sum">${order.length} stations, ${red} must-understand, needs zone ${zone} hardware at its heaviest stop.</p>`;
+ document.querySelectorAll('#plan a[data-go]').forEach(a=>a.addEventListener('click',()=>showRoute(a.dataset.go)));showStation(id)}
+document.querySelectorAll('.legend .lg').forEach(b=>b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')==='true';document.querySelectorAll('.legend .lg').forEach(x=>x.setAttribute('aria-pressed','false'));if(on){focusSet(null);return}b.setAttribute('aria-pressed','true');
+ const hits=N.filter(n=>b.dataset.crit!=null?n.crit===+b.dataset.crit&&!n.dest:n.zone===+b.dataset.zone&&!n.dest);const set=new Set();hits.forEach(h=>{set.add(h.id);if(b.dataset.crit!=null)ancestors(h.id).forEach(a=>set.add(a))});focusSet(set)}));
+const search=document.getElementById('search');search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();if(!q){focusSet(null);return}
+ const hits=N.filter(n=>(n.name+' '+n.unlocks).toLowerCase().includes(q));const set=new Set();hits.forEach(h=>{set.add(h.id);ancestors(h.id).forEach(a=>set.add(a))});focusSet(set)});
+document.getElementById('clear').addEventListener('click',()=>{search.value='';document.querySelectorAll('.legend .lg').forEach(x=>x.setAttribute('aria-pressed','false'));showRoute('');document.querySelectorAll('.stn.sel').forEach(e=>e.classList.remove('sel'));document.getElementById('station').innerHTML='<h2>Pick a station</h2><p class="empty">Click any station on the map. Everything it builds on stays sharp; the rest fades.</p>'});
+// pan and zoom on the viewBox
+const full={x:0,y:0,w:svgW,h:H};let view={...full};svg.style.aspectRatio=svgW+' / '+H;
+const apply=()=>svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`);
+const toSvg=(cx,cy)=>{const r=svg.getBoundingClientRect();return {x:view.x+(cx-r.left)/r.width*view.w,y:view.y+(cy-r.top)/r.height*view.h}};
+const zoomAt=(f,cx,cy)=>{const p=toSvg(cx,cy);const w=Math.min(full.w*1.5,Math.max(full.w/8,view.w*f));const h=w*full.h/full.w;view={x:p.x-(p.x-view.x)*w/view.w,y:p.y-(p.y-view.y)*h/view.h,w,h};apply()};
+svg.addEventListener('wheel',e=>{if(!e.shiftKey)return;e.preventDefault();const d=e.deltaY||e.deltaX;zoomAt(d>0?1.05:1/1.05,e.clientX,e.clientY)},{passive:false});
+const ptrs=new Map();let dragged=false,last=null,pinch=null;
+svg.addEventListener('pointerdown',e=>{if(e.target.closest('.stn'))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});dragged=false;last={x:e.clientX,y:e.clientY};
+ if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)}}});
+svg.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(ptrs.size===2&&pinch){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);zoomAt(pinch.d/d,(a.x+b.x)/2,(a.y+b.y)/2);pinch.d=d;dragged=true;return}
+ const r=svg.getBoundingClientRect();const dx=(e.clientX-last.x)/r.width*view.w,dy=(e.clientY-last.y)/r.height*view.h;if(!dragged&&Math.abs(e.clientX-last.x)+Math.abs(e.clientY-last.y)>4){dragged=true;svg.setPointerCapture(e.pointerId);svg.classList.add('panning')}if(!dragged)return;
+ view.x-=dx;view.y-=dy;last={x:e.clientX,y:e.clientY};apply()});
+const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size)svg.classList.remove('panning')};svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
+const centre=()=>{const r=svg.getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]};
+document.getElementById('zin').addEventListener('click',()=>zoomAt(1/1.15,...centre()));document.getElementById('zout').addEventListener('click',()=>zoomAt(1.15,...centre()));
+document.getElementById('zreset').addEventListener('click',()=>{view={...full};apply()});
+</script>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { critClass, shapePath, type Criticality } from "./tube-map";
-import { ZOOM_STEP, centreOn, fitView, frameBoxes, linkPath, pan, startView, toMap, zoomAt, type Size, type View } from "./whole-map-view";
+import { ZOOM_STEP, centreOn, clampView, fitView, frameBoxes, pan, startView, toMap, zoomAt, type Box, type Size, type View } from "./whole-map-view";
 
 /**
  * The whole map (Ceetrix story 29): every station and how they connect, where the learner is, and
@@ -19,10 +19,24 @@ const YOU_ARE_HERE = "You are here";
 const REACHED = "You've covered everything this needs.";
 
 const COVERED = new Set(["reported", "assisted", "verified", "skipped"]);
-const DOT_R = 7;
-const DOT_X = 8;
-const NAME_X = 22;
-const HERE_DY = 16;
+/** The station shape's half-size; destinations are bigger, as on the tube map. */
+const DOT_R = 8;
+const DEST_R = 11;
+/** Label plates: a station's name sits under it, a destination's to its right (tube-map layout). */
+const LABEL_DY = 22;
+const LINE_DY = 11;
+const DEST_LABEL_DX = 20;
+const DEST_LABEL_DY = 5;
+const CHAR_PX = 6.1;
+const DEST_CHAR_PX = 7.6;
+const PLATE_PAD_X = 4;
+const PLATE_PAD_TOP = 9;
+const PLATE_PAD_BOTTOM = 4;
+const DEST_PLATE_TOP = 13;
+const DEST_PLATE_BOTTOM = 5;
+const HERE_DY = 18;
+/** Room around a station when a route is framed. */
+const FRAME_PAD = 60;
 /** A drag shorter than this (pixels) is a tap, not a move. */
 const DRAG_PX = 4;
 /** How strongly one wheel notch zooms. */
@@ -44,8 +58,8 @@ export type WholeMapData = {
   layout: {
     width: number;
     height: number;
-    stations: Record<string, { x: number; y: number; w: number; h: number }>;
-    edges: { from: string; to: string; points: [number, number][] }[];
+    stations: Record<string, { x: number; y: number; dest: boolean; label: string[] }>;
+    edges: { from: string; to: string; kind: "track" | "link" | "better"; area: string; d: string }[];
   };
   current: string;
   goal: string | null;
@@ -54,6 +68,34 @@ export type WholeMapData = {
 };
 
 type Load = { state: "loading" } | { state: "failed" } | { state: "ready"; data: WholeMapData };
+
+type Spot = WholeMapData["layout"]["stations"][string];
+
+/** The plate behind a station's name, sized from its text so a track never runs through it. */
+function plateOf(spot: Spot): Box {
+  const longest = Math.max(...spot.label.map((line) => line.length));
+  if (spot.dest) {
+    const w = longest * DEST_CHAR_PX + 2 * PLATE_PAD_X;
+    return { x: spot.x + DEST_LABEL_DX - PLATE_PAD_X, y: spot.y + DEST_LABEL_DY - DEST_PLATE_TOP, w, h: DEST_PLATE_TOP + DEST_PLATE_BOTTOM };
+  }
+  const w = longest * CHAR_PX + 2 * PLATE_PAD_X;
+  const top = spot.y + LABEL_DY - PLATE_PAD_TOP;
+  const h = PLATE_PAD_TOP + (spot.label.length - 1) * LINE_DY + PLATE_PAD_BOTTOM;
+  return { x: spot.x - w / 2, y: top, w, h };
+}
+
+function hitArea(spot: Spot, r: number, plate: Box): { x: number; y: number; width: number; height: number } {
+  const x = Math.min(spot.x - r, plate.x);
+  const y = spot.y - r;
+  return { x, y, width: Math.max(spot.x + r, plate.x + plate.w) - x, height: Math.max(spot.y + r, plate.y + plate.h) - y };
+}
+
+/** A layout this view can draw (version 2: stations as points, links as paths). */
+export function drawable(data: WholeMapData): boolean {
+  const { layout } = data;
+  if (!layout || typeof layout !== "object" || !Array.isArray(layout.edges) || !layout.stations) return false;
+  return Object.values(layout.stations).every((s) => Number.isFinite(s.x) && Number.isFinite(s.y) && Array.isArray(s.label)) && layout.edges.every((e) => typeof e.d === "string");
+}
 
 function frameOf(svg: SVGSVGElement | null): Size {
   return { width: svg?.clientWidth ?? 0, height: svg?.clientHeight ?? 0 };
@@ -81,16 +123,19 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
     let live = true;
     fetch(MAP_URL, { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
-      .then((data: WholeMapData) => live && setLoad({ state: "ready", data }))
+      .then((data: WholeMapData) => live && setLoad(drawable(data) ? { state: "ready", data } : { state: "failed" }))
       .catch(() => live && setLoad({ state: "failed" }));
     return () => {
       live = false;
     };
   }, [attempt]);
 
+  // Every move goes through here, and none leaves the map for blank space.
+  const bounds = useRef<Box | null>(null);
   const show = useCallback((next: View) => {
-    view.current = next;
-    svg.current?.setAttribute("viewBox", `${next.x} ${next.y} ${next.w} ${next.h}`);
+    const kept = bounds.current ? clampView(next, bounds.current) : next;
+    view.current = kept;
+    svg.current?.setAttribute("viewBox", `${kept.x} ${kept.y} ${kept.w} ${kept.h}`);
   }, []);
 
   const fit = useCallback(() => {
@@ -107,11 +152,12 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
     if (load.state !== "ready") return;
     const { width, height, stations } = load.data.layout;
     const frame = frameOf(svg.current);
-    fitted.current = fitView({ x: 0, y: 0, w: width, h: height }, frame);
+    bounds.current = { x: 0, y: 0, w: width, h: height };
+    fitted.current = fitView(bounds.current, frame);
     if (started.current) return;
     started.current = true;
     const here = stations[load.data.current];
-    const at = here ? { x: here.x + here.w / 2, y: here.y + here.h / 2 } : { x: width / 2, y: height / 2 };
+    const at = here ? { x: here.x, y: here.y } : { x: width / 2, y: height / 2 };
     show(startView(at, frame, fitted.current));
   }, [load, show]);
   useEffect(() => {
@@ -180,8 +226,8 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
     if (drag.current?.moved) return;
     setSelected(id);
     setSaveError(false);
-    const box = data?.layout.stations[id];
-    if (centre && box && view.current) show(centreOn(view.current, { x: box.x + box.w / 2, y: box.y + box.h / 2 }));
+    const spot = data?.layout.stations[id];
+    if (centre && spot && view.current) show(centreOn(view.current, { x: spot.x, y: spot.y }));
   };
 
   const setGoal = async (destination: string | null) => {
@@ -197,7 +243,10 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
       const next = (await response.json()) as WholeMapData;
       setLoad({ state: "ready", data: next });
       // A new goal: frame where the learner is and the whole route to it.
-      const boxes = [next.current, ...next.route].map((id) => next.layout.stations[id]).filter(Boolean);
+      const boxes: Box[] = [next.current, ...next.route]
+        .map((id) => next.layout.stations[id])
+        .filter(Boolean)
+        .map((spot) => ({ x: spot.x - FRAME_PAD, y: spot.y - FRAME_PAD, w: 2 * FRAME_PAD, h: 2 * FRAME_PAD }));
       const framed = fitted.current && destination ? frameBoxes(boxes, frameOf(svg.current), fitted.current) : null;
       if (framed) show(framed);
     } catch {
@@ -259,6 +308,7 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
           className="coach-whole-map__svg"
           data-testid="coach-whole-map-svg"
           data-goal={data.goal ?? ""}
+          data-has-route={data.route.length > 0 ? "true" : undefined}
           role="group"
           aria-label="Every station"
           onPointerDown={onPointerDown}
@@ -268,31 +318,36 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
         >
           <g className="coach-whole-map__links">
             {data.layout.edges.map((edge) => {
-              const lit = onRoute.has(edge.to) && (onRoute.has(edge.from) || COVERED.has(byId.get(edge.from)?.status ?? ""));
+              // A route is made of requirements: a better-with link is never part of it.
+              const lit = edge.kind !== "better" && onRoute.has(edge.to) && (onRoute.has(edge.from) || COVERED.has(byId.get(edge.from)?.status ?? ""));
               const touched = selected !== null && (edge.from === selected || edge.to === selected);
               return (
                 <path
-                  key={`${edge.from}>${edge.to}`}
-                  d={linkPath(edge.points)}
-                  className={`coach-whole-map__link${lit ? " coach-whole-map__link--route" : ""}${touched ? " coach-whole-map__link--touched" : ""}`}
+                  key={`${edge.kind}:${edge.from}>${edge.to}`}
+                  d={edge.d}
+                  // Each area's track in its own colour (coach.css --map-line-<area>).
+                  style={{ "--line": `var(--map-line-${edge.area}, var(--coach-line))` } as CSSProperties}
+                  className={`coach-whole-map__link coach-whole-map__link--${edge.kind}${lit ? " coach-whole-map__link--route" : ""}${touched ? " coach-whole-map__link--touched" : ""}`}
+                  data-kind={edge.kind}
+                  data-area={edge.area}
                   data-route={lit ? "true" : undefined}
                 />
               );
             })}
           </g>
           {data.stations.map((station) => {
-            const box = data.layout.stations[station.id];
-            if (!box) return null;
+            const spot = data.layout.stations[station.id];
+            if (!spot) return null;
             const covered = COVERED.has(station.status);
             const route = onRoute.has(station.id);
             const strong = covered || route || station.id === data.current || station.id === data.goal;
-            const cy = box.y + box.h / 2;
-            const cx = box.x + DOT_X;
             const criticality = station.criticality ?? undefined;
+            const r = spot.dest ? DEST_R : DOT_R;
+            const plate = plateOf(spot);
             return (
               <g
                 key={station.id}
-                className={`coach-whole-map__station${strong ? "" : " coach-whole-map__station--faint"}${route ? " coach-whole-map__station--route" : ""}${selected === station.id ? " coach-whole-map__station--selected" : ""}`}
+                className={`coach-whole-map__station${spot.dest ? " coach-whole-map__station--dest" : ""}${strong ? "" : " coach-whole-map__station--faint"}${route ? " coach-whole-map__station--route" : ""}${selected === station.id ? " coach-whole-map__station--selected" : ""}`}
                 data-station={station.id}
                 data-covered={covered ? "true" : "false"}
                 data-route={route ? "true" : undefined}
@@ -303,15 +358,24 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
                 onClick={() => select(station.id)}
                 onKeyDown={(event) => onStationKey(event, station.id)}
               >
-                {/* The whole row is the tap target, not only the dot and the letters. */}
-                <rect x={box.x} y={box.y} width={box.w} height={box.h} className="coach-whole-map__hit" />
-                <path d={shapePath(criticality, cx, cy, DOT_R)} className={`coach-whole-map__dot ${critClass(criticality)}${covered ? " coach-whole-map__dot--covered" : ""}`} />
-                {station.id === data.goal && <circle cx={cx} cy={cy} r={DOT_R + 4} className="coach-whole-map__goal-ring" data-testid="coach-whole-map-goal" />}
-                <text x={box.x + NAME_X} y={cy} dominantBaseline="central" className="coach-whole-map__name">
-                  {station.name}
-                </text>
+                {/* The shape and the name's plate together are the tap target. */}
+                <rect {...hitArea(spot, r, plate)} className="coach-whole-map__hit" />
+                <path d={shapePath(criticality, spot.x, spot.y, r)} className={`coach-whole-map__dot ${critClass(criticality)}${covered ? " coach-whole-map__dot--covered" : ""}`} />
+                {station.id === data.goal && <circle cx={spot.x} cy={spot.y} r={r + 5} className="coach-whole-map__goal-ring" data-testid="coach-whole-map-goal" />}
+                <rect x={plate.x} y={plate.y} width={plate.w} height={plate.h} rx={4} className="coach-whole-map__plate" data-testid="coach-whole-map-plate" />
+                {spot.label.map((line, i) => (
+                  <text
+                    key={line}
+                    x={spot.dest ? spot.x + DEST_LABEL_DX : spot.x}
+                    y={spot.dest ? spot.y + DEST_LABEL_DY : spot.y + LABEL_DY + i * LINE_DY}
+                    textAnchor={spot.dest ? "start" : "middle"}
+                    className="coach-whole-map__name"
+                  >
+                    {line}
+                  </text>
+                ))}
                 {station.id === data.current && (
-                  <text x={cx} y={box.y - HERE_DY / 2} textAnchor="start" className="coach-whole-map__here" data-testid="coach-whole-map-here">
+                  <text x={spot.x} y={spot.y - r - HERE_DY / 2} textAnchor="middle" className="coach-whole-map__here" data-testid="coach-whole-map-here">
                     {YOU_ARE_HERE}
                   </text>
                 )}

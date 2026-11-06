@@ -965,38 +965,55 @@ def _finite(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
+MAP_LAYOUT_VERSION = 2
+LINK_KINDS = ("track", "link")
+BETTER_KIND = "better"
+
+
 def check_map_layout(root: Path, stations: dict[str, dict[str, Any]], report: Report) -> None:
-    """Story 29: the whole map's generated layout places exactly the stations in stations.json and
-    draws exactly their needs links. Optional: a curriculum without one has no whole map."""
+    """Stories 29 and 30: the whole map's generated tube layout places exactly the stations in
+    stations.json, draws every needs pair once as a track or link and every betterWith pair once as
+    a better link, and nothing else. Optional: a curriculum without one has no whole map."""
     path = root / MAP_LAYOUT_FILE
     if not path.is_file():
         return
     layout = _load_json(path, MAP_LAYOUT_FILE, report)
-    if not isinstance(layout, dict) or not isinstance(layout.get("stations"), dict) or not isinstance(layout.get("edges"), list):
-        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, "expected stations (an object) and edges (a list)")
+    if (not isinstance(layout, dict) or layout.get("version") != MAP_LAYOUT_VERSION
+            or not isinstance(layout.get("stations"), dict) or not isinstance(layout.get("edges"), list)):
+        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"expected version {MAP_LAYOUT_VERSION} with stations (an object) and edges (a list); run make map-layout")
         return
     placed = layout["stations"]
     for sid in sorted(set(stations) - set(placed)):
         report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"station {sid!r} has no place; run make map-layout")
     for sid in sorted(set(placed) - set(stations)):
         report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"{sid!r} is placed but is not in stations.json; run make map-layout")
-    for sid, box in placed.items():
-        if not isinstance(box, dict) or not all(_finite(box.get(k)) for k in ("x", "y", "w", "h")):
-            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"station {sid!r} needs finite x, y, w and h")
-    want = {(need, sid) for sid, st in stations.items() for need in st.get("needs") or []}
-    drawn: set[tuple[str, str]] = set()
+    for sid, spot in placed.items():
+        if not isinstance(spot, dict) or not _finite(spot.get("x")) or not _finite(spot.get("y")):
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"station {sid!r} needs a finite x and y")
+    needs = {(need, sid) for sid, st in stations.items() for need in st.get("needs") or []}
+    better = {(other, sid) for sid, st in stations.items() for other in st.get("betterWith") or []}
+    drawn_needs: list[tuple[str, str]] = []
+    drawn_better: list[tuple[str, str]] = []
     for edge in layout["edges"]:
         if not isinstance(edge, dict):
             report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, "every link must be an object")
             continue
-        drawn.add((edge.get("from"), edge.get("to")))
-        points = edge.get("points")
-        if not isinstance(points, list) or not all(isinstance(p, list) and len(p) == 2 and all(_finite(v) for v in p) for p in points):
-            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"link {edge.get('from')!r} to {edge.get('to')!r} needs finite points")
-    for need, sid in sorted(want - drawn):
-        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"the link from {need!r} to {sid!r} is not drawn; run make map-layout")
-    for need, sid in sorted(drawn - want):
-        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"a link from {need!r} to {sid!r} is drawn but {sid!r} doesn't need {need!r}")
+        pair = (edge.get("from"), edge.get("to"))
+        if not isinstance(edge.get("d"), str) or not edge["d"].strip():
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"link {pair[0]!r} to {pair[1]!r} has no path")
+        if edge.get("kind") in LINK_KINDS:
+            drawn_needs.append(pair)
+        elif edge.get("kind") == BETTER_KIND:
+            drawn_better.append(pair)
+        else:
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"link {pair[0]!r} to {pair[1]!r} has an unknown kind {edge.get('kind')!r}")
+    for want, drawn, what in ((needs, drawn_needs, "needs"), (better, drawn_better, "betterWith")):
+        for a, b in sorted(want - set(drawn)):
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"{b!r} {what} {a!r} but no link is drawn; run make map-layout")
+        for a, b in sorted(set(drawn) - want):
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"a {what} link from {a!r} to {b!r} is drawn but isn't in stations.json")
+        for pair in sorted({x for x in drawn if drawn.count(x) > 1}):
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"the {what} link from {pair[0]!r} to {pair[1]!r} is drawn twice")
 
 
 def validate(root: Path = DEFAULT_ROOT, probes_path: Path = DEFAULT_PROBES, stylecheck_path: Path = DEFAULT_STYLECHECK,

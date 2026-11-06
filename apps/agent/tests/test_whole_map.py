@@ -212,3 +212,11 @@ def test_tc14_restart_moves_the_goal_aside_with_progress(client):
     client.post("/coach/goal", json={"destination": a_destination()})
     assert client.post("/coach/restart").status_code == 200
     assert client.get("/curriculum/map").json()["goal"] is None
+
+
+# Story 30, TC-15
+def test_s30_tc15_the_map_carries_the_tube_layout(client):
+    layout = client.get("/curriculum/map").json()["layout"]
+    assert layout["version"] == 2
+    assert set(layout["stations"]) == set(stations())
+    assert {e["kind"] for e in layout["edges"]} == {"track", "link", "better"}
