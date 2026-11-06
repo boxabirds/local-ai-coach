@@ -201,6 +201,8 @@ Status order: `unseen`, `read`, `rehearsed`, `reported`, `assisted`, `verified`,
 
 **Consent** is `~/.local-ai-coach/consent.json`: `{ "probes": true, "history": true, "doIt": true, "granted_at": "..." }`, written by the first-run flow in the chat (a `run_confirm`-style card with the list of what the coach may read). A probe whose consent is missing returns `{ "denied": "consent" }` and the coach offers the paste-it path.
 
+**Ratings** (Ceetrix story 26) are `~/.local-ai-coach/ratings/<UTC stamp>-<8 hex>.json`, one file per Good or Not good pressed in the palette on a coach item, written once by atomic rename from `POST /coach/rating` (refused from a browser; the app's `/api/coach-rating` accepts only the coach's own page). Each holds the rating, the optional reason, the rated item's words, the browser's copy of the conversation up to the rated turn (keys redacted) and the same in the eval cases' shape, the model in use, and fingerprints of the prompt, skills and curriculum. They are the author's test data, not the learner's progress: Restart coach leaves them, and nothing sends them anywhere. `make rating-to-case` turns one into a draft eval case in `apps/agent/evals/cases/drafts/` (not run until moved into `cases/`); `make ratings-export` zips them for a tester to send.
+
 ## Evidence collector
 
 `src/coach/probes.py`: a dictionary of named probes, each a fixed argv list (never a shell string), a timeout of 5 s, a parser that returns matched lines only, and the consent key it needs. `run_check` and `probe` can only call names in this table; a step whose `check.probe` is not in it fails validation.

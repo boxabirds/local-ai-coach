@@ -32,6 +32,7 @@ from src.coach.stub import stub_graph
 from src.coach.stored_keys import StoredKeys, router as keys_router
 from src.coach.turn_log import TurnLog
 from src.coach.restart import router as restart_router
+from src.coach.ratings import router as ratings_router
 from src.coach.server_model import ServerModel, router as server_router
 
 load_dotenv()
@@ -65,6 +66,8 @@ app.add_middleware(StoredKeys)
 app.include_router(keys_router)
 app.include_router(server_router)
 app.include_router(restart_router)
+# Story 26: the author's ratings of the coach's turns, kept on this computer.
+app.include_router(ratings_router)
 
 
 @app.post("/credentials/validate")

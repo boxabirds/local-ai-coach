@@ -412,8 +412,41 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await shot(page, "07-new-chat");
   });
 
+  test("rate a coach turn Not good with a reason, and it is kept on this computer (story 26, TC-32)", async () => {
+    const ratingsDir = join(process.env.COACH_E2E_HOME!, "ratings");
+    expect(existsSync(ratingsDir)).toBe(false);
+    await page.getByRole("button", { name: "Read Priya's story" }).click();
+    const beat = page.getByTestId("coach-beat").first();
+    await expect(beat).toBeVisible();
+    // Nothing shows until the pointer is on the item.
+    await expect(page.getByTestId("coach-palette")).toHaveCount(0);
+    await beat.hover();
+    const palette = page.getByTestId("coach-palette");
+    await expect(palette.getByRole("button", { name: "Ask about this" })).toBeVisible();
+    await palette.getByRole("button", { name: "Not good" }).click();
+    const why = palette.getByRole("textbox", { name: "What was wrong?" });
+    await expect(why).toBeFocused();
+    await why.fill("too slow to start");
+    await why.press("Enter");
+    await expect(palette.getByTestId("coach-rate-status")).toHaveText("Saved");
+    await expect(palette.getByRole("button", { name: "Not good" })).toHaveAttribute("aria-pressed", "true");
+    await shot(page, "07b-rating");
+    const saved = readdirSync(ratingsDir).filter((name) => name.endsWith(".json"));
+    expect(saved).toHaveLength(1);
+    const record = JSON.parse(readFileSync(join(ratingsDir, saved[0]), "utf8"));
+    expect(record.rating).toBe("down");
+    expect(record.reason).toBe("too slow to start");
+    expect(record.item.kind).toBe("story");
+    expect(record.history.at(0)).toEqual({ type: "human", content: "Read Priya's story" });
+    expect(record.messages.at(record.rated_index).id).toBe(record.message_id);
+    // Pointing away puts the palette away.
+    await page.getByRole("banner").hover();
+    await expect(page.getByTestId("coach-palette")).toHaveCount(0);
+  });
+
   test("Restart coach asks first, then puts progress and permission aside and starts again (story 23, TC-14)", async () => {
     const home = process.env.COACH_E2E_HOME!;
+    const ratingsBefore = readdirSync(join(home, "ratings"));
     expect(progressRaw()).not.toBeNull(); // the chapter above left progress and permission behind
     expect(existsSync(join(home, "consent.json"))).toBe(true);
     await page.getByRole("button", { name: "Restart coach" }).click();
@@ -428,6 +461,8 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     const backups = readdirSync(join(home, "old"));
     expect(backups).toHaveLength(1);
     expect(readdirSync(join(home, "old", backups[0])).sort()).toEqual(["consent.json", "progress.stub.json"]);
+    // Story 26: ratings are the author's test data, not the learner's progress; they stay.
+    expect(readdirSync(join(home, "ratings"))).toEqual(ratingsBefore);
     await shot(page, "08-restart-coach");
   });
 

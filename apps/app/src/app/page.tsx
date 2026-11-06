@@ -10,7 +10,8 @@ import { AnswerMarkdown } from "@/components/chat/answer-markdown";
 import { QuoteContext } from "@/components/chat/quote-block";
 import { QuotedInput } from "@/components/chat/quoted-input";
 import { QuotedUserText } from "@/components/chat/quoted-user-text";
-import { useAskAbout } from "@/hooks/use-ask-about";
+import { useAskAbout, type RateRequest } from "@/hooks/use-ask-about";
+import { sendRating } from "@/components/chat/rating";
 import {
   CopilotChat,
   UseAgentUpdate,
@@ -64,7 +65,9 @@ export default function HomePage() {
     setQuote(text);
     requestAnimationFrame(() => chatRoot.current?.querySelector<HTMLTextAreaElement>('[data-testid="copilot-chat-textarea"]')?.focus());
   }, []);
-  const { button: askButton } = useAskAbout(chatRoot, askAbout);
+  // Story 26: Good and Not good in the same palette, kept on this computer as test data.
+  const rate = useCallback((request: RateRequest) => sendRating(threadId, agent.messages, request), [threadId, agent]);
+  const { button: askButton } = useAskAbout(chatRoot, askAbout, rate);
 
   useEffect(() => {
     const subscription = agent.subscribe({

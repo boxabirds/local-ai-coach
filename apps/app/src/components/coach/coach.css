@@ -625,9 +625,93 @@
   border-radius: var(--radius-lg);
 }
 
-.coach-ask-button {
+/* The palette on a coach item (stories 8 and 26): Ask about this, Good, Not good. It sits at
+   the item's top right; its right edge is the item's. */
+.coach-palette {
   position: fixed;
   z-index: 50;
+  transform: translateX(-100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.coach-palette__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--color-border, #d9d9e0);
+  border-radius: var(--radius-md);
+  background: var(--coach-paper);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.coach-rate {
+  min-width: 32px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.coach-rate:hover {
+  background: var(--coach-accent-soft);
+}
+
+.coach-rate[aria-pressed="true"] {
+  border-color: var(--coach-accent);
+  background: var(--coach-accent-soft);
+}
+
+.coach-palette__reason {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-border, #d9d9e0);
+  border-radius: var(--radius-md);
+  background: var(--coach-paper);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  font-size: 0.875rem;
+}
+
+.coach-palette__reason input {
+  width: 16rem;
+  padding: 4px 8px;
+  border: 1px solid var(--coach-line);
+  border-radius: var(--radius-md);
+  background: var(--coach-paper);
+  color: var(--coach-ink);
+  font: inherit;
+}
+
+.coach-rate-save {
+  padding: 4px 10px;
+  border: 1px solid var(--coach-accent);
+  border-radius: var(--radius-md);
+  background: var(--coach-accent);
+  color: var(--coach-accent-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.coach-palette__status {
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  background: var(--coach-paper);
+  color: var(--text-secondary, var(--coach-ink));
+  font-size: 0.8125rem;
+}
+
+.coach-ask-button {
   padding: 4px 10px;
   border: 1px solid var(--coach-accent);
   border-radius: var(--radius-md);
