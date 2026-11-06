@@ -28,7 +28,10 @@ const BASE = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3110";
 const VIEWPORT = { width: 1280, height: 860 };
 const PAPER = "rgb(255, 255, 255)";
 /** The reserved criticality colours (coach.css --crit-*), light theme. */
-const CRIT = { grey: "rgb(107, 114, 128)", amber: "rgb(180, 83, 9)", red: "rgb(185, 28, 28)" } as const;
+// Outline colours: amber is drawn with its dark edge (#92400e), the fill being too light for 3:1.
+const CRIT = { grey: "rgb(107, 114, 128)", amber: "rgb(146, 64, 14)", red: "rgb(185, 28, 28)" } as const;
+/** Amber's fill: a true amber (coach.css --crit-amber). */
+const AMBER_FILL = "rgb(255, 176, 0)";
 /** A one-line user message: bubble plus breathing room, no reserved toolbar. */
 const MAX_USER_BLOCK = 80;
 
@@ -75,9 +78,11 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
   test.describe.configure({ mode: "serial" });
   let browser: Browser;
   let page: Page;
+  const pageErrors: string[] = [];
 
   test.beforeAll(async () => {
     ({ browser, page } = await openBrowser());
+    page.on("pageerror", (error) => pageErrors.push(error.message));
     await page.goto("/");
   });
 
@@ -302,7 +307,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
       await expect(marker(id)).toHaveAttribute("data-fill", fill);
       await expect(marker(id).getByTestId("coach-map-outline")).toHaveCSS("stroke", CRIT[criticality]);
     }
-    await expect(marker("machine").getByTestId("coach-map-fill")).toHaveCSS("fill", CRIT.amber);
+    await expect(marker("machine").getByTestId("coach-map-fill")).toHaveCSS("fill", AMBER_FILL);
     await expect(map.getByTestId("coach-map-key")).toContainText("must understand");
     // Every station name fits inside the map: none clipped at the edges.
     const svg = (await map.locator("svg").boundingBox())!;
@@ -405,5 +410,11 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     expect(backups).toHaveLength(1);
     expect(readdirSync(join(home, "old", backups[0])).sort()).toEqual(["consent.json", "progress.stub.json"]);
     await shot(page, "08-restart-coach");
+  });
+
+  test("answers grow in steps and fade in without errors, and no fade cover is left (story 24, TC-12)", async () => {
+    await page.waitForTimeout(1500); // longer than a step and a fade
+    await expect(page.locator(".answer-chunk-cover")).toHaveCount(0);
+    expect(pageErrors).toEqual([]);
   });
 });

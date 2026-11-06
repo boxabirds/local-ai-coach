@@ -177,6 +177,20 @@
   opacity: 1;
   pointer-events: auto;
 }
+/* Story 24: each half-second step's new words fade in, under covers that fade out. */
+.answer-markdown { position: relative; }
+.answer-chunk-layer { position: absolute; inset: 0; pointer-events: none; }
+.answer-chunk-cover {
+  position: absolute;
+  animation: answer-chunk-fade 280ms ease-out forwards;
+}
+@keyframes answer-chunk-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .answer-chunk-cover { display: none; }
+}
 .answer-markdown [data-answer-reveal="pending"] {
   opacity: 0;
   transform: translateY(6px);
