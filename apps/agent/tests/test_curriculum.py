@@ -443,3 +443,9 @@ def test_story25_tc04_a_term_defined_in_the_fact_counts_for_the_task(root: Path)
         first["fact"], first["text"] = "**Memory** is a sample definition.", "Find a sample number for memory."
     edit(root, "lessons/machine.json", move)
     assert errors(run(root)) == []
+
+
+def test_story25_tc04b_a_fact_that_uses_a_later_term_is_early(root: Path) -> None:
+    """The fact is read by the term rules like any other text: a later lesson's term in it is TERM_EARLY."""
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2").__setitem__("fact", "A sample fact. Your tailnet can wait."))
+    assert errors(run(root)) == ["TERM_EARLY"]
