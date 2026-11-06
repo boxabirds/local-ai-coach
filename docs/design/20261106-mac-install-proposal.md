@@ -83,3 +83,4 @@ Two things differ from Cutaway:
 1. ~~Browser tab (launcher) or a real window (Tauri)?~~ Browser tab for the first version (Julian, 2026-11-06).
 2. ~~Unsigned for the first testers, or a Developer ID from the start?~~ Signed and notarised from the start, with macscreencap's pipeline (Julian, 2026-11-06).
 3. The Bun migration, and with it retiring the two V1 rules (upstream stack unchanged; the do-not-touch runtime route).
+4. ~~The icon?~~ `docs/design/icons/round-4/14-chip-tick.svg` for now (Julian, 2026-11-06). It is the browser tab's icon (`apps/app/public/icon.svg`, black on light tabs, white on dark), and will be the menu-bar and app icon when the launcher is built.
