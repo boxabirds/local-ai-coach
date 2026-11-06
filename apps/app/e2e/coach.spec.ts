@@ -72,6 +72,16 @@ const fromEnd = (page: Page) =>
   page.locator(".reader-scroll-view").evaluate((el) => el.scrollHeight - el.clientHeight - el.scrollTop);
 const END_THRESHOLD_PX = 48; // follow-end.ts
 
+/** The start screen: all three starters, the focus in the start box, and no ring drawn around it. */
+async function expectStartScreen(page: Page) {
+  for (const starter of ["Read Priya's story", "What can my computer do?", "Where am I on the map?"]) {
+    await expect(page.getByRole("button", { name: starter })).toBeVisible();
+  }
+  const box = page.getByTestId("copilot-chat-textarea");
+  await expect(box).toBeFocused();
+  await expect(box).toHaveCSS("outline-style", "none");
+}
+
 /** Starts clean: a browser of its own, no kept conversation. */
 test("home: the coach, the stub badge and the three starters, no demo", async () => {
   const { browser, page } = await openBrowser();
@@ -79,12 +89,9 @@ test("home: the coach, the stub badge and the three starters, no demo", async ()
     await page.goto("/");
     await expect(page).toHaveTitle("Mastering Local AI coach");
     await expect(page.getByTestId("coach-stub-banner")).toHaveText("Stub coach, no model");
-    for (const starter of ["Read Priya's story", "What can my computer do?", "Where am I on the map?"]) {
-      await expect(page.getByRole("button", { name: starter })).toBeVisible();
-    }
     await expect(page.getByRole("link", { name: /GitHub/ })).toHaveCount(0);
     // The start box has the focus, so the learner can just type.
-    await expect(page.getByTestId("copilot-chat-textarea")).toBeFocused();
+    await expectStartScreen(page);
     await shot(page, "01-home");
   } finally {
     await browser.close();
@@ -435,6 +442,8 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     const last = page.getByTestId("copilot-assistant-message").last();
     const box = (await last.boundingBox())!;
     expect(box.y + box.height).toBeLessThanOrEqual(VIEWPORT.height);
+    // A restored conversation is not the start screen: no starters.
+    await expect(page.getByRole("button", { name: "Where am I on the map?" })).toHaveCount(0);
     // Story 28, TC-20: the chat itself is at its end.
     expect(await fromEnd(page)).toBeLessThanOrEqual(END_THRESHOLD_PX);
 
@@ -479,6 +488,8 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
   test("New chat clears the conversation, and a reload stays clear", async () => {
     await page.getByRole("button", { name: "New chat" }).click();
     await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toHaveCount(0);
+    // Without a reload: the start screen has its starters and the start box has the focus.
+    await expectStartScreen(page);
     await page.reload();
     await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Read Priya's story" })).toBeVisible();
@@ -533,7 +544,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(dialog.getByRole("button", { name: "Restart" })).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(dialog).toBeHidden();
-    await expect(page.getByRole("button", { name: "Read Priya's story" })).toBeVisible();
+    await expectStartScreen(page);
     expect(progressRaw()).toBeNull();
     expect(existsSync(join(home, "consent.json"))).toBe(false);
     const backups = readdirSync(join(home, "old"));

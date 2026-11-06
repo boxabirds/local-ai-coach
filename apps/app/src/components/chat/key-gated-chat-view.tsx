@@ -24,6 +24,8 @@ export function StubBadge() {
   );
 }
 
+const NO_STARTERS: NonNullable<ComponentProps<typeof CopilotChatView>["suggestions"]> = [];
+
 /** Gate submission before CopilotKit adds a message or starts a provider request. */
 function KeyGatedChatViewComponent(props: ComponentProps<typeof CopilotChatView>) {
   const { hasKeys, setKeysOpen } = useProviderKeys();
@@ -37,6 +39,10 @@ function KeyGatedChatViewComponent(props: ComponentProps<typeof CopilotChatView>
     <ChatStartContext.Provider value={start}>
       <CopilotChatView
         {...props}
+        // The starters belong to the start screen. Judged here, from the conversation on screen:
+        // CopilotKit's own "before-first-message" counts a shared copy of the agent, not this
+        // conversation, so it hid them after New chat and showed them in a restored chat.
+        suggestions={welcome ? props.suggestions : NO_STARTERS}
         inputValue={draft}
         onInputChange={setDraft}
         onSubmitMessage={(value) => {

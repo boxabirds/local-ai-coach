@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import "@testing-library/jest-dom/vitest";
 import type { ComponentProps } from "react";
 import type { CopilotChatInput, CopilotChatView } from "@copilotkit/react-core/v2";
-import { ChatStartContext, glideFrom, glideToChat, takeStartBox } from "./chat-start";
+import { ChatStartContext, focusStartBox, glideFrom, glideToChat, takeStartBox } from "./chat-start";
 import { ProviderKeysProvider, useProviderKeys } from "./provider-keys";
 import { KeyGatedChatView } from "./key-gated-chat-view";
 import { QuotedInput } from "./quoted-input";
@@ -11,7 +11,10 @@ import { QuoteContext } from "./quote-block";
 
 vi.mock("@copilotkit/react-core/v2", () => ({
   CopilotChatView: (props: ComponentProps<typeof CopilotChatView>) => (
-    <button onClick={() => props.onSubmitMessage?.("hello")}>Send</button>
+    <>
+      <button onClick={() => props.onSubmitMessage?.("hello")}>Send</button>
+      {(props.suggestions ?? []).map((s) => <button key={s.title}>{s.title}</button>)}
+    </>
   ),
   CopilotChatInput: (props: ComponentProps<typeof CopilotChatInput>) => (
     <div data-testid="input" data-autofocus={String(Boolean(props.autoFocus))} data-disclaimer={String(Boolean(props.showDisclaimer))} />
@@ -130,5 +133,60 @@ describe("the message box", () => {
 
   it("doesn't take the focus once the chat is under way (a card may hold it)", () => {
     expect(box(false)).toHaveAttribute("data-autofocus", "false");
+  });
+});
+
+describe("the starters belong to the start screen, judged by the conversation on screen", () => {
+  const STARTERS = [{ title: "Made-up starter", message: "Made-up starter", isLoading: false }];
+  it.each([
+    ["an empty conversation shows them", [], 1],
+    ["a conversation under way (or restored) hides them", [{ id: "u1", role: "user", content: "hi" }], 0],
+  ])("%s", (_label, messages, shown) => {
+    render(
+      <ProviderKeysProvider>
+        <KeyGatedChatView messages={messages as never} suggestions={STARTERS} />
+      </ProviderKeysProvider>,
+    );
+    expect(screen.queryAllByRole("button", { name: "Made-up starter" })).toHaveLength(shown);
+  });
+});
+
+
+describe("focusStartBox", () => {
+  function startScreen() {
+    document.body.innerHTML = `<div id="wrap"><textarea data-testid="copilot-chat-textarea"></textarea></div><input id="other" />`;
+    return { wrap: document.getElementById("wrap")!, box: document.querySelector("textarea")!, other: document.getElementById("other") as HTMLInputElement };
+  }
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("takes the focus back from a button (a closing dialog returns it to its opener)", () => {
+    const { wrap, box } = startScreen();
+    const opener = document.createElement("button");
+    document.body.append(opener);
+    opener.focus();
+    expect(focusStartBox(wrap)).toBe(true);
+    expect(box).toHaveFocus();
+  });
+
+  it("leaves the focus alone while a dialog is open", () => {
+    const { wrap, box } = startScreen();
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("open", "");
+    document.body.append(dialog);
+    expect(focusStartBox(wrap)).toBe(false);
+    expect(box).not.toHaveFocus();
+  });
+
+  it("never takes the focus from somewhere the learner is typing", () => {
+    const { wrap, other } = startScreen();
+    other.focus();
+    expect(focusStartBox(wrap)).toBe(false);
+    expect(other).toHaveFocus();
+  });
+
+  it("does nothing without a start box", () => {
+    expect(focusStartBox(null)).toBe(false);
   });
 });

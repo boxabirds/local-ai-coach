@@ -58,6 +58,11 @@
   outline: 2px solid #189370;
   outline-offset: 4px;
 }
+/* The message box shows its focus with the caret; the green ring around the start box read as a
+   stray rectangle (Julian, 2026-11-06). Every other control keeps its ring. */
+.chat-app [data-testid="copilot-chat-textarea"]:focus-visible {
+  outline: none;
+}
 .chat-error {
   background: #ffac4d20;
   border: 1px solid #ffac4d;

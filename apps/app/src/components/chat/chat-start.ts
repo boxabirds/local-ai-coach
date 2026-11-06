@@ -62,3 +62,22 @@ export function glideFrom(box: HTMLElement, from: DOMRect | null): boolean {
   setTimeout(tidy, GLIDE_MS * 2);
   return true;
 }
+
+const TEXTAREA = '[data-testid="copilot-chat-textarea"]';
+const OPEN_DIALOG = "dialog[open]";
+
+/**
+ * Put the focus in the start box, unless a dialog is open (the keys dialog keeps it) or the
+ * learner is already typing somewhere. Never scrolls.
+ */
+export function focusStartBox(wrapper: HTMLElement | null): boolean {
+  const box = wrapper?.querySelector<HTMLTextAreaElement>(TEXTAREA);
+  if (!box || !box.isConnected) return false;
+  const doc = box.ownerDocument;
+  if (doc.querySelector(OPEN_DIALOG)) return false;
+  const active = doc.activeElement;
+  if (active && active !== box && active.matches("input, textarea, [contenteditable='true']")) return false;
+  box.focus({ preventScroll: true });
+  return true;
+}
+
