@@ -1,4 +1,4 @@
-.PHONY: help install setup dev dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test clean
+.PHONY: help install setup dev serve dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -16,6 +16,14 @@ setup: install ## Full setup: install deps and create .env from template
 
 dev: ## Start all services (frontend + agent + mcp); the agent reloads on src/ edits only
 	pnpm dev
+
+SERVE_DIST := .next-serve
+
+serve: ## Build the app for production and serve it with the agent: stable for testing, no hot reload (run again after changes)
+	cd apps/app && DO_NOT_TRACK=1 NEXT_DIST_DIR=$(SERVE_DIST) npx next build
+	pnpm exec concurrently --names app,agent --kill-others \
+		"cd apps/app && DO_NOT_TRACK=1 NEXT_DIST_DIR=$(SERVE_DIST) npx next start -H 127.0.0.1 -p 3000" \
+		"pnpm dev:agent"
 
 STUB_URL := http://127.0.0.1:8123/stub
 
