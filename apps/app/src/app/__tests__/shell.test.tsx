@@ -201,3 +201,37 @@ describe("what typing and streaming redraw (TC-09, TC-10)", () => {
     expect(renders.header - before).toBeLessThan(TOKENS.length);
   });
 });
+
+describe("Restart coach (story 23)", () => {
+  it("the header offers Restart coach, which asks first, even during a run", async () => {
+    const runtime = fakeRuntime();
+    await openPage();
+    await ask("A sample question");
+    const restart = screen.getByRole("button", { name: "Restart coach" });
+    expect(restart).toBeEnabled();
+    fireEvent.click(restart);
+    expect(await screen.findByRole("dialog", { name: "Start the coach again?" })).toBeVisible();
+    await waitFor(() => expect(runtime.stopped()).toBe(true));
+  });
+
+  it("confirming clears the kept conversation and starts the chat again", async () => {
+    window.localStorage.setItem(CHAT_KEY, JSON.stringify({ version: 1, state: {}, messages: [
+      { id: "q-1", role: "user", content: "A kept sample question" },
+      { id: "a-1", role: "assistant", content: "A kept sample answer" },
+    ] }));
+    fakeRuntime({ hang: false });
+    const restarts: string[] = [];
+    const base = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url) === "/api/coach-restart") { restarts.push(init?.method ?? "GET"); return Response.json({ archived: "old/x", moved: ["progress.json"] }); }
+      return base(url, init);
+    }));
+    await openPage();
+    await screen.findByText("A kept sample answer");
+    fireEvent.click(screen.getByRole("button", { name: "Restart coach" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Restart" }));
+    await waitFor(() => expect(screen.queryByText("A kept sample answer")).toBeNull());
+    expect(restarts).toEqual(["POST"]);
+    expect(window.localStorage.getItem(CHAT_KEY)).toBeNull();
+  });
+});

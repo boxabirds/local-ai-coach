@@ -1,5 +1,5 @@
 import { chromium, expect, test, type Browser, type Page } from "@playwright/test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { totalmem } from "node:os";
 import { join } from "node:path";
 
@@ -386,5 +386,24 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Read Priya's story" })).toBeVisible();
     await shot(page, "07-new-chat");
+  });
+
+  test("Restart coach asks first, then puts progress and permission aside and starts again (story 23, TC-14)", async () => {
+    const home = process.env.COACH_E2E_HOME!;
+    expect(progressRaw()).not.toBeNull(); // the chapter above left progress and permission behind
+    expect(existsSync(join(home, "consent.json"))).toBe(true);
+    await page.getByRole("button", { name: "Restart coach" }).click();
+    const dialog = page.getByRole("dialog", { name: "Start the coach again?" });
+    await expect(dialog).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cancel" })).toBeFocused();
+    await dialog.getByRole("button", { name: "Restart" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole("button", { name: "Read Priya's story" })).toBeVisible();
+    expect(progressRaw()).toBeNull();
+    expect(existsSync(join(home, "consent.json"))).toBe(false);
+    const backups = readdirSync(join(home, "old"));
+    expect(backups).toHaveLength(1);
+    expect(readdirSync(join(home, "old", backups[0])).sort()).toEqual(["consent.json", "progress.stub.json"]);
+    await shot(page, "08-restart-coach");
   });
 });

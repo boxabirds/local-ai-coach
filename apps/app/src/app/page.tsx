@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProviderKeysDialog } from "@/components/chat/provider-keys-dialog";
+import { RestartDialog } from "@/components/chat/restart-dialog";
 import { useProviderKeys } from "@/components/chat/provider-keys";
 import { COACH_STUB, KeyGatedChatView, StubBadge } from "@/components/chat/key-gated-chat-view";
 import { ReaderScrollView } from "@/components/chat/reader-scroll-view";
@@ -53,6 +54,7 @@ export default function HomePage() {
   const { copilotkit } = useCopilotKit();
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
+  const [restartOpen, setRestartOpen] = useState(false);
   const retryingRef = useRef(false);
   const chatRoot = useRef<HTMLDivElement>(null);
   // Story 8: click a coach bubble, Ask about this, and its words wait in the message box.
@@ -137,11 +139,15 @@ export default function HomePage() {
           <button type="button" onClick={() => stopThen(newChat)} disabled={retrying}>
             New chat
           </button>
+          <button type="button" onClick={() => stopThen(() => setRestartOpen(true))} disabled={retrying} aria-haspopup="dialog">
+            Restart coach
+          </button>
           <button type="button" onClick={openKeys} disabled={retrying} aria-haspopup="dialog">
             API keys{hasKeys ? " •" : ""}
           </button>
         </nav>
       </header>
+      {restartOpen && <RestartDialog onClose={() => setRestartOpen(false)} onRestarted={newChat} />}
       {keysOpen && <ProviderKeysDialog onClose={() => setKeysOpen(false)} disabled={retrying} />}
       <main id="main-content" className="chat-main">
         {error && (
