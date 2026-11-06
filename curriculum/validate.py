@@ -856,14 +856,18 @@ def check_figures(
 
         # Station colours match the station graph.
         if stations is not None:
+            # A station may be drawn once per state; a wrong colour is one fault, reported once.
+            wrong: dict[str, str] = {}
             for node in svg.iter():
                 sid = node.get("data-station")
                 if not sid:
                     continue
                 m = CRIT_CLASS.search(node.get("class") or "")
                 want = CRITICALITY.get((stations.get(sid) or {}).get("inYourHead", ""))
-                if m is None or m.group(1) != want:
-                    report.error("FIGURE_CRIT", where, f"station {sid!r} is drawn {m.group(1) if m else 'without a colour'}; stations.json says {want}")
+                if (m is None or m.group(1) != want) and sid not in wrong:
+                    wrong[sid] = f"station {sid!r} is drawn {m.group(1) if m else 'without a colour'}; stations.json says {want}"
+            for message in wrong.values():
+                report.error("FIGURE_CRIT", where, message)
 
         # The print drawing is the source in its print state.
         print_rel = f"{FIGURES_DIR}/print/{fid}.svg"

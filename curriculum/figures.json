@@ -39,8 +39,7 @@
       "id": "three-stations",
       "item": "legal-letter",
       "title": "Three stations, three amounts of you",
-      "alt": "Three stations on one line: What can my computer do?, an amber diamond; Local chat, a grey circle; Is my chat app talking to anyone else?, a red triangle with an exclamation mark.",
-      "caption": "Priya's three stations. The shape says the same as the colour, so it reads in black and white too.",
+      "alt": "Three stations on one line: What can my computer do?, an amber diamond; Local chat, a grey circle; Is my chat app talking to anyone else?, a red triangle with an exclamation mark. You are at the station you picked; it and the ones before it are drawn full strength, the ones after it faded.",
       "controls": [
         { "name": "station", "label": "Station", "default": "machine", "options": [
           { "value": "machine", "label": "What can my computer do?" },

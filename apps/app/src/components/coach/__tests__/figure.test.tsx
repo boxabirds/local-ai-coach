@@ -164,3 +164,21 @@ describe("Figure component (TC-23)", () => {
     expect(screen.queryByTestId("coach-figure")).toBeNull();
   });
 });
+
+describe("a figure's quiet parts (2026-11-06)", () => {
+  /** A made-up figure: one control, no caption. */
+  const MADE_UP = {
+    id: "made-up", title: "A sample figure", alt: "A sample drawing.",
+    controls: [{ name: "pick", label: "Sample control", default: "a", options: [{ value: "a", label: "Option A" }, { value: "b", label: "Option B" }] }],
+    svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><text class="fig-result" data-when="pick=a">A</text></svg>',
+  };
+
+  it("names the choices for screen readers only, and draws no caption when there is none", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response(JSON.stringify(MADE_UP), { status: 200 }))));
+    render(<Figure id="made-up" />);
+    const figure = await screen.findByTestId("coach-figure");
+    expect(within(figure).getByRole("group", { name: "Sample control" })).toBeInTheDocument();
+    expect(within(figure).getByText("Sample control")).toHaveClass("coach-sr-only");
+    expect(figure.querySelector("figcaption")).toBeNull();
+  });
+});

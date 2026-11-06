@@ -91,7 +91,8 @@ export function Figure({ id }: { id: string }) {
       </p>
       {data.controls.map((control) => (
         <div key={control.name} className="coach-figure__choices" role="group" aria-label={control.label}>
-          <span className="coach-figure__label">{control.label}</span>
+          {/* Named for screen readers; on screen the buttons speak for themselves (2026-11-06). */}
+          <span className="coach-sr-only">{control.label}</span>
           {control.options.map((option) => {
             const on = choices[control.name] === option.value;
             return (
@@ -110,7 +111,7 @@ export function Figure({ id }: { id: string }) {
           })}
         </div>
       ))}
-      <figcaption className="coach-figure__caption">{data.caption}</figcaption>
+      {data.caption && <figcaption className="coach-figure__caption">{data.caption}</figcaption>}
     </figure>
   );
 }

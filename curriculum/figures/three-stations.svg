@@ -1,23 +1,57 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 246" width="640" height="246" font-family="system-ui, -apple-system, Segoe UI, sans-serif" class="fig" data-figure="three-stations">
   <title>Three stations, three amounts of you</title>
-  <line x1="110" y1="90" x2="530" y2="90" class="fig-line-stroke" stroke="#8b8ba3" stroke-width="8" stroke-linecap="round" />
-  <circle cx="110" cy="90" r="30" class="fig-accent-stroke" fill="none" stroke="#1d4ed8" stroke-width="3" data-when="station=machine" />
-  <polygon points="110,72 128,90 110,108 92,90" class="fig-crit coach-crit--amber" fill="#b45309" data-station="machine" />
+  <line x1="110" y1="90" x2="530" y2="90" class="fig-line-stroke" stroke="#8b8ba3" opacity="0.5" stroke-width="8" stroke-linecap="round" data-when="station=machine" />
+  <line x1="110" y1="90" x2="320" y2="90" class="fig-line-stroke" stroke="#8b8ba3" stroke-width="8" stroke-linecap="round" data-when="station=localchat" />
+  <line x1="320" y1="90" x2="530" y2="90" class="fig-line-stroke" stroke="#8b8ba3" opacity="0.5" stroke-width="8" stroke-linecap="round" data-when="station=localchat" />
+  <line x1="110" y1="90" x2="530" y2="90" class="fig-line-stroke" stroke="#8b8ba3" stroke-width="8" stroke-linecap="round" data-when="station=prove" />
+  <g data-when="station=machine">
+    <polygon points="110,72 128,90 110,108 92,90" class="fig-crit coach-crit--amber" fill="#ffb000" data-station="machine" stroke="#92400e" stroke-width="2" />
+  </g>
+  <g data-when="station=localchat">
+    <polygon points="110,72 128,90 110,108 92,90" class="fig-crit coach-crit--amber" fill="#ffb000" data-station="machine" stroke="#92400e" stroke-width="2" />
+  </g>
+  <g data-when="station=prove">
+    <polygon points="110,72 128,90 110,108 92,90" class="fig-crit coach-crit--amber" fill="#ffb000" data-station="machine" stroke="#92400e" stroke-width="2" />
+  </g>
+  <text x="110" y="34" font-size="13" text-anchor="middle" class="fig-accent-fill" fill="#1d4ed8" font-weight="bold" data-when="station=machine">You are here</text>
+  <polygon points="102,42 118,42 110,54" class="fig-accent-fill" fill="#1d4ed8" data-when="station=machine" />
   <text x="110" y="150" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">What can my</text>
   <text x="110" y="166" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">computer do?</text>
   <text x="110" y="186" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Amber</text>
   <text x="320" y="228" font-size="15" text-anchor="middle" class="fig-ink fig-result" fill="#1c1c28" font-weight="bold" data-when="station=machine">Amber: you can say in a sentence what it did.</text>
-  <circle cx="320" cy="90" r="30" class="fig-accent-stroke" fill="none" stroke="#1d4ed8" stroke-width="3" data-when="station=localchat" />
-  <circle cx="320" cy="90" r="18" class="fig-crit coach-crit--grey" fill="#6b7280" data-station="localchat" />
+  <g data-when="station=machine">
+    <circle cx="320" cy="90" r="18" class="fig-paper" fill="#ffffff" />
+    <circle cx="320" cy="90" r="18" class="fig-crit coach-crit--grey" fill="#6b7280" data-station="localchat" opacity="0.5" />
+  </g>
+  <g data-when="station=localchat">
+    <circle cx="320" cy="90" r="18" class="fig-crit coach-crit--grey" fill="#6b7280" data-station="localchat" />
+  </g>
+  <g data-when="station=prove">
+    <circle cx="320" cy="90" r="18" class="fig-crit coach-crit--grey" fill="#6b7280" data-station="localchat" />
+  </g>
+  <text x="320" y="34" font-size="13" text-anchor="middle" class="fig-accent-fill" fill="#1d4ed8" font-weight="bold" data-when="station=localchat">You are here</text>
+  <polygon points="312,42 328,42 320,54" class="fig-accent-fill" fill="#1d4ed8" data-when="station=localchat" />
   <text x="320" y="150" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">Local chat</text>
   <text x="320" y="186" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Grey</text>
   <text x="320" y="228" font-size="15" text-anchor="middle" class="fig-ink fig-result" fill="#1c1c28" font-weight="bold" data-when="station=localchat">Grey: it ran.</text>
-  <circle cx="530" cy="90" r="30" class="fig-accent-stroke" fill="none" stroke="#1d4ed8" stroke-width="3" data-when="station=prove" />
-  <polygon points="530,72 548,104.4 512,104.4" class="fig-crit coach-crit--red" fill="#b91c1c" data-station="prove" />
-  <text x="530" y="99" font-size="15" text-anchor="middle" class="fig-on-crit" fill="#ffffff" font-weight="bold">!</text>
+  <g data-when="station=machine">
+    <polygon points="530,72 548,104.4 512,104.4" class="fig-paper" fill="#ffffff" />
+    <polygon points="530,72 548,104.4 512,104.4" class="fig-crit coach-crit--red" fill="#b91c1c" data-station="prove" opacity="0.5" />
+    <text x="530" y="99" font-size="15" text-anchor="middle" class="fig-on-crit" fill="#ffffff" opacity="0.5" font-weight="bold">!</text>
+  </g>
+  <g data-when="station=localchat">
+    <polygon points="530,72 548,104.4 512,104.4" class="fig-paper" fill="#ffffff" />
+    <polygon points="530,72 548,104.4 512,104.4" class="fig-crit coach-crit--red" fill="#b91c1c" data-station="prove" opacity="0.5" />
+    <text x="530" y="99" font-size="15" text-anchor="middle" class="fig-on-crit" fill="#ffffff" opacity="0.5" font-weight="bold">!</text>
+  </g>
+  <g data-when="station=prove">
+    <polygon points="530,72 548,104.4 512,104.4" class="fig-crit coach-crit--red" fill="#b91c1c" data-station="prove" />
+    <text x="530" y="99" font-size="15" text-anchor="middle" class="fig-on-crit" fill="#ffffff" font-weight="bold">!</text>
+  </g>
+  <text x="530" y="34" font-size="13" text-anchor="middle" class="fig-accent-fill" fill="#1d4ed8" font-weight="bold" data-when="station=prove">You are here</text>
+  <polygon points="522,42 538,42 530,54" class="fig-accent-fill" fill="#1d4ed8" data-when="station=prove" />
   <text x="530" y="150" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">Is my chat app talking</text>
   <text x="530" y="166" font-size="13" text-anchor="middle" class="fig-ink" fill="#1c1c28" font-weight="bold">to anyone else?</text>
   <text x="530" y="186" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Red</text>
   <text x="320" y="228" font-size="15" text-anchor="middle" class="fig-ink fig-result" fill="#1c1c28" font-weight="bold" data-when="station=prove">Red: you can say what it looks like when it goes wrong.</text>
-  <text x="320" y="36" font-size="13" text-anchor="middle" class="fig-muted" fill="#55556a">Priya's week, on the map</text>
 </svg>

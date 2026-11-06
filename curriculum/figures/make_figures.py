@@ -44,7 +44,11 @@ PAPER = "#ffffff"
 SOFT = "#dbe6ff"
 ACCENT = "#1d4ed8"
 CODE = "#f2f2f4"
-CRIT = {"grey": "#6b7280", "amber": "#b45309", "red": "#b91c1c"}
+CRIT = {"grey": "#6b7280", "amber": "#ffb000", "red": "#b91c1c"}
+# Amber is too light for 3:1 against paper on its own, so its shape gets this edge (2026-11-06).
+CRIT_EDGE = {"amber": "#92400e"}
+# A station or stretch of line not reached yet is drawn at half strength (2026-11-06).
+NOT_YET = 0.5
 
 # The chapter 1 rule of thumb, wide on purpose: under half fits, bigger than memory doesn't,
 # anything between depends (docs/design/20261105-pedagogical-flow-proposal.md, decision 6).
@@ -209,16 +213,31 @@ STATION_TEST = {
 }
 
 
-def station_glyph(svg: Svg, x: float, y: float, colour: str, station: str) -> None:
+def station_glyph(svg: Svg, x: float, y: float, colour: str, station: str, *, when: str | None = None, reached: bool = True) -> None:
     attrs = {"class": f"fig-crit coach-crit--{colour}", "fill": CRIT[colour], "data-station": station}
+    if colour in CRIT_EDGE:
+        attrs.update({"stroke": CRIT_EDGE[colour], "stroke-width": 2})
+    if not reached:
+        attrs["opacity"] = NOT_YET
+    parent = svg.group(when) if when else None
     r = 18
+    if not reached:
+        # A paper copy underneath, so a faded station hides the line instead of showing it through.
+        backing = {"class": "fig-paper", "fill": PAPER}
+        if colour == "grey":
+            svg.el("circle", {"cx": x, "cy": y, "r": r, **backing}, parent=parent)
+        elif colour == "amber":
+            svg.el("polygon", {"points": f"{x:g},{y - r:g} {x + r:g},{y:g} {x:g},{y + r:g} {x - r:g},{y:g}", **backing}, parent=parent)
+        else:
+            svg.el("polygon", {"points": f"{x:g},{y - r:g} {x + r:g},{y + r * 0.8:g} {x - r:g},{y + r * 0.8:g}", **backing}, parent=parent)
     if colour == "grey":
-        svg.el("circle", {"cx": x, "cy": y, "r": r, **attrs})
+        svg.el("circle", {"cx": x, "cy": y, "r": r, **attrs}, parent=parent)
     elif colour == "amber":
-        svg.el("polygon", {"points": f"{x:g},{y - r:g} {x + r:g},{y:g} {x:g},{y + r:g} {x - r:g},{y:g}", **attrs})
+        svg.el("polygon", {"points": f"{x:g},{y - r:g} {x + r:g},{y:g} {x:g},{y + r:g} {x - r:g},{y:g}", **attrs}, parent=parent)
     else:
-        svg.el("polygon", {"points": f"{x:g},{y - r:g} {x + r:g},{y + r * 0.8:g} {x - r:g},{y + r * 0.8:g}", **attrs})
-        svg.text(x, y + 9, "!", size=SIZE_TEXT, anchor="middle", weight="bold", cls="fig-on-crit", fill=PAPER)
+        svg.el("polygon", {"points": f"{x:g},{y - r:g} {x + r:g},{y + r * 0.8:g} {x - r:g},{y + r * 0.8:g}", **attrs}, parent=parent)
+        extra = {} if reached else {"opacity": NOT_YET}
+        svg.text(x, y + 9, "!", size=SIZE_TEXT, anchor="middle", weight="bold", cls="fig-on-crit", fill=PAPER, parent=parent, **extra)
 
 
 # A station name longer than this is split over two lines, so neighbours don't overlap.
@@ -235,21 +254,35 @@ def label_lines(label: str) -> list[str]:
     return [label[:cut], label[cut + 1:]]
 
 
+HERE_Y = 34  # the "You are here" label, above the chosen station
+POINTER = 8  # the pointer under it, down to the station
+
+
 def three_stations(entry: dict[str, Any]) -> Svg:
+    """Priya's three stations on one line. The one picked is where you are: it and everything
+    before it, line included, at full strength; the rest at half (2026-11-06)."""
     svg = Svg(entry["id"], 246, entry["title"])
     options = entry["controls"][0]["options"]
     xs = [110, 320, 530]
-    svg.line(xs[0], 90, xs[-1], 90, cls="fig-line-stroke", stroke=LINE, **{"stroke-width": 8, "stroke-linecap": "round"})
-    for x, option in zip(xs, options):
+    line = {"stroke-width": 8, "stroke-linecap": "round"}
+    for here, picked in enumerate(options):
+        when = f"station={picked['value']}"
+        if here > 0:
+            svg.line(xs[0], 90, xs[here], 90, cls="fig-line-stroke", stroke=LINE, when=when, **line)
+        if here < len(xs) - 1:
+            svg.line(xs[here], 90, xs[-1], 90, cls="fig-line-stroke", stroke=LINE, when=when, opacity=NOT_YET, **line)
+    for i, (x, option) in enumerate(zip(xs, options)):
         sid = option["value"]
         colour = entry["crit"][sid]
-        svg.el("circle", {"cx": x, "cy": 90, "r": 30, "class": "fig-accent-stroke", "fill": "none", "stroke": ACCENT, "stroke-width": 3}, when=f"station={sid}")
-        station_glyph(svg, x, 90, colour, sid)
-        for n, line in enumerate(label_lines(option["label"])):
-            svg.text(x, 150 + n * LABEL_LINE, line, size=SIZE_SMALL, anchor="middle", weight="bold")
+        for here, picked in enumerate(options):
+            station_glyph(svg, x, 90, colour, sid, when=f"station={picked['value']}", reached=i <= here)
+        svg.text(x, HERE_Y, "You are here", size=SIZE_SMALL, anchor="middle", weight="bold", cls="fig-accent-fill", fill=ACCENT, when=f"station={sid}")
+        svg.el("polygon", {"points": f"{x - POINTER:g},{HERE_Y + 8:g} {x + POINTER:g},{HERE_Y + 8:g} {x:g},{HERE_Y + 8 + POINTER * 1.5:g}",
+                           "class": "fig-accent-fill", "fill": ACCENT}, when=f"station={sid}")
+        for n, text_line in enumerate(label_lines(option["label"])):
+            svg.text(x, 150 + n * LABEL_LINE, text_line, size=SIZE_SMALL, anchor="middle", weight="bold")
         svg.text(x, 186, colour.capitalize(), size=SIZE_SMALL, anchor="middle", cls="fig-muted", fill=MUTED)
         svg.result(WIDTH / 2, 228, STATION_TEST[colour], when=f"station={sid}", anchor="middle")
-    svg.text(WIDTH / 2, 36, "Priya's week, on the map", anchor="middle", cls="fig-muted", fill=MUTED, size=SIZE_SMALL)
     return svg
 
 

@@ -172,7 +172,9 @@
   /* Criticality (the book's grey, amber, red). Reserved: used only in .coach-crit rules.
      Each is at least 3:1 against paper for the outlines. */
   --crit-grey: #6b7280;
-  --crit-amber: #b45309;
+  /* Amber is a true amber fill; too light for 3:1 on its own, so outlines use its edge. */
+  --crit-amber: #ffb000;
+  --crit-amber-edge: #92400e;
   --crit-red: #b91c1c;
 }
 
@@ -388,7 +390,7 @@
 }
 
 .coach-map__outline.coach-crit--grey { stroke: var(--crit-grey); }
-.coach-map__outline.coach-crit--amber { stroke: var(--crit-amber); }
+.coach-map__outline.coach-crit--amber { stroke: var(--crit-amber-edge); }
 .coach-map__outline.coach-crit--red { stroke: var(--crit-red); }
 .coach-map__outline.coach-crit--none { stroke: var(--coach-line); }
 
@@ -489,22 +491,19 @@
   height: auto;
 }
 
+/* Even columns that wrap as a whole, so a long label never strands a button on its own row. */
 .coach-figure__choices {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 6px;
 }
 
-.coach-figure__label {
-  margin-right: 4px;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
 .coach-figure__choice {
-  padding: 4px 10px;
+  padding: 6px 10px;
   font-size: 0.875rem;
+  line-height: 1.3;
+  white-space: normal;
+  text-align: center;
 }
 
 .coach-figure__caption {
@@ -525,7 +524,7 @@
 .coach-figure .fig-accent-stroke { stroke: var(--coach-accent); }
 .coach-figure .fig-on-crit { fill: var(--coach-paper); }
 .coach-figure .fig-crit.coach-crit--grey { fill: var(--crit-grey); }
-.coach-figure .fig-crit.coach-crit--amber { fill: var(--crit-amber); }
+.coach-figure .fig-crit.coach-crit--amber { fill: var(--crit-amber); stroke: var(--crit-amber-edge); }
 .coach-figure .fig-crit.coach-crit--red { fill: var(--crit-red); }
 
 .coach-sr-only {

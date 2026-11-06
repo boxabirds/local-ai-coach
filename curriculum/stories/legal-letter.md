@@ -106,7 +106,7 @@ It's drawn like the London Underground: coloured lines, with a circle on each li
 
 I call each of those circles a **station**, and getting to one means you can do the thing it's named after. (Yes, there is a Circle line. No, it doesn't go anywhere useful either. 😆)
 
-Each station has a colour too: grey, amber or red.
+Each station has a colour and a shape too: a grey circle, an amber diamond or a red triangle.
 
 Grey means press go. A script does it, and you never need to know what happened.
 
