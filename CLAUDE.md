@@ -32,7 +32,7 @@ Start step 1 in plan mode and show the plan before writing code.
 - `run_do_it` runs only after a `run_confirm` result in the thread, in the agent's PTY, and records `assisted`.
 - Everything the coach says follows `assets/tone-of-voice-guide.md` (the same guide as `panel/style-guide.md`): canned text (stub replies, check notes, card labels, buttons, error lines), the system prompt's Voice section (a chat subset of the guide with book passages as examples), skills and lesson JSON. Also `panel/authoring-policy.md` for lessons: no em or en dashes, nothing from the avoid list, UK spelling, define a term before using it. Check prose with `python3 panel/stylecheck.py --book <file>`; `apps/agent/tests/test_voice.py` scans the coach's frontend text.
 - Keep upstream's streaming tool contract text in `src/prompt.py` verbatim; `test_canonical_contract.py` and `test_skills_contract.py` must stay green.
-- Pin every dependency at the versions in the lockfiles. No upgrades during V1.
+- Dependencies are pinned in the lockfiles. Upgrading or adding one is a deliberate change with Julian's OK, never a side effect. On this machine never run `uv lock` or `uv add`: the installed uv is older than the one that wrote `apps/agent/uv.lock` and rewrites the whole lock.
 
 ## No explanatory metadata in the UI
 

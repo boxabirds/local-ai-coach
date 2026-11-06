@@ -289,7 +289,7 @@ Two things to notice. The check no longer needs the laptop off the internet, so 
 
 | Risk | Likelihood | What we do |
 | --- | --- | --- |
-| Prerelease CopilotKit (`1.55.2-next.1`) changes under us | High over months, low over the four weeks of V1 | Pin exactly; no upgrades during the study |
+| Prerelease CopilotKit (`1.55.2-next.1`) changes under us | High over months, low over the four weeks of V1 | Pin exactly; upgrade deliberately, never as a side effect |
 | Jev routes a coaching turn to `open_generative_ui` and the model draws instead of running the step | Medium | `coach-playbook` says: during a step, text first, draw only if asked. Count occurrences in the study |
 | `chat-latest` is a moving alias; behaviour shifts mid-study | Low over four weeks | Note the date in each session summary; if behaviour shifts, set `LLM_MODEL` to a pinned `gpt-*` via the server-key path for the remaining sessions |
 | macOS history not flushed, so `history_has` misses | Certain | Already corroboration only |
