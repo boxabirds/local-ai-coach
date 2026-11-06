@@ -11,12 +11,9 @@
 #   sh install.sh --plan   print what would be downloaded for this computer, then stop
 set -eu
 
-NODE_VERSION=24.22.2
 UV_VERSION=0.13.7
 RELEASE_BASE="${COACH_RELEASE_BASE:-https://github.com/boxabirds/local-ai-coach/releases/latest/download}"
-NODE_BASE="${COACH_NODE_BASE:-https://nodejs.org/dist}"
 UV_BASE="${COACH_UV_BASE:-https://github.com/astral-sh/uv/releases/download}"
-ARCHIVE=local-ai-coach.tar.gz
 
 COACH_ROOT="$HOME/.local-ai-coach"
 APP="$COACH_ROOT/app"
@@ -30,19 +27,19 @@ fail() { printf 'install: %s\n' "$*" >&2; exit 1; }
 os="$(uname -s)"
 cpu="$(uname -m)"
 case "$os/$cpu" in
-  Darwin/arm64) node_platform=darwin-arm64; uv_target=aarch64-apple-darwin ;;
-  Darwin/x86_64) node_platform=darwin-x64; uv_target=x86_64-apple-darwin ;;
-  Linux/x86_64) node_platform=linux-x64; uv_target=x86_64-unknown-linux-gnu ;;
-  Linux/aarch64 | Linux/arm64) node_platform=linux-arm64; uv_target=aarch64-unknown-linux-gnu ;;
+  Darwin/arm64) platform=darwin-arm64; uv_target=aarch64-apple-darwin ;;
+  Darwin/x86_64) platform=darwin-x64; uv_target=x86_64-apple-darwin ;;
+  Linux/x86_64) platform=linux-x64; uv_target=x86_64-unknown-linux-gnu ;;
+  Linux/aarch64 | Linux/arm64) platform=linux-arm64; uv_target=aarch64-unknown-linux-gnu ;;
   *) fail "this computer ($os on $cpu) is not supported. The coach runs on macOS (Apple silicon or Intel) and Linux (x86_64 or arm64)." ;;
 esac
 
-node_file="node-v$NODE_VERSION-$node_platform.tar.gz"
+# One archive per kind of computer: the page's server is an executable built for it.
+ARCHIVE="local-ai-coach-$platform.tar.gz"
 uv_file="uv-$uv_target.tar.gz"
 
 if [ "${1:-}" = "--plan" ]; then
   say "release $RELEASE_BASE/$ARCHIVE"
-  say "node $NODE_BASE/v$NODE_VERSION/$node_file"
   say "uv $UV_BASE/$UV_VERSION/$uv_file"
   exit 0
 fi
@@ -74,11 +71,6 @@ fetch "$RELEASE_BASE/$ARCHIVE" "$WORK/$ARCHIVE"
 fetch "$RELEASE_BASE/$ARCHIVE.sha256" "$WORK/$ARCHIVE.sha256"
 verify "$WORK/$ARCHIVE" "$(cut -d ' ' -f 1 "$WORK/$ARCHIVE.sha256")" "$ARCHIVE"
 
-say "Downloading Node $NODE_VERSION"
-fetch "$NODE_BASE/v$NODE_VERSION/$node_file" "$WORK/$node_file"
-fetch "$NODE_BASE/v$NODE_VERSION/SHASUMS256.txt" "$WORK/node.sums"
-verify "$WORK/$node_file" "$(grep " $node_file\$" "$WORK/node.sums" | cut -d ' ' -f 1)" "$node_file"
-
 say "Downloading uv $UV_VERSION"
 fetch "$UV_BASE/$UV_VERSION/$uv_file" "$WORK/$uv_file"
 fetch "$UV_BASE/$UV_VERSION/$uv_file.sha256" "$WORK/uv.sha256"
@@ -91,9 +83,8 @@ verify "$WORK/$uv_file" "$(cut -d ' ' -f 1 "$WORK/uv.sha256")" "$uv_file"
 
 mkdir -p "$COACH_ROOT"
 NEW="$(mktemp -d "$COACH_ROOT/app-XXXXXX")"
-mkdir -p "$NEW/release" "$NEW/node" "$NEW/uv"
+mkdir -p "$NEW/release" "$NEW/uv"
 tar -xzf "$WORK/$ARCHIVE" -C "$NEW/release"
-tar -xzf "$WORK/$node_file" -C "$NEW/node" --strip-components 1
 tar -xzf "$WORK/$uv_file" -C "$NEW/uv" --strip-components 1
 
 say "Preparing the coach's agent (Python and its packages; the first time takes a minute)"

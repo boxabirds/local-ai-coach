@@ -42,8 +42,10 @@ If Terminal says `command not found`, use the full path the installer printed
 
 ## For maintainers
 
-`make release VERSION=x.y.z` builds `dist/local-ai-coach.tar.gz` and its `.sha256`.
-`make release-test` builds, installs from scratch into a temporary home with the real
-pinned Node and uv, and runs the browser suite against the installed coach. Publish by
-attaching `dist/local-ai-coach.tar.gz`, `dist/local-ai-coach.tar.gz.sha256` and
-`install.sh` to a GitHub release.
+`make release VERSION=x.y.z` builds one archive per kind of computer,
+`dist/local-ai-coach-<platform>.tar.gz` and its `.sha256`, for darwin-arm64, darwin-x64,
+linux-x64 and linux-arm64. Each holds the page's server as a single Bun executable for
+that computer, so testers download no Node. `make release-test` builds this machine's
+archive, installs it from scratch into a temporary home with the real pinned uv, and runs
+the browser suite against the installed coach. Publish by attaching every
+`dist/local-ai-coach-*.tar.gz`, its `.sha256` and `install.sh` to a GitHub release.

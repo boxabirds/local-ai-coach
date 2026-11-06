@@ -31,7 +31,6 @@ done
 RELEASE="$(cd "$(dirname "$SELF")/.." && pwd)"
 APP_DIR="$(cd "$RELEASE/.." && pwd -P)"
 INSTALL_ROOT="$(dirname "$APP_DIR")"
-NODE="$APP_DIR/node/bin/node"
 UV="$APP_DIR/uv/uv"
 
 APP_PORT="${COACH_APP_PORT:-3000}"
@@ -94,10 +93,10 @@ say "Starting the coach (version $(cat "$RELEASE/VERSION"))"
 AGENT_PID=$!
 
 (
-  cd "$RELEASE/server/apps/app" || exit 1
-  export HOSTNAME="$HOST" PORT="$APP_PORT" NODE_ENV=production DO_NOT_TRACK=1
+  # The page's server is one Bun executable; it always listens on 127.0.0.1.
+  export PORT="$APP_PORT" COACH_WEB_DIR="$RELEASE/web" COACH_STUB=1 DO_NOT_TRACK=1
   export LANGGRAPH_DEPLOYMENT_URL="http://$HOST:$AGENT_PORT/stub" COACH_AGENT_URL="http://$HOST:$AGENT_PORT"
-  exec "$NODE" server.js
+  exec "$RELEASE/bin/coach-web"
 ) </dev/null >"$LOGS/app.log" 2>&1 &
 SERVER_PID=$!
 set +m

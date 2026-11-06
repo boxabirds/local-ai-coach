@@ -1,12 +1,14 @@
-"""The release: build, installer and launcher (Ceetrix story 6).
+"""The release: build, installer and launcher (Ceetrix stories 6 and 31).
 
 Unit cases run the real install.sh and launcher as subprocesses against a fake
-release, fake Node and fake uv served from file:// URLs, with uname faked, so
-they test the scripts' decisions without the network.
+release (one archive per platform, its page server a fake executable) and fake
+uv served from file:// URLs, with uname faked, so they test the scripts'
+decisions without the network.
 
-The end-to-end cases (COACH_RELEASE_E2E=1) build the real release, install it
-into a temporary HOME with the real pinned Node and uv, start it and run the
-Playwright suite against it. They download about 100 MB.
+The end-to-end cases (COACH_RELEASE_E2E=1) build the real release for this
+machine, install it into a temporary HOME with the real pinned uv, start it and
+run the Playwright suite against it. They download Python and the agent's
+packages.
 """
 
 from __future__ import annotations
@@ -29,7 +31,6 @@ REPO = Path(__file__).resolve().parents[3]
 INSTALL = REPO / "install.sh"
 LAUNCHER = REPO / "scripts" / "local-ai-coach"
 BUILD = REPO / "scripts" / "build-release.sh"
-NODE_VERSION = "24.22.2"
 UV_VERSION = "0.13.7"
 RUN_TIMEOUT = 60
 VERSION = "9.9.9-test"
@@ -41,6 +42,13 @@ SUPPORTED = [
     ("Linux", "x86_64", "linux-x64", "x86_64-unknown-linux-gnu"),
     ("Linux", "aarch64", "linux-arm64", "aarch64-unknown-linux-gnu"),
 ]
+
+# The platform the fakes' default uname (Darwin arm64) asks for.
+HERE_PLATFORM = "darwin-arm64"
+
+
+def archive_name(platform: str) -> str:
+    return f"local-ai-coach-{platform}.tar.gz"
 
 
 # ------------------------------------------------------------------ fakes
@@ -66,45 +74,36 @@ def tar_dir(src: Path, out: Path, top: str | None = None) -> None:
 
 
 class Fakes:
-    """A fake release, Node and uv laid out like their real download sites."""
+    """A fake release (one archive per platform) and uv, laid out like their real download sites."""
 
-    def __init__(self, root: Path, *, uv_sync_ok: bool = True, node_body: str = f"sleep {FAKE_SLEEP}", uv_run_body: str = f"sleep {FAKE_SLEEP}"):
+    def __init__(self, root: Path, *, uv_sync_ok: bool = True, server_body: str = f"sleep {FAKE_SLEEP}", uv_run_body: str = f"sleep {FAKE_SLEEP}"):
         self.root = root
         self.release = root / "release"
-        self.node = root / "node"
         self.uv = root / "uv"
-        for d in (self.release, self.node / f"v{NODE_VERSION}", self.uv / UV_VERSION):
+        for d in (self.release, self.uv / UV_VERSION):
             d.mkdir(parents=True, exist_ok=True)
 
-        tree = root / "tree"
-        shutil.copy(LAUNCHER, (tree / "bin").mkdir(parents=True) or tree / "bin" / "local-ai-coach")
-        (tree / "bin" / "local-ai-coach").chmod(0o755)
-        (tree / "VERSION").write_text(VERSION + "\n")
-        (tree / "apps" / "agent").mkdir(parents=True)
-        (tree / "server" / "apps" / "app").mkdir(parents=True)
-        (tree / "server" / "apps" / "app" / "server.js").write_text("// fake\n")
-        tar_dir(tree, self.release / "local-ai-coach.tar.gz")
-        self.write_release_sum()
-
-        for _, _, node_platform, uv_target in SUPPORTED:
-            ntree = root / f"node-tree-{node_platform}"
-            write_exe(ntree / "bin" / "node", f"# fake-node marker\n{node_body}")
-            name = f"node-v{NODE_VERSION}-{node_platform}.tar.gz"
-            tar_dir(ntree, self.node / f"v{NODE_VERSION}" / name, top=f"node-v{NODE_VERSION}-{node_platform}")
+        for _, _, platform, uv_target in SUPPORTED:
+            tree = root / f"tree-{platform}"
+            shutil.copy(LAUNCHER, (tree / "bin").mkdir(parents=True) or tree / "bin" / "local-ai-coach")
+            (tree / "bin" / "local-ai-coach").chmod(0o755)
+            write_exe(tree / "bin" / "coach-web", f"# fake page server for {platform}\n{server_body}")
+            (tree / "VERSION").write_text(VERSION + "\n")
+            (tree / "apps" / "agent").mkdir(parents=True)
+            (tree / "web").mkdir()
+            (tree / "web" / "index.html").write_text("<!doctype html>\n")
+            tar_dir(tree, self.release / archive_name(platform))
+            self.write_release_sum(platform)
             utree = root / f"uv-tree-{uv_target}"
             sync = "exit 0" if uv_sync_ok else "echo 'uv: failed to resolve' >&2; exit 1"
             write_exe(utree / "uv", f'case "$1" in sync) {sync} ;; run) {uv_run_body} ;; esac')
             uname = f"uv-{uv_target}.tar.gz"
             tar_dir(utree, self.uv / UV_VERSION / uname, top=f"uv-{uv_target}")
             (self.uv / UV_VERSION / f"{uname}.sha256").write_text(f"{sha256(self.uv / UV_VERSION / uname)}  {uname}\n")
-        sums = [
-            f"{sha256(p)}  {p.name}" for p in sorted((self.node / f"v{NODE_VERSION}").glob("*.tar.gz"))
-        ]
-        (self.node / f"v{NODE_VERSION}" / "SHASUMS256.txt").write_text("\n".join(sums) + "\n")
 
-    def write_release_sum(self, value: str | None = None) -> None:
-        archive = self.release / "local-ai-coach.tar.gz"
-        (self.release / "local-ai-coach.tar.gz.sha256").write_text(f"{value or sha256(archive)}  local-ai-coach.tar.gz\n")
+    def write_release_sum(self, platform: str = HERE_PLATFORM, value: str | None = None) -> None:
+        archive = self.release / archive_name(platform)
+        (self.release / f"{archive.name}.sha256").write_text(f"{value or sha256(archive)}  {archive.name}\n")
 
     def env(self, home: Path, *, os_name: str = "Darwin", cpu: str = "arm64") -> dict[str, str]:
         shim = self.root / "shim"
@@ -114,7 +113,6 @@ class Fakes:
             "HOME": str(home),
             "PATH": f"{shim}:{os.environ['PATH']}",
             "COACH_RELEASE_BASE": f"file://{self.release}",
-            "COACH_NODE_BASE": f"file://{self.node}",
             "COACH_UV_BASE": f"file://{self.uv}",
         }
 
@@ -143,14 +141,27 @@ def home(tmp_path: Path) -> Path:
 # ------------------------------------------------------------------ installer (unit)
 
 
-@pytest.mark.parametrize("os_name,cpu,node_platform,uv_target", SUPPORTED)
-def test_tc01_plan_picks_the_assets_for_each_supported_system(tmp_path, home, os_name, cpu, node_platform, uv_target):
+@pytest.mark.parametrize("os_name,cpu,platform,uv_target", SUPPORTED)
+def test_tc01_plan_picks_the_assets_for_each_supported_system(tmp_path, home, os_name, cpu, platform, uv_target):
     fakes = Fakes(tmp_path)
     result = run(["sh", str(INSTALL), "--plan"], fakes.env(home, os_name=os_name, cpu=cpu))
     assert result.returncode == 0, result.stderr
-    assert f"node-v{NODE_VERSION}-{node_platform}.tar.gz" in result.stdout
+    assert f"/{archive_name(platform)}" in result.stdout
     assert f"{UV_VERSION}/uv-{uv_target}.tar.gz" in result.stdout
-    assert "local-ai-coach.tar.gz" in result.stdout
+    # Story 31 (TC-11): the page's server is in the archive, so nothing else is fetched.
+    assert len(result.stdout.strip().splitlines()) == 2
+    assert "node" not in result.stdout.lower()
+
+
+@pytest.mark.parametrize("os_name,cpu,platform,uv_target", SUPPORTED)
+def test_s31_tc11_install_unpacks_this_machines_server_and_downloads_no_node(tmp_path, home, os_name, cpu, platform, uv_target):
+    fakes = Fakes(tmp_path)
+    result = install(fakes, home, os_name=os_name, cpu=cpu)
+    assert result.returncode == 0, result.stderr
+    assert "node" not in (result.stdout + result.stderr).lower()
+    server = home / ".local-ai-coach" / "app" / "release" / "bin" / "coach-web"
+    assert f"fake page server for {platform}" in server.read_text()
+    assert not (home / ".local-ai-coach" / "app" / "node").exists()
 
 
 @pytest.mark.parametrize("os_name,cpu", [("MINGW64_NT-10.0", "x86_64"), ("Darwin", "ppc"), ("FreeBSD", "amd64")])
@@ -165,10 +176,10 @@ def test_tc02_unsupported_system_stops_before_downloading(tmp_path, home, os_nam
 
 def test_tc03_a_checksum_mismatch_installs_nothing(tmp_path, home):
     fakes = Fakes(tmp_path)
-    fakes.write_release_sum("0" * 64)
+    fakes.write_release_sum(value="0" * 64)
     result = install(fakes, home)
     assert result.returncode != 0
-    assert "local-ai-coach.tar.gz could not be verified" in result.stderr
+    assert f"{archive_name(HERE_PLATFORM)} could not be verified" in result.stderr
     assert snapshot_tree(home / ".local-ai-coach") == {}
     assert not (home / ".local" / "bin" / "local-ai-coach").exists()
 
@@ -177,10 +188,10 @@ def test_tc04_a_missing_download_leaves_the_earlier_install(tmp_path, home):
     fakes = Fakes(tmp_path)
     assert install(fakes, home).returncode == 0
     before = snapshot_tree(home / ".local-ai-coach")
-    (fakes.release / "local-ai-coach.tar.gz").unlink()
+    (fakes.release / archive_name(HERE_PLATFORM)).unlink()
     result = install(fakes, home)
     assert result.returncode != 0
-    assert "could not download" in result.stderr and "local-ai-coach.tar.gz" in result.stderr
+    assert "could not download" in result.stderr and archive_name(HERE_PLATFORM) in result.stderr
     assert snapshot_tree(home / ".local-ai-coach") == before
 
 
@@ -366,7 +377,7 @@ def test_unknown_option_is_refused(tmp_path, home):
 # ------------------------------------------------------------------ build (unit)
 
 
-@pytest.mark.parametrize("bad", ["server/node_modules/x/lib/thing.node", "apps/agent/.env", "server/.env.local"])
+@pytest.mark.parametrize("bad", ["web/node_modules/x/lib/thing.node", "apps/agent/.env", "web/.env.local"])
 def test_tc06_check_tree_refuses_native_modules_and_env_files(tmp_path, bad):
     tree = tmp_path / "tree"
     (tree / bad).parent.mkdir(parents=True)
@@ -389,12 +400,21 @@ def test_tc06b_check_tree_accepts_a_clean_tree_with_an_env_template(tmp_path):
 
 e2e = pytest.mark.skipif(os.environ.get("COACH_RELEASE_E2E") != "1", reason="set COACH_RELEASE_E2E=1 (builds and downloads about 100 MB)")
 BUILD_TIMEOUT = 900
+# What a reinstall must leave alone: the learner's record, Restart coach's archive and ratings.
+LEARNER_OWNS = ("progress.stub.json", "consent.json", "old", "ratings")
 START_WAIT = 90
+
+
+def this_platform() -> str:
+    system = {"Darwin": "darwin", "Linux": "linux"}[os.uname().sysname]
+    cpu = {"arm64": "arm64", "aarch64": "arm64", "x86_64": "x64"}[os.uname().machine]
+    return f"{system}-{cpu}"
 
 
 @pytest.fixture(scope="module")
 def built_release() -> Path:
-    result = subprocess.run(["bash", str(BUILD), VERSION], capture_output=True, text=True, timeout=BUILD_TIMEOUT, check=False)
+    env = {**os.environ, "COACH_RELEASE_PLATFORMS": this_platform()}
+    result = subprocess.run(["bash", str(BUILD), VERSION], env=env, capture_output=True, text=True, timeout=BUILD_TIMEOUT, check=False)
     assert result.returncode == 0, result.stderr[-2000:]
     return REPO / "dist"
 
@@ -406,16 +426,18 @@ def real_install(dist: Path, home: Path) -> subprocess.CompletedProcess[str]:
 
 @e2e
 def test_tc05_archive_contents(built_release):
-    with tarfile.open(built_release / "local-ai-coach.tar.gz") as tar:
+    archive = built_release / archive_name(this_platform())
+    with tarfile.open(archive) as tar:
         names = tar.getnames()
-    for needed in ("./VERSION", "./bin/local-ai-coach", "./apps/agent/uv.lock", "./apps/agent/main.py", "./curriculum/stations.json", "./server/apps/app/server.js"):
+    for needed in ("./VERSION", "./bin/local-ai-coach", "./bin/coach-web", "./web/index.html", "./apps/agent/uv.lock", "./apps/agent/main.py", "./curriculum/stations.json"):
         assert needed in names, needed
-    assert any(n.startswith("./server/apps/app/.next/static/") for n in names)
+    assert any(n.endswith(".js") and n.startswith("./web/") for n in names)
+    assert not [n for n in names if n.endswith(".map")], "source maps in the archive"
     assert not [n for n in names if n.endswith(".node")]
     assert not [n for n in names if n.split("/")[-1] == ".env" or (n.split("/")[-1].startswith(".env.") and not n.endswith(".env.example"))]
     assert not [n for n in names if n.startswith(("./apps/agent/tests", "./apps/agent/.venv"))]
     assert not [n for n in names if n.split("/")[-1].startswith("._")], "macOS metadata files in the archive"
-    assert (built_release / "local-ai-coach.tar.gz.sha256").read_text().split()[0] == sha256(built_release / "local-ai-coach.tar.gz")
+    assert (built_release / f"{archive.name}.sha256").read_text().split()[0] == sha256(archive)
 
 
 @e2e
@@ -429,7 +451,9 @@ def test_tc12_to_tc14_install_run_browse_reinstall(built_release, tmp_path):
     # The installed coach keeps progress in its default place, ~/.local-ai-coach under this HOME,
     # which is where the browser suite looks; the test-wide COACH_HOME must not leak in.
     env = {**os.environ, "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach"), "COACH_APP_PORT": str(app_port), "COACH_AGENT_PORT": str(agent_port)}
-    env.pop("COACH_CURRICULUM", None)  # the installed coach reads the curriculum it ships with
+    # The browser suite is written against the tests' frozen curriculum (story 13), as it is
+    # when it starts its own servers; that the release ships the real one is TC-05's check.
+    env["COACH_CURRICULUM"] = str(REPO / "fixtures" / "curriculum")
     coach = subprocess.Popen([command(home), "--no-open"], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     try:
         deadline = time.monotonic() + START_WAIT
@@ -466,9 +490,13 @@ def test_tc12_to_tc14_install_run_browse_reinstall(built_release, tmp_path):
         coach.terminate()
         coach.wait(timeout=30)
 
-    # TC-14: reinstall keeps progress byte for byte.
-    progress = home / ".local-ai-coach" / "progress.stub.json"
-    before = progress.read_bytes()
+    # TC-14: reinstall keeps everything the learner owns byte for byte. The suite's Restart
+    # coach case moves progress into old/<stamp>/, so the learner's files are compared whole.
+    learner = home / ".local-ai-coach"
+    (learner / "progress.stub.json").write_text('{"stations": {"machine": {"status": "reported"}}}')
+    owned = lambda: {k: v for k, v in snapshot_tree(learner).items() if k.split("/")[0] in LEARNER_OWNS or k in LEARNER_OWNS}
+    before = owned()
+    assert "progress.stub.json" in before and any(k.startswith("old/") for k in before) and any(k.startswith("ratings/") for k in before), sorted(before)
     again = real_install(built_release, home)
     assert again.returncode == 0, again.stderr[-2000:]
-    assert progress.read_bytes() == before
+    assert owned() == before

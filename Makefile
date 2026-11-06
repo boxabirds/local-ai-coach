@@ -45,11 +45,11 @@ build: ## Build all apps
 lint: ## Lint all apps
 	pnpm lint
 
-release: ## Build the tester release: make release VERSION=0.1.0 (writes dist/)
+release: ## Build the tester release, one archive per platform: make release VERSION=0.1.0 (writes dist/)
 	@test -n "$(VERSION)" || (echo "Set VERSION, for example: make release VERSION=0.1.0"; exit 1)
 	scripts/build-release.sh $(VERSION)
 
-release-test: ## Build, install from scratch and run the browser suite against the install (downloads ~100 MB); then the smoke test if make dev is running
+release-test: ## Build this machine's archive, install it from scratch and run the browser suite against the install; then the smoke test if make dev is running
 	COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_release.py
 	@if curl -s -m 5 -o /dev/null "$(SMOKE_URL)/api/health"; then $(MAKE) smoke; else echo "SMOKE NOT RUN: nothing answers at $(SMOKE_URL). Start make dev and run make smoke."; fi
 
