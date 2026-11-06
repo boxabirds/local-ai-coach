@@ -1,5 +1,3 @@
-"use client";
-
 import type { ComponentProps } from "react";
 import { CopilotChatUserMessage } from "@copilotkit/react-core/v2";
 import { split } from "./ask-about";

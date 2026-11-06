@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useLayoutEffect, useRef, type ComponentProps } from "react";
 import { CopilotChatInput } from "@copilotkit/react-core/v2";
 import { compose } from "./ask-about";

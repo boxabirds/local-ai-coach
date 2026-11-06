@@ -63,7 +63,7 @@ function setup(onRate: (r: RateRequest) => Promise<RateResult> = vi.fn(ok)) {
 
 const point = (testId: string) => fireEvent.pointerOver(screen.getByTestId(testId));
 // Only the timers the delay uses are faked, so the palette's placement (requestAnimationFrame) runs.
-const TIMERS = { toFake: ["setTimeout", "clearTimeout"] } as const;
+const TIMERS: Parameters<typeof vi.useFakeTimers>[0] = { toFake: ["setTimeout", "clearTimeout"] };
 const wait = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 /** Rest the pointer on an item long enough for its palette. */
 function rest(testId: string) {

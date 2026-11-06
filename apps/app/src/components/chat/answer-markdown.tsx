@@ -1,5 +1,3 @@
-"use client";
-
 import { useLayoutEffect, useRef, type ComponentProps } from "react";
 import { CopilotChatAssistantMessage } from "@copilotkit/react-core/v2";
 import { observeAnswerBlocks } from "./reveal-blocks";

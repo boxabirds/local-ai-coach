@@ -1,5 +1,3 @@
-"use client";
-
 import { CopilotChatView } from "@copilotkit/react-core/v2";
 import { useMemo, type ComponentProps } from "react";
 import { useDraft, useProviderKeys } from "./provider-keys";
@@ -7,10 +5,10 @@ import { ChatStartContext, glideToChat } from "./chat-start";
 
 /**
  * The stub coach (apps/agent/src/coach/stub.py) needs no keys. Set
- * NEXT_PUBLIC_COACH_STUB=1 at build or dev time, with the runtime pointed at
+ * COACH_STUB=1 at build or dev time, with the runtime pointed at
  * the stub (LANGGRAPH_DEPLOYMENT_URL=http://127.0.0.1:8123/stub).
  */
-export const COACH_STUB = process.env.NEXT_PUBLIC_COACH_STUB === "1";
+export const COACH_STUB = process.env.COACH_STUB === "1";
 export const STUB_BANNER = "Stub coach, no model";
 const STUB_BANNER_DETAIL = "Fixed wording, no keys, nothing leaves this machine.";
 

@@ -1,5 +1,3 @@
-"use client";
-
 import { createCatalog } from "@copilotkit/a2ui-renderer";
 import { z } from "zod";
 

@@ -69,7 +69,7 @@ const OPENERS: Record<string, string> = { "(": ")", "“": "”", "‘": "’", 
 const CLOSERS = new Set(Object.values(OPENERS));
 const ENDS = new Set([".", "!", "?", "…"]);
 const TRAILING = new Set([...CLOSERS, '"', "'"]);
-const NEXT_STARTS = /[A-Z0-9“‘("'\[*_`]/;
+const NEXT_STARTS = /[A-Z0-9“‘("'[*_`]/;
 
 /**
  * One paragraph into sentences. A sentence ends at . ! ? or … (with any closing

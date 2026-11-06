@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from "react";
 import {
   chartToStandaloneHtml,

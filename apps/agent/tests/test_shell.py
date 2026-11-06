@@ -61,14 +61,13 @@ def test_tc37_demo_path_is_removed(path):
 
 
 def test_tc37_no_telemetry_or_analytics_imports_in_the_app():
-    pattern = re.compile(r"posthog|telemetry\.copilotkit\.ai|fetch\(")
     offenders = []
     for source in APP_SRC.rglob("*.ts*"):
-        text = source.read_text()
-        if "posthog" in text.lower():
+        text = source.read_text().lower()
+        if "posthog" in text or "launch-telemetry" in text or "telemetry.copilotkit.ai" in text:
             offenders.append(str(source.relative_to(REPO)))
-    telemetry = (APP_SRC / "lib" / "launch-telemetry.ts").read_text()
-    assert not pattern.search(telemetry), "launch-telemetry.ts must stay inert"
+    # Story 31: the inert stand-in went with the Next route that imported it.
+    assert not (APP_SRC / "lib" / "launch-telemetry.ts").exists()
     assert offenders == []
 
 

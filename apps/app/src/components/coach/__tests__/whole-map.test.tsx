@@ -112,7 +112,7 @@ function serve(map: WholeMapData, goal: (body: unknown) => Response = () => Resp
   return fetchMock;
 }
 
-const station = (id: string) => document.querySelector(`[data-station="${id}"]`) as SVGGElement;
+const station = (id: string) => document.querySelector(`[data-station="${id}"]`) as unknown as HTMLElement;
 
 /** Render the map; the data comes from serve(). */
 async function open(onClose = vi.fn()) {

@@ -20,7 +20,7 @@ APP = REPO / "apps" / "app" / "src"
 FILES = sorted(
     [*(APP / "components" / "coach").glob("*.tsx"), *(APP / "components" / "coach").glob("*.ts")]
     + [APP / "components" / "chat" / n for n in ("quote-block.tsx", "quoted-input.tsx", "quoted-user-text.tsx")]
-    + [APP / "app" / "page.tsx", APP / "hooks" / "use-coach-ui.tsx"]
+    + [APP / "web" / "app.tsx", APP / "hooks" / "use-coach-ui.tsx"]
 )
 DASHES = re.compile("[–—]")
 COMMENTS = re.compile(r"/\*.*?\*/|(?<![:\"'])//[^\n]*", re.S)

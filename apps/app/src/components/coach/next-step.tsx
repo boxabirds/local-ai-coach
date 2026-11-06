@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import type { CardStatus } from "./card";
 import { StepCard } from "./step-card";
@@ -12,7 +10,7 @@ import { ChoiceCard } from "./choice-card";
  * this only decides how a step looks, from the step's own check.
  */
 
-type Step = {
+export type Step = {
   id: string;
   text: string;
   where?: string;

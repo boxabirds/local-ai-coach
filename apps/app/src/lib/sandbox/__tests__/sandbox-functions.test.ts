@@ -99,7 +99,7 @@ describe("openLinkFunction", () => {
   });
 
   it("rejects https URLs outside the env allowlist", async () => {
-    vi.stubEnv("NEXT_PUBLIC_OPEN_LINK_ALLOWED_ORIGINS", "https://github.com");
+    vi.stubEnv("OPEN_LINK_ALLOWED_ORIGINS", "https://github.com");
     await expect(
       openLinkFunction.handler({ url: "https://evil.com/x" }),
     ).rejects.toThrow();
@@ -107,7 +107,7 @@ describe("openLinkFunction", () => {
   });
 
   it("allows https URLs inside the env allowlist", async () => {
-    vi.stubEnv("NEXT_PUBLIC_OPEN_LINK_ALLOWED_ORIGINS", "https://github.com");
+    vi.stubEnv("OPEN_LINK_ALLOWED_ORIGINS", "https://github.com");
     await expect(
       openLinkFunction.handler({ url: "https://github.com/CopilotKit" }),
     ).resolves.toEqual({ ok: true });
@@ -164,7 +164,7 @@ describe("isAllowedLinkUrl", () => {
 
   it("falls back to the env allowlist when no explicit list is given", () => {
     vi.stubEnv(
-      "NEXT_PUBLIC_OPEN_LINK_ALLOWED_ORIGINS",
+      "OPEN_LINK_ALLOWED_ORIGINS",
       "https://github.com, https://copilotkit.ai",
     );
     expect(isAllowedLinkUrl("https://github.com/x")).toBe(true);

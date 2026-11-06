@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { critClass, shapePath, type Criticality } from "./tube-map";
 import { ZOOM_STEP, centreOn, clampView, fitView, frameBoxes, pan, startView, toMap, zoomAt, type Box, type Size, type View } from "./whole-map-view";

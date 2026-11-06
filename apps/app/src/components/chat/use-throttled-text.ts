@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 
 /** How often a growing answer is redrawn (Ceetrix story 24). */

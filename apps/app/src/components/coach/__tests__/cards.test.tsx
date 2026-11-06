@@ -261,7 +261,7 @@ describe("story card", () => {
     );
     await screen.findByRole("button", { name: "Next" });
     // The answered card draws the story's figures too; those are other fetches.
-    const storyFetches = fetchMock.mock.calls.filter(([url]) => String(url).includes("/story/"));
+    const storyFetches = (fetchMock.mock.calls as unknown[][]).filter(([url]) => String(url).includes("/story/"));
     expect(storyFetches).toHaveLength(1);
   });
 

@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "DO_NOT_TRACK=1 next dev --turbopack",
-    "build": "pnpm --filter @repo/design-system build && next build",
-    "start": "DO_NOT_TRACK=1 next start",
+    "dev": "DO_NOT_TRACK=1 bun --watch dev.ts",
+    "build": "pnpm --filter @repo/design-system build && bun build.ts",
+    "start": "DO_NOT_TRACK=1 bun server.ts",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run",
-    "test:e2e": "NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_COACH_STUB=1 next build && NEXT_DIST_DIR=.next-e2e playwright test"
+    "test": "vitest run && bun test ./bun-tests",
+    "test:e2e": "COACH_STUB=1 COACH_WEB_OUT=dist/web-e2e bun build.ts && playwright test",
+    "test:bun": "bun test ./bun-tests"
   },
   "dependencies": {
     "@ag-ui/a2ui-middleware": "^0.0.2",
@@ -20,8 +22,6 @@
     "@copilotkitnext/shared": "1.54.1-next.6",
     "@jetbrains/websandbox": "1.2.1",
     "@repo/design-system": "workspace:*",
-    "next": "16.1.6",
-    "posthog-js": "^1.438.8",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -30,20 +30,25 @@
     "recharts": "^3.7.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
+    "@eslint/js": "9.39.2",
     "@playwright/test": "1.64.1",
-    "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/bun": "1.2.17",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.2",
+    "bun": "1.2.17",
+    "bun-plugin-tailwind": "0.1.2",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.0.1",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "typescript-eslint": "8.54.0",
     "vitest": "^4.1.8",
     "zod": "^3.23.8"
   }

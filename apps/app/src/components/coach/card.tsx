@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 
 /** The tool-call states CopilotKit passes to a card. */

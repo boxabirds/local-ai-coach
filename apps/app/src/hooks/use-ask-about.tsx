@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { QUOTABLE, QUOTABLE_ATTR, SELECTED_ATTR, quotable, quoteText } from "@/components/chat/ask-about";

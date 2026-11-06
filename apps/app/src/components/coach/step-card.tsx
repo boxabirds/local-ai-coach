@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { inline } from "./markdown";

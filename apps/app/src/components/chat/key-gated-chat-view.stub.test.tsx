@@ -18,8 +18,8 @@ const select = vi.fn();
 /** COACH_STUB is read when the module loads, so each case imports it fresh. */
 async function mount(flag: string | undefined) {
   vi.resetModules();
-  if (flag === undefined) vi.stubEnv("NEXT_PUBLIC_COACH_STUB", "");
-  else vi.stubEnv("NEXT_PUBLIC_COACH_STUB", flag);
+  if (flag === undefined) vi.stubEnv("COACH_STUB", "");
+  else vi.stubEnv("COACH_STUB", flag);
   const { ProviderKeysProvider, useProviderKeys } = await import("./provider-keys");
   const { KeyGatedChatView, StubBadge } = await import("./key-gated-chat-view");
   function Harness() {

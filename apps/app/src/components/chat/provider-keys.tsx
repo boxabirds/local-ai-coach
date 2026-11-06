@@ -1,5 +1,3 @@
-"use client";
-
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { browserStorage, clearChat } from "@/lib/chat-store";
 

@@ -4,13 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { FIXTURE_CURRICULUM } from "@/test/fixture-curriculum";
-import { NextStepCard, NOT_FOUND_NOTE, NOT_LOADED_NOTE, STEP_URL, cardFor } from "../next-step";
+import { NextStepCard, NOT_FOUND_NOTE, NOT_LOADED_NOTE, STEP_URL, cardFor, type Step } from "../next-step";
 
 /** show_next_step draws the card a step calls for (Ceetrix story 19, TC-05). Steps come from the
  * tests' frozen curriculum, so they are real step shapes. */
 const LESSON = JSON.parse(readFileSync(resolve(FIXTURE_CURRICULUM, "lessons/machine.json"), "utf8"));
-type LessonStep = { id: string; check?: { kind?: string; compare?: string; choices?: unknown } };
-const byKind = (test: (s: LessonStep) => boolean): LessonStep & { text: string } => LESSON.steps.find(test);
+const byKind = (test: (s: Step) => boolean): Step => LESSON.steps.find(test);
 const TYPED = byKind((s) => s.check?.kind === "real" && s.check?.compare === "typed");
 const CHOICES = byKind((s) => Boolean(s.check?.choices));
 const ASK = byKind((s) => s.check?.kind === "ask" && !s.check?.choices);

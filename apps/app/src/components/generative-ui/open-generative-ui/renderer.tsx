@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSandboxFunctions } from "@copilotkit/react-core/v2";
 import { ExportOverlay } from "../export-overlay";

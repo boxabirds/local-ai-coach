@@ -178,7 +178,7 @@ describe("selecting (TC-05 to TC-07)", () => {
     expect(sentence()).not.toHaveAttribute("data-ask-selected");
     await waitFor(() => expect(sentence()).toHaveAttribute("tabindex", "0"));
     expect(screen.getAllByTestId("copilot-user-message")[0]).not.toHaveAttribute("tabindex");
-    sentence().focus();
+    (sentence() as HTMLElement).focus();
     fireEvent.keyDown(sentence(), { key: " " });
     expect(sentence()).not.toHaveAttribute("data-ask-selected");
     fireEvent.keyDown(sentence(), { key: "Enter" });

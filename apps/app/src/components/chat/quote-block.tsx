@@ -1,5 +1,3 @@
-"use client";
-
 import { createContext, useContext } from "react";
 
 /** The quote waiting in the message box, shared by the page and the input slot (story 8). */

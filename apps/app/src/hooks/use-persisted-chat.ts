@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { browserStorage, loadChat, restorable, saveChat, type ChatMessage } from "@/lib/chat-store";
 

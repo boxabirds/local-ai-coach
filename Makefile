@@ -17,22 +17,20 @@ setup: install ## Full setup: install deps and create .env from template
 dev: ## Start all services (frontend + agent + mcp); the agent reloads on src/ edits only
 	pnpm dev
 
-SERVE_DIST := .next-serve
-
-serve: ## Build the app for production and serve it with the agent: stable for testing, no hot reload (run again after changes)
-	cd apps/app && DO_NOT_TRACK=1 NEXT_DIST_DIR=$(SERVE_DIST) npx next build
+serve: ## Build the page and serve it with the agent: stable for testing, no rebuilds (run again after changes)
+	cd apps/app && pnpm exec bun build.ts
 	pnpm exec concurrently --names app,agent --kill-others \
-		"cd apps/app && DO_NOT_TRACK=1 NEXT_DIST_DIR=$(SERVE_DIST) npx next start -H 127.0.0.1 -p 3000" \
+		"cd apps/app && pnpm start" \
 		"pnpm dev:agent"
 
 STUB_URL := http://127.0.0.1:8123/stub
 
 dev-stub: ## Start the stub coach: no model, no keys (writes ~/.local-ai-coach/progress.stub.json)
 	pnpm exec concurrently --names app,agent --kill-others \
-		"cd apps/app && NEXT_PUBLIC_COACH_STUB=1 LANGGRAPH_DEPLOYMENT_URL=$(STUB_URL) pnpm dev" \
+		"cd apps/app && COACH_STUB=1 LANGGRAPH_DEPLOYMENT_URL=$(STUB_URL) pnpm dev" \
 		"pnpm dev:agent"
 
-dev-app: ## Start Next.js frontend only (http://localhost:3000)
+dev-app: ## Start the page and its server only, rebuilding on change (http://127.0.0.1:3000)
 	pnpm dev:app
 
 dev-agent: ## Start LangGraph agent only (http://localhost:8123); reloads on src/ edits, restart after editing main.py

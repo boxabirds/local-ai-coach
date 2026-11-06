@@ -56,12 +56,14 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `npx next start -H 127.0.0.1 -p ${APP_PORT}`,
+      // The stub page, built by `pnpm test:e2e` into its own folder, so make dev's is left alone.
+      command: `bun server.ts`,
       url: `http://127.0.0.1:${APP_PORT}/api/health`,
       env: {
+        PORT: String(APP_PORT),
+        COACH_WEB_DIR: resolve(__dirname, "dist/web-e2e"),
+        COACH_STUB: "1",
         COACH_AGENT_URL: AGENT_URL,
-        // The test build lives in its own folder (package.json test:e2e), apart from make dev's.
-        NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || ".next-e2e",
         LANGGRAPH_DEPLOYMENT_URL: `${AGENT_URL}/stub`,
         DO_NOT_TRACK: "1",
       },

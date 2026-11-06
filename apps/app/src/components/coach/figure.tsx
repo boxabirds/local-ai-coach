@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { defaultChoices, parseWhen, resultText, sanitiseSvg, visible, type Choices, type FigureData } from "./figure-logic";
 

@@ -13,7 +13,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     // e2e/ holds Playwright specs (pnpm test:e2e), not vitest tests.
-    exclude: [...configDefaults.exclude, "e2e/**", "test-results/**", ".next/**"],
+    exclude: [...configDefaults.exclude, "e2e/**", "test-results/**", "dist/**", "bun-tests/**"],
     server: { deps: { inline: [/@copilotkit\/react-core/] } },
   },
 });

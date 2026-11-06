@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, type RefObject } from "react";
 import { answers, followAfterScroll, learnerActed } from "./follow-end";
 

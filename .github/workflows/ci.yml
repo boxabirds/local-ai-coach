@@ -13,13 +13,13 @@ permissions:
 
 jobs:
   smoke:
-    name: Smoke / ${{ matrix.os }} / Node ${{ matrix.node }}
+    name: Smoke / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        node: [22, 24]
+        # The coach runs on macOS and Linux only.
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout
@@ -27,10 +27,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Node.js
+      - name: Setup Node.js (for pnpm; Bun comes from the lockfile)
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 22
 
       - name: Install pnpm
         uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
@@ -41,70 +41,19 @@ jobs:
       - name: Build all apps
         run: pnpm build
 
-      - name: Create empty .env file
-        run: touch .env
-
-      - name: Test frontend startup (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Test the coach's server starts
         run: |
-          # Start the Next.js frontend in background
-          pnpm --filter app start &
-          FRONTEND_PID=$!
-
-          # Wait for frontend to start (max 30 seconds)
-          timeout=30
-          elapsed=0
+          pnpm --filter @repo/app start &
+          SERVER_PID=$!
           started=false
-
-          while [ $elapsed -lt $timeout ] && [ "$started" = false ]; do
-            if curl -s http://localhost:3000 > /dev/null 2>&1; then
-              started=true
-              echo "✅ Frontend started successfully"
-            else
-              sleep 1
-              elapsed=$((elapsed + 1))
-            fi
+          for _ in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3000/api/health > /dev/null; then started=true; break; fi
+            sleep 1
           done
-
-          # Clean up background process (ignore SIGTERM exit code from pnpm)
-          kill $FRONTEND_PID 2>/dev/null || true
-          wait $FRONTEND_PID 2>/dev/null || true
-
-          if [ "$started" = false ]; then
-            echo "❌ Frontend failed to start within 30 seconds"
-            exit 1
-          fi
+          kill $SERVER_PID 2>/dev/null || true
+          wait $SERVER_PID 2>/dev/null || true
+          [ "$started" = true ] || { echo "The coach's server did not start within 30 seconds"; exit 1; }
         shell: bash
-
-      - name: Test frontend startup (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          # Start the Next.js frontend in background
-          pnpm --filter app start &
-
-          # Wait for frontend to start (max 30 seconds)
-          $timeout = 30
-          $elapsed = 0
-          $started = $false
-
-          while ($elapsed -lt $timeout -and -not $started) {
-            try {
-              $response = Invoke-WebRequest -Uri "http://localhost:3000" -TimeoutSec 1 -ErrorAction SilentlyContinue
-              if ($response.StatusCode -eq 200) {
-                $started = $true
-                Write-Host "✅ Frontend started successfully"
-              }
-            } catch {
-              Start-Sleep -Seconds 1
-              $elapsed++
-            }
-          }
-
-          if (-not $started) {
-            Write-Host "❌ Frontend failed to start within 30 seconds"
-            exit 1
-          }
-        shell: pwsh
 
   lint:
     name: Lint

@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef } from "react";
 import { useAgent, useCopilotKit } from "@copilotkit/react-core/v2";
 import {

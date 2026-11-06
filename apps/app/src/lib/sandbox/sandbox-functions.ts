@@ -64,7 +64,7 @@ const openLinkParameters = z.object({
 });
 
 const envAllowedOrigins = (): string[] | undefined => {
-  const raw = process.env.NEXT_PUBLIC_OPEN_LINK_ALLOWED_ORIGINS;
+  const raw = process.env.OPEN_LINK_ALLOWED_ORIGINS;
   if (!raw) return undefined;
   const origins = raw
     .split(",")

@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * What the learner sees when the coach uses one of its own tools (story 10):
  * one plain sentence when it reads this computer, nothing for the coach's

@@ -13,10 +13,6 @@ node_modules
 # testing
 coverage
 
-# next.js
-.next/
-.next-e2e/
-.next-serve/
 out/
 
 # production
@@ -41,7 +37,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # lock files
 package-lock.json
