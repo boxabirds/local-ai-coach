@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { useState } from "react";
-import { KEYS_URL, SERVER_URL, ProviderKeysProvider, useProviderKeys, type Server } from "./provider-keys";
+import { useEffect, useState } from "react";
+import { KEYS_URL, SERVER_URL, ProviderKeysProvider, useDraft, useProviderKeys, type Server } from "./provider-keys";
 import { ProviderKeysDialog } from "./provider-keys-dialog";
 
 /** A made-up server (story 21 fixtures). */
@@ -258,5 +258,59 @@ describe("any OpenAI-compatible server (story 21, TC-11 to TC-13)", () => {
     expect(screen.getByLabelText("Model name")).toHaveValue(SERVER.model);
     expect(screen.getByLabelText("API key for that server")).toHaveValue("");
     expect(document.body.innerHTML).not.toContain(OPENAI.slice(0, 12));
+  });
+});
+
+describe("headers CopilotKit sees (story 22, TC-11)", () => {
+  function Watch({ seen }: { seen: unknown[] }) {
+    const { headers, setKeysOpen } = useProviderKeys();
+    const { setDraft } = useDraft();
+    seen.push(headers);
+    return <>
+      <button onClick={() => setDraft("a sample draft")}>Change draft</button>
+      <button onClick={() => setKeysOpen(true)}>Open from header</button>
+    </>;
+  }
+
+  it.each([["no keys"], ["session keys"]])("with %s, a re-render that changes no key keeps the same headers object", async (label) => {
+    serve();
+    const seen: unknown[] = [];
+    render(<ProviderKeysProvider><Watch seen={seen} /><Harness /></ProviderKeysProvider>);
+    await act(async () => {});
+    if (label === "session keys") {
+      fireEvent.click(screen.getByText("Open keys"));
+      enterKeys();
+      await testAndSave();
+      await waitFor(() => expect(screen.getByTestId("active")).toHaveTextContent(OPENAI));
+    }
+    const before = seen.at(-1);
+    expect(before).toBeDefined(); // never undefined: CopilotKit would make a new {} each render
+    fireEvent.click(screen.getByText("Change draft"));
+    fireEvent.click(screen.getByText("Open from header"));
+    await act(async () => {});
+    expect(seen.length).toBeGreaterThan(1);
+    expect(seen.at(-1)).toBe(before);
+  });
+});
+
+describe("typing stays in the message box (story 22, TC-09)", () => {
+  it("changing the draft re-renders nothing that reads the keys", async () => {
+    serve();
+    const commits = { keys: 0 };
+    function KeysReader() {
+      useProviderKeys();
+      useEffect(() => { commits.keys += 1; }); // once per commit of this reader
+      return null;
+    }
+    function Box() {
+      const { draft, setDraft } = useDraft();
+      return <input aria-label="Message" value={draft} onChange={(event) => setDraft(event.target.value)} />;
+    }
+    render(<ProviderKeysProvider><KeysReader /><Box /></ProviderKeysProvider>);
+    await act(async () => {});
+    const before = commits.keys;
+    for (const text of ["a", "ab", "abc"]) fireEvent.change(screen.getByLabelText("Message"), { target: { value: text } });
+    expect(screen.getByLabelText("Message")).toHaveValue("abc");
+    expect(commits.keys).toBe(before);
   });
 });

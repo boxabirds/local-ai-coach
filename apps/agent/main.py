@@ -89,14 +89,14 @@ def curriculum_story(story_id: str):
 
 @app.get("/curriculum/step/{station}/{step_id}")
 def curriculum_step(station: str, step_id: str):
-    """One lesson step, for the show_next_step card to draw (story 19). Records that it was
-    shown, so a detour can say where the learner was. Unknown station or step: 404."""
-    from src.coach.tools import _record_event, _step
+    """One lesson step, for the show_next_step card to draw (story 19). Read-only (story 22):
+    step_shown is recorded from the model's own call (CoachStateMiddleware.after_model), since
+    a reload fetches every old card again. Unknown station or step: 404."""
+    from src.coach.tools import _step
 
     step = _step(station, step_id)
     if step is None:
         return JSONResponse({}, status_code=404)
-    _record_event("step_shown", station=station, step=step_id)
     return JSONResponse({"station": station, "step": step})
 
 

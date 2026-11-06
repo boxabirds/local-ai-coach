@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProviderKeysDialog } from "@/components/chat/provider-keys-dialog";
 import { useProviderKeys } from "@/components/chat/provider-keys";
 import { COACH_STUB, KeyGatedChatView, StubBadge } from "@/components/chat/key-gated-chat-view";
@@ -12,6 +12,7 @@ import { QuotedUserText } from "@/components/chat/quoted-user-text";
 import { useAskAbout } from "@/hooks/use-ask-about";
 import {
   CopilotChat,
+  UseAgentUpdate,
   useAgent,
   useCopilotKit,
 } from "@copilotkit/react-core/v2";
@@ -20,6 +21,13 @@ import { useCoachUI } from "@/hooks/use-coach-ui";
 import { usePersistedChat, type PersistableAgent } from "@/hooks/use-persisted-chat";
 import { newThreadId } from "@/lib/chat-store";
 
+/** Shown while the browser refuses to keep the conversation (story 22). */
+const NOT_KEPT = "I can't keep this conversation in this browser, so a reload will lose it.";
+/** The chat's message renderers, one object for the page's life (story 22). */
+const MESSAGE_VIEW = { assistantMessage: { markdownRenderer: AnswerMarkdown }, userMessage: { messageRenderer: QuotedUserText } };
+/** The page redraws when a run starts or stops, not per streamed token (story 22). */
+const PAGE_UPDATES = [UseAgentUpdate.OnRunStatusChanged];
+const MESSAGE_UPDATES = [UseAgentUpdate.OnMessagesChanged];
 /** Frames to keep pinning the end while restored cards finish laying out. */
 const RESTORE_SCROLL_FRAMES = 10;
 
@@ -29,7 +37,7 @@ export default function HomePage() {
   // One thread id for the page's agent and the chat (new each load; see newThreadId),
   // so the restored conversation lands in the agent copy the chat actually renders.
   const [threadId] = useState(newThreadId);
-  const { agent } = useAgent({ threadId });
+  const { agent } = useAgent({ threadId, updates: PAGE_UPDATES });
   // A restored conversation opens at its end, where the learner left off.
   const scrollToEnd = useCallback(() => {
     const settle = (frames: number) =>
@@ -40,7 +48,7 @@ export default function HomePage() {
       });
     settle(RESTORE_SCROLL_FRAMES);
   }, []);
-  usePersistedChat(agent as unknown as PersistableAgent, undefined, scrollToEnd);
+  const { kept } = usePersistedChat(agent as unknown as PersistableAgent, undefined, scrollToEnd);
   const { newChat, hasKeys, saved, where, server, keysOpen, setKeysOpen } = useProviderKeys();
   const { copilotkit } = useCopilotKit();
   const [error, setError] = useState<string | null>(null);
@@ -55,27 +63,6 @@ export default function HomePage() {
     requestAnimationFrame(() => chatRoot.current?.querySelector<HTMLTextAreaElement>('[data-testid="copilot-chat-textarea"]')?.focus());
   }, []);
   const { button: askButton } = useAskAbout(chatRoot, askAbout);
-  const latestQuestion = agent.messages.filter((message) => message.role === "user").at(-1)?.id;
-
-  // Move only when a question is submitted. Streamed text and growing visuals
-  // must never take scroll ownership from the reader.
-  useEffect(() => {
-    if (!latestQuestion || !chatRoot.current) return;
-    const root = chatRoot.current;
-    const revealQuestion = () => {
-      const question = Array.from(root.querySelectorAll<HTMLElement>('[data-testid="copilot-user-message"]'))
-        .find((element) => element.dataset.messageId === latestQuestion);
-      if (!question) return false;
-      question.scrollIntoView?.({ block: "start", behavior: "instant" });
-      return true;
-    };
-    if (revealQuestion()) return;
-    const observer = new MutationObserver(() => {
-      if (revealQuestion()) observer.disconnect();
-    });
-    observer.observe(root, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [latestQuestion]);
 
   useEffect(() => {
     const subscription = agent.subscribe({
@@ -88,6 +75,36 @@ export default function HomePage() {
     });
     return () => subscription.unsubscribe();
   }, [agent]);
+
+  // Story 22: API keys and New chat always work. A run in progress is stopped first, so a run
+  // that never finishes (the agent restarted, the network dropped) can't lock the learner out.
+  const stopThen = (action: () => void) => {
+    if (agent.isRunning) {
+      try {
+        copilotkit.stopAgent({ agent });
+      } catch {
+        // Nothing to stop, or it couldn't be: do what was asked anyway.
+      }
+    }
+    action();
+  };
+  const openKeys = () => stopThen(() => setKeysOpen(true));
+
+  const labels = useMemo(() => ({
+    welcomeMessageText: "This is the coach for Mastering Local AI. Start with the story.",
+    chatInputPlaceholder: "Ask the coach…",
+    chatDisclaimerText: COACH_STUB
+      ? "Stub coach: no model and no keys."
+      : hasKeys
+        ? server
+          ? `My answers come from ${server.model} at ${new URL(server.base_url).host}.${saved ? " Your keys are in this Mac's Keychain." : ""}`
+          : saved
+          ? "I use two hosted services for now. Your keys are in this Mac's Keychain."
+          : "I use two hosted services for now. Your own model stays on your machine."
+        : where === "keychain"
+          ? "To start, I need two keys: OpenAI and Jev. I'll keep them in this Mac's Keychain."
+          : "To start, I need two keys: OpenAI and Jev. I forget them when you refresh.",
+  }), [hasKeys, server, saved, where]);
 
   const retry = async () => {
     if (retryingRef.current || agent.isRunning) return;
@@ -117,15 +134,15 @@ export default function HomePage() {
           <StubBadge />
         </span>
         <nav aria-label="Main navigation">
-          <button type="button" onClick={newChat} disabled={agent.isRunning || retrying}>
+          <button type="button" onClick={() => stopThen(newChat)} disabled={retrying}>
             New chat
           </button>
-          <button type="button" onClick={() => setKeysOpen(true)} disabled={agent.isRunning || retrying} aria-haspopup="dialog">
+          <button type="button" onClick={openKeys} disabled={retrying} aria-haspopup="dialog">
             API keys{hasKeys ? " •" : ""}
           </button>
         </nav>
       </header>
-      {keysOpen && <ProviderKeysDialog onClose={() => setKeysOpen(false)} disabled={agent.isRunning || retrying} />}
+      {keysOpen && <ProviderKeysDialog onClose={() => setKeysOpen(false)} disabled={retrying} />}
       <main id="main-content" className="chat-main">
         {error && (
           <div className="chat-error" role="alert">
@@ -137,9 +154,10 @@ export default function HomePage() {
             >
               Try again
             </button>
-            <button type="button" className="provider-keys-recover" disabled={retrying || agent.isRunning} onClick={() => setKeysOpen(true)}>API keys</button>
+            <button type="button" className="provider-keys-recover" disabled={retrying} onClick={openKeys}>API keys</button>
           </div>
         )}
+        {!kept && <p className="chat-not-kept" role="status">{NOT_KEPT}</p>}
         <div className="chat-content" ref={chatRoot}>
           <QuoteContext.Provider value={{ quote, clear: clearQuote }}>
           <CopilotChat
@@ -147,33 +165,50 @@ export default function HomePage() {
             chatView={KeyGatedChatView}
             autoScroll={false}
             scrollView={ReaderScrollView}
-            messageView={{ assistantMessage: { markdownRenderer: AnswerMarkdown }, userMessage: { messageRenderer: QuotedUserText } }}
+            messageView={MESSAGE_VIEW}
             input={QuotedInput}
             onError={() =>
               setError(
                 "Something cut my answer off. Try again, or ask me something else.",
               )
             }
-            labels={{
-              welcomeMessageText: "This is the coach for Mastering Local AI. Start with the story.",
-              chatInputPlaceholder: "Ask the coach…",
-              chatDisclaimerText: COACH_STUB
-                ? "Stub coach: no model and no keys."
-                : hasKeys
-                  ? server
-                    ? `My answers come from ${server.model} at ${new URL(server.base_url).host}.${saved ? " Your keys are in this Mac's Keychain." : ""}`
-                    : saved
-                    ? "I use two hosted services for now. Your keys are in this Mac's Keychain."
-                    : "I use two hosted services for now. Your own model stays on your machine."
-                  : where === "keychain"
-                    ? "To start, I need two keys: OpenAI and Jev. I'll keep them in this Mac's Keychain."
-                    : "To start, I need two keys: OpenAI and Jev. I forget them when you refresh.",
-            }}
+            labels={labels}
           />
           </QuoteContext.Provider>
           {askButton}
+          <RevealLatestQuestion threadId={threadId} root={chatRoot} />
         </div>
       </main>
     </div>
   );
+}
+
+/**
+ * Brings a newly asked question into view. It is the only part of the page that needs every
+ * message change, so it lives apart and redraws alone while an answer streams (story 22).
+ */
+function RevealLatestQuestion({ threadId, root: chatRoot }: { threadId: string; root: React.RefObject<HTMLDivElement | null> }) {
+  const { agent } = useAgent({ threadId, updates: MESSAGE_UPDATES });
+  const latestQuestion = agent.messages.filter((message) => message.role === "user").at(-1)?.id;
+
+  // Move only when a question is submitted. Streamed text and growing visuals
+  // must never take scroll ownership from the reader.
+  useEffect(() => {
+    if (!latestQuestion || !chatRoot.current) return;
+    const root = chatRoot.current;
+    const revealQuestion = () => {
+      const question = Array.from(root.querySelectorAll<HTMLElement>('[data-testid="copilot-user-message"]'))
+        .find((element) => element.dataset.messageId === latestQuestion);
+      if (!question) return false;
+      question.scrollIntoView?.({ block: "start", behavior: "instant" });
+      return true;
+    };
+    if (revealQuestion()) return;
+    const observer = new MutationObserver(() => {
+      if (revealQuestion()) observer.disconnect();
+    });
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [latestQuestion, chatRoot]);
+  return null;
 }

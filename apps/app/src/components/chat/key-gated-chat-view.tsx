@@ -2,7 +2,7 @@
 
 import { CopilotChatView } from "@copilotkit/react-core/v2";
 import type { ComponentProps } from "react";
-import { useProviderKeys } from "./provider-keys";
+import { useDraft, useProviderKeys } from "./provider-keys";
 
 /**
  * The stub coach (apps/agent/src/coach/stub.py) needs no keys. Set
@@ -25,7 +25,8 @@ export function StubBadge() {
 
 /** Gate submission before CopilotKit adds a message or starts a provider request. */
 function KeyGatedChatViewComponent(props: ComponentProps<typeof CopilotChatView>) {
-  const { hasKeys, draft, setDraft, setKeysOpen } = useProviderKeys();
+  const { hasKeys, setKeysOpen } = useProviderKeys();
+  const { draft, setDraft } = useDraft();
   const open = COACH_STUB || hasKeys;
   return (
       <CopilotChatView

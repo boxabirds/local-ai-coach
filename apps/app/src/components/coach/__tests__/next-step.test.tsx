@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { FIXTURE_CURRICULUM } from "@/test/fixture-curriculum";
-import { NextStepCard, NOT_FOUND_NOTE, STEP_URL, cardFor } from "../next-step";
+import { NextStepCard, NOT_FOUND_NOTE, NOT_LOADED_NOTE, STEP_URL, cardFor } from "../next-step";
 
 /** show_next_step draws the card a step calls for (Ceetrix story 19, TC-05). Steps come from the
  * tests' frozen curriculum, so they are real step shapes. */
@@ -51,5 +51,25 @@ describe("show_next_step", () => {
     const fetchMock = serve(TYPED);
     render(<NextStepCard station="mach" step="machine." status="inProgress" />);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["the agent answers 500", () => ({ ok: false, status: 500, json: async () => ({}) })],
+    ["the network fails", () => { throw new TypeError("fetch failed"); }],
+  ])("story 22, TC-16: when %s, the card offers Try again and the model is not told", async (_label, failure) => {
+    let fail = true;
+    const fetchMock = vi.fn(async () => (fail ? failure() : { ok: true, status: 200, json: async () => ({ station: "machine", step: ASK }) }));
+    vi.stubGlobal("fetch", fetchMock);
+    const respond = vi.fn();
+    render(<NextStepCard station="machine" step={ASK.id} status="executing" respond={respond} />);
+    expect(await screen.findByText(NOT_LOADED_NOTE)).toBeInTheDocument();
+    await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
+    expect(respond).not.toHaveBeenCalled();
+    expect(screen.queryByText(NOT_FOUND_NOTE)).toBeNull();
+    fail = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByTestId("coach-step")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(respond).not.toHaveBeenCalled();
   });
 });

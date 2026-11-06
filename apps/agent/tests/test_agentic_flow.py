@@ -119,14 +119,15 @@ def test_events_are_capped():
 
 # ------------------------------------------------------------------ the step route (TC-04)
 
-def test_tc04_the_step_route_serves_a_step_and_records_it_shown():
+def test_tc04_the_step_route_serves_a_step():
+    """Story 22 changed this: the route only reads. step_shown comes from the model's own call
+    (test_step_record.py), because a reload re-fetched every old card and rewrote history."""
     import main
 
     client = TestClient(main.app)
     step = curriculum.lesson("machine")["steps"][0]
     response = client.get(f"/curriculum/step/machine/{step['id']}")
     assert response.status_code == 200 and response.json() == {"station": "machine", "step": step}
-    assert progress.load(progress.home())["events"][-1] == {**progress.load(progress.home())["events"][-1], "event": "step_shown", "step": step["id"]}
     assert client.get("/curriculum/step/machine/machine.99").status_code == 404
     assert client.get("/curriculum/step/nowhere/x.1").status_code == 404
 

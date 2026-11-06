@@ -163,6 +163,23 @@ class CoachStateMiddleware(AgentMiddleware):
     async def abefore_agent(self, state, runtime):
         return self.before_agent(state, runtime)
 
+    def after_model(self, state, runtime):
+        """Record each show_next_step the model just called (story 22). This writes down the
+        model's decision, as chapter_ended and user_navigated do; it decides nothing."""
+        from src.coach import tools
+
+        messages = state.get("messages", [])
+        newest = messages[-1] if messages else None
+        for call in getattr(newest, "tool_calls", None) or []:
+            args = call.get("args") or {}
+            station, step = args.get("station"), args.get("step")
+            if call.get("name") == tools.SHOW_NEXT_STEP and isinstance(station, str) and isinstance(step, str) and call.get("id"):
+                tools.record_step_shown(station, step, call["id"])
+        return None
+
+    async def aafter_model(self, state, runtime):
+        return self.after_model(state, runtime)
+
     def wrap_model_call(self, request, handler):
         return handler(with_context(request))
 

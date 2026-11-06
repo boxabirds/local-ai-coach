@@ -47,6 +47,14 @@ def test_tc36_agent_binds_loopback_in_main_and_dev_script():
     assert ANY_ADDRESS not in dev_agent
 
 
+def test_story22_tc19_dev_reload_watches_the_agents_source_not_its_libraries():
+    """uvicorn's stat reloader walks every .py under each watched folder; the default (the
+    agent folder) includes .venv, thousands of files polled four times a second."""
+    dev_agent = json.loads((REPO / "package.json").read_text())["scripts"]["dev:agent"]
+    assert "--reload-dir src" in dev_agent
+    assert f"--host {LOOPBACK}" in dev_agent
+
+
 @pytest.mark.parametrize("path", REMOVED)
 def test_tc37_demo_path_is_removed(path):
     assert not (REPO / path).exists(), path

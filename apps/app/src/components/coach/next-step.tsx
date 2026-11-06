@@ -21,10 +21,13 @@ type Step = {
   doIt?: unknown;
   check?: { kind?: string; compare?: string; choices?: { items: { label: string }[]; options: string[] } };
 };
-type Load = { state: "loading" } | { state: "ready"; step: Step } | { state: "missing" };
+type Load = { state: "loading" } | { state: "ready"; step: Step } | { state: "missing" } | { state: "failed" };
 
 export const STEP_URL = (station: string, step: string) => `/api/curriculum/step/${encodeURIComponent(station)}/${encodeURIComponent(step)}`;
 export const NOT_FOUND_NOTE = "I couldn't find that step in the lesson.";
+/** The step exists but didn't arrive (agent slow or down): the learner can retry; the model isn't told. */
+export const NOT_LOADED_NOTE = "I couldn't load this step.";
+const NOT_FOUND = 404;
 const UNIT = "GB";
 
 export type CardKind = "number" | "choice" | "step";
@@ -44,6 +47,7 @@ export function NextStepCard({ station, step, status, respond, result }: {
   result?: string;
 }) {
   const [load, setLoad] = useState<Load>({ state: "loading" });
+  const [attempt, setAttempt] = useState(0);
   const told = useRef(false);
   // While arguments stream in, the ids grow a character at a time: fetch once they've arrived.
   const settled = status !== "inProgress";
@@ -51,14 +55,19 @@ export function NextStepCard({ station, step, status, respond, result }: {
   useEffect(() => {
     if (!settled || !station || !step) return;
     let live = true;
+    // Only a 404 means the lesson has no such step; anything else is a failure to load it.
     fetch(STEP_URL(station, step), { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
-      .then((data) => live && setLoad({ state: "ready", step: data.step as Step }))
-      .catch(() => live && setLoad({ state: "missing" }));
+      .then(async (response) => {
+        if (!live) return;
+        if (response.status === NOT_FOUND) setLoad({ state: "missing" });
+        else if (!response.ok) setLoad({ state: "failed" });
+        else setLoad({ state: "ready", step: (await response.json()).step as Step });
+      })
+      .catch(() => live && setLoad({ state: "failed" }));
     return () => {
       live = false;
     };
-  }, [settled, station, step]);
+  }, [settled, station, step, attempt]);
 
   // An unknown step goes back to the model as the answer, once, so it can choose again.
   useEffect(() => {
@@ -69,6 +78,14 @@ export function NextStepCard({ station, step, status, respond, result }: {
   }, [load, respond, result, station, step]);
 
   if (load.state === "missing") return <p className="coach-note">{NOT_FOUND_NOTE}</p>;
+  if (load.state === "failed") {
+    return (
+      <p className="coach-note">
+        {NOT_LOADED_NOTE}{" "}
+        <button type="button" className="coach-button" onClick={() => { setLoad({ state: "loading" }); setAttempt((n) => n + 1); }}>Try again</button>
+      </p>
+    );
+  }
   if (load.state === "loading") return null;
   const s = load.step;
   const figure = s.figure || undefined;

@@ -1,4 +1,4 @@
-.PHONY: help install setup dev dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke release release-test clean
+.PHONY: help install setup dev dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke smoke release release-test clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -14,7 +14,7 @@ setup: install ## Full setup: install deps and create .env from template
 		echo "apps/agent/.env already exists, skipping"; \
 	fi
 
-dev: ## Start all services (frontend + agent + mcp)
+dev: ## Start all services (frontend + agent + mcp); the agent reloads on src/ edits only
 	pnpm dev
 
 STUB_URL := http://127.0.0.1:8123/stub
@@ -27,7 +27,7 @@ dev-stub: ## Start the stub coach: no model, no keys (writes ~/.local-ai-coach/p
 dev-app: ## Start Next.js frontend only (http://localhost:3000)
 	pnpm dev:app
 
-dev-agent: ## Start LangGraph agent only (http://localhost:8123)
+dev-agent: ## Start LangGraph agent only (http://localhost:8123); reloads on src/ edits, restart after editing main.py
 	pnpm dev:agent
 
 dev-mcp: ## Start MCP server only
@@ -43,8 +43,13 @@ release: ## Build the tester release: make release VERSION=0.1.0 (writes dist/)
 	@test -n "$(VERSION)" || (echo "Set VERSION, for example: make release VERSION=0.1.0"; exit 1)
 	scripts/build-release.sh $(VERSION)
 
-release-test: ## Build, install from scratch and run the browser suite against the install (downloads ~100 MB)
+release-test: ## Build, install from scratch and run the browser suite against the install (downloads ~100 MB); then the smoke test if make dev is running
 	COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_release.py
+	@if curl -s -m 5 -o /dev/null "$(SMOKE_URL)/api/health"; then $(MAKE) smoke; else echo "SMOKE NOT RUN: nothing answers at $(SMOKE_URL). Start make dev and run make smoke."; fi
+
+SMOKE_URL ?= http://127.0.0.1:3000
+smoke: ## Real-browser smoke test of the running coach (make dev): load, API keys, typing, reload. Never types a key
+	cd apps/app && SMOKE_URL=$(SMOKE_URL) npx playwright test -c playwright.smoke.config.ts
 
 evals: ## Dispatch cases against the real model, 5 runs each (ONLY=D-11,D-13 for some; needs apps/agent/.env.test)
 	cd apps/agent && COACH_EVALS=1 COACH_EVALS_ONLY=$(ONLY) uv run pytest evals -q -s -p no:cacheprovider

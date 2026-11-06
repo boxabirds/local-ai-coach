@@ -193,6 +193,18 @@ def _record_event(kind: str, **fields: Any) -> bool:
     return True
 
 
+SHOW_NEXT_STEP = "show_next_step"  # the frontend tool (apps/app use-coach-ui.tsx)
+
+
+def record_step_shown(station: str, step: str, call_id: str) -> bool:
+    """The model chose to show this step (story 22): record it once per tool call, so a
+    replayed or redrawn card never adds history. Returns whether a new event was written."""
+    events = progress.load(progress.home()).get(EVENTS, [])
+    if any(e.get("event") == "step_shown" and e.get("call") == call_id for e in events):
+        return False
+    return _record_event("step_shown", station=station, step=step, call=call_id)
+
+
 @tool
 def chapter_ended(station: str, summary: str, runtime: ToolRuntime) -> Command | str:
     """Use when you judge the learner has finished a station's steps: closes the chapter and shows them their map.

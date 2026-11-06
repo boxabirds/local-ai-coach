@@ -22,6 +22,8 @@ process.env.COACH_E2E_HOME ??= mkdtempSync(join(tmpdir(), "coach-e2e-"));
 
 export default defineConfig({
   testDir: "./e2e",
+  // e2e/real is the smoke test of the running coach (playwright.smoke.config.ts), not the stub suite.
+  testIgnore: ["real/**"],
   fullyParallel: false,
   workers: 1,
   retries: 0,

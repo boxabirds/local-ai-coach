@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { browserStorage, loadChat, restorable, saveChat, type ChatMessage } from "@/lib/chat-store";
 
 type Subscriber = { onMessagesChanged?: () => void; onStateChanged?: () => void; onRunFinalized?: () => void };
@@ -12,6 +12,7 @@ type Subscriber = { onMessagesChanged?: () => void; onStateChanged?: () => void;
 export type PersistableAgent = {
   messages: ChatMessage[];
   state: unknown;
+  isRunning: boolean;
   setMessages(messages: ChatMessage[]): void;
   setState(state: Record<string, unknown>): void;
   subscribe(subscriber: Subscriber): { unsubscribe(): void };
@@ -25,12 +26,18 @@ export type PersistableAgent = {
  * the server's copy of the thread, which for a new thread is empty and replaces
  * what was restored. So the restore is applied again once, when the first run
  * finishes, if the conversation was wiped by it.
+ *
+ * Kept once per turn (story 22): when a run finishes, and when the conversation changes
+ * outside a run (a card answer, New chat, a restore). Never per streamed token, which
+ * serialised the whole conversation once a word. `kept` is false while the browser
+ * refuses to keep it (full or turned off), so the page can say so.
  */
 export function usePersistedChat(
   agent: PersistableAgent,
   storage: Storage | undefined = browserStorage(),
   onRestored?: () => void,
-) {
+): { kept: boolean } {
+  const [kept, setKept] = useState(true);
   useEffect(() => {
     let pending: { messages: ChatMessage[]; state: Record<string, unknown> } | null = null;
     if (agent.messages.length === 0) {
@@ -42,10 +49,17 @@ export function usePersistedChat(
         onRestored?.();
       }
     }
-    const save = () => saveChat(storage, agent.messages, agent.state);
+    const save = () => {
+      // An empty conversation is nothing to keep, and not a failure to keep it.
+      if (!storage || agent.messages.length === 0) return;
+      setKept(saveChat(storage, agent.messages, agent.state));
+    };
+    const outsideARun = () => {
+      if (!agent.isRunning) save();
+    };
     const subscription = agent.subscribe({
-      onMessagesChanged: save,
-      onStateChanged: save,
+      onMessagesChanged: outsideARun,
+      onStateChanged: outsideARun,
       onRunFinalized: () => {
         if (pending && agent.messages.length === 0) {
           agent.setMessages(pending.messages);
@@ -53,10 +67,12 @@ export function usePersistedChat(
           onRestored?.();
         }
         pending = null;
+        save();
       },
     });
     return () => subscription.unsubscribe();
     // onRestored is read once per agent on purpose; the page passes a stable callback.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agent, storage]);
+  return { kept };
 }
