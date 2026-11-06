@@ -63,8 +63,23 @@ The release script builds the `.app`, signs it, optionally notarises it, and wra
 3. Signing and notarisation, once it goes beyond friendly testers.
 4. Bundled Python for offline install, if testers have trouble with the first launch.
 
+## Signing and notarising: reuse macscreencap's pipeline
+
+Julian already signs and notarises Cutaway (`~/expts/macscreencap`: `ScreencapMenuBar/build-app.sh` and `scripts/release.sh`). The coach reuses the same pieces, so testers get a normal, notarised download from the start:
+
+- the Developer ID Application certificate in the login Keychain (found with `security find-identity -v -p codesigning`), and the stored `notarytool-profile`;
+- sign inside out: every nested executable first (here the Bun binary and the `uv` binary), each with `codesign --force --options runtime --timestamp`, then the app with its entitlements, then `codesign --verify --deep --strict`;
+- zip, `xcrun notarytool submit … --keychain-profile notarytool-profile --wait`, `xcrun stapler staple`;
+- the `.dmg` built with `hdiutil`, signed, notarised and stapled the same way;
+- later, Sparkle and an appcast for updates, as Cutaway does.
+
+Two things differ from Cutaway:
+
+1. **The Bun binary needs JIT entitlements** under the hardened runtime (its JavaScript engine compiles code at run time). As far as I recall Bun's documentation lists `com.apple.security.cs.allow-jit` and related entitlements for compiled executables; to be confirmed when it is first signed.
+2. **The Python packages are not in the bundle.** `uv` installs them into Application Support on first launch, so notarisation covers only what we ship. Files `uv` downloads are not quarantined, so Gatekeeper does not check them. If Python is bundled later for offline installs, every `.so` and `.dylib` in it must be signed too, which is exactly the "sign nested binaries" loop Cutaway's script already has.
+
 ## Decisions that are Julian's
 
 1. Browser tab (launcher) or a real window (Tauri)?
-2. Unsigned for the first testers, or a Developer ID from the start?
+2. ~~Unsigned for the first testers, or a Developer ID from the start?~~ Signed and notarised from the start, with macscreencap's pipeline (Julian, 2026-11-06).
 3. The Bun migration, and with it retiring the two V1 rules (upstream stack unchanged; the do-not-touch runtime route).
