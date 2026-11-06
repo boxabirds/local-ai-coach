@@ -80,6 +80,6 @@ Two things differ from Cutaway:
 
 ## Decisions that are Julian's
 
-1. Browser tab (launcher) or a real window (Tauri)?
+1. ~~Browser tab (launcher) or a real window (Tauri)?~~ Browser tab for the first version (Julian, 2026-11-06).
 2. ~~Unsigned for the first testers, or a Developer ID from the start?~~ Signed and notarised from the start, with macscreencap's pipeline (Julian, 2026-11-06).
 3. The Bun migration, and with it retiring the two V1 rules (upstream stack unchanged; the do-not-touch runtime route).
