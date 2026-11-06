@@ -4,17 +4,17 @@ import { useState } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { inline } from "./markdown";
 import { Figure } from "./figure";
+import { FactBubble } from "./fact-bubble";
 
 export type StepAction = "claim" | "do_it" | "skip";
 
+/** Where the learner acts, shown only where it tells them something the task doesn't (story 25). */
 const WHERE: Record<string, string> = {
-  settings: "In your settings",
   "real-terminal": "In your terminal",
   sandbox: "In the practice terminal",
   "chat-app": "In your chat app",
-  coach: "Here, with me",
-  read: "Read this",
 };
+const NEXT_STEP = "Your next step";
 
 export const ACTION_LABEL: Record<StepAction, string> = {
   claim: "I did it",
@@ -30,19 +30,22 @@ export type StepCardProps = {
   hint?: string;
   hasDoIt?: boolean;
   figure?: string;
+  /** What to know first (story 25), shown in a fact bubble before the task. */
+  fact?: string;
   status: CardStatus;
   respond?: Respond;
   result?: string;
 };
 
-export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false, figure, status, respond, result }: StepCardProps) {
+export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false, figure, fact, status, respond, result }: StepCardProps) {
   const [hintOpen, setHintOpen] = useState(false);
   const [chosen, setChosen] = useState<StepAction | null>(null);
   const answered = parseResult<{ action?: StepAction }>(result)?.action ?? chosen;
   const active = status === "executing" && Boolean(respond) && !answered;
   const { cardRef, primaryRef } = useCardFocus<HTMLButtonElement>(active);
   const actions: StepAction[] = hasDoIt ? ["claim", "do_it", "skip"] : ["claim", "skip"];
-  const label = WHERE[where] ?? "Your next step";
+  const label = WHERE[where] ?? NEXT_STEP;
+  const quietLabel = !(where in WHERE);
 
   const act = (action: StepAction) => {
     if (!respond || answered) return;
@@ -52,17 +55,22 @@ export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false,
 
   if (answered) {
     return (
-      <CoachCard label={label} testId="coach-step" state="answered">
+      <>
+      <FactBubble text={fact} />
+      <CoachCard label={label} testId="coach-step" state="answered" kind="task" quietLabel={quietLabel}>
         <p className="coach-step__text coach-step__text--done" data-step-id={stepId}>
           {inline(text)}
         </p>
         <AnswerRecord label="You chose:" value={ACTION_LABEL[answered] ?? answered} />
       </CoachCard>
+      </>
     );
   }
 
   return (
-    <CoachCard label={label} testId="coach-step" state={active ? "active" : "plain"} cardRef={cardRef}>
+    <>
+    <FactBubble text={fact} />
+    <CoachCard label={label} testId="coach-step" state={active ? "active" : "plain"} cardRef={cardRef} kind="task" quietLabel={quietLabel}>
       {figure && <Figure id={figure} />}
       <p className="coach-step__text" data-step-id={stepId}>
         {inline(text)}
@@ -101,5 +109,6 @@ export function StepCard({ stepId, text = "", where = "", hint, hasDoIt = false,
         ))}
       </div>
     </CoachCard>
+    </>
   );
 }

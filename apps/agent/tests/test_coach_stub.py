@@ -687,3 +687,20 @@ def test_s11_tc10_through_the_request_handler(client, tmp_path):
     [(name, args)] = _calls(wrong)
     assert name == "check_result" and args["passed"] is False
     assert stub.load(tmp_path)["steps"]["machine.3"]["status"] == "reported"  # unchanged by the wrong answer
+
+
+# ------------------------------------------------------------------ story 25: a step's fact reaches every card
+
+import pytest as _pytest  # noqa: E402
+
+from src.coach import stub as _stub  # noqa: E402
+
+
+@_pytest.mark.parametrize("shape", ["step", "number", "choice"])
+def test_story25_the_stub_passes_a_steps_fact_to_its_card(shape):
+    step = {"id": "machine.9", "text": "Do a sample task.", "where": "coach", "hint": "A sample hint.", "fact": "A sample fact."}
+    if shape == "number":
+        step["id"] = _stub.NUMBER_STEP
+    if shape == "choice":
+        step["check"] = {"choices": {"items": [{"label": "One"}], "options": ["Yes", "No"]}}
+    assert _stub._step_turn(step, "machine").args["fact"] == "A sample fact."

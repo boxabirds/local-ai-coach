@@ -14,7 +14,8 @@
   "steps": [
     {
       "id": "machine.1",
-      "text": "Find your number: how much **memory** your machine has, in GB. (Memory is the space your laptop works in. Whatever it's doing right now has to be in there.) On a Mac: Apple menu, About This Mac, the line that says Memory.",
+      "fact": "Memory is the space your laptop works in. Whatever it's doing right now has to be in there.",
+      "text": "Find your number: how much **memory** your machine has, in GB. On a Mac: Apple menu, About This Mac, the line that says Memory.",
       "where": "settings",
       "hint": "It might say RAM instead. Same thing. On Linux you already know, and I know you know (`free -h`, the Mem line).",
       "doIt": { "kind": "instructions", "explain": "I'll give you the exact clicks for your machine, one at a time." },
@@ -41,7 +42,8 @@
     {
       "id": "machine.3",
       "figure": "will-it-fit",
-      "text": "Now the test. For each of these, say fits or doesn't fit: a 2 GB **model file**, a 5 GB one, a 20 GB one. (The model file is the single file a model is downloaded as: the whole of the clever part, in one lump.)",
+      "fact": "The model file is the single file a model is downloaded as: the whole of the clever part, in one lump.",
+      "text": "Now the test. For each of these, say fits or doesn't fit: a 2 GB **model file**, a 5 GB one, a 20 GB one.",
       "where": "coach",
       "hint": "My **rule of thumb**: under about three quarters of your number, fine. Over it, a squeeze. Bigger than the number, no.",
       "doIt": { "kind": "instructions", "explain": "I'll work it through with your number, one file at a time." },

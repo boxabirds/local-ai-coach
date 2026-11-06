@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { Figure } from "./figure";
+import { FactBubble } from "./fact-bubble";
 import { inline } from "./markdown";
 
 /**
@@ -17,6 +18,8 @@ export type ChoiceCardProps = {
   items?: string[];
   options?: string[];
   figure?: string;
+  /** What to know first (story 25), shown in a fact bubble before the task. */
+  fact?: string;
   status: CardStatus;
   respond?: Respond;
   result?: string;
@@ -24,7 +27,7 @@ export type ChoiceCardProps = {
 
 type ChoiceAnswer = { answers?: string[]; action?: "skip" };
 
-export function ChoiceCard({ stepId, text = "", items = [], options = [], figure, status, respond, result }: ChoiceCardProps) {
+export function ChoiceCard({ stepId, text = "", items = [], options = [], figure, fact, status, respond, result }: ChoiceCardProps) {
   // Keyed by row, not sized at first render: the card's arguments stream in, so the rows
   // may not exist yet when it first appears.
   const [picked, setPicked] = useState<Record<number, string>>({});
@@ -42,7 +45,9 @@ export function ChoiceCard({ stepId, text = "", items = [], options = [], figure
 
   if (answered) {
     return (
-      <CoachCard label="Your answers" testId="coach-choice" state="answered">
+      <>
+      <FactBubble text={fact} />
+      <CoachCard label="Your answers" testId="coach-choice" state="answered" kind="task">
         <p className="coach-step__text coach-step__text--done" data-step-id={stepId}>
           {inline(text)}
         </p>
@@ -58,11 +63,14 @@ export function ChoiceCard({ stepId, text = "", items = [], options = [], figure
           </ul>
         )}
       </CoachCard>
+      </>
     );
   }
 
   return (
-    <CoachCard label="Your answers" testId="coach-choice" state={active ? "active" : "plain"} cardRef={cardRef}>
+    <>
+    <FactBubble text={fact} />
+    <CoachCard label="Your answers" testId="coach-choice" state={active ? "active" : "plain"} cardRef={cardRef} kind="task">
       {figure && <Figure id={figure} />}
       <p className="coach-step__text" data-step-id={stepId}>
         {inline(text)}
@@ -102,5 +110,6 @@ export function ChoiceCard({ stepId, text = "", items = [], options = [], figure
         </button>
       </div>
     </CoachCard>
+    </>
   );
 }

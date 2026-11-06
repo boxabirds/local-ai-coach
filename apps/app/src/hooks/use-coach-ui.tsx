@@ -59,6 +59,7 @@ const StepParams = z.object({
   hint: z.string().optional(),
   has_do_it: z.boolean(),
   figure: z.string().optional(),
+  fact: z.string().optional(),
 });
 
 const NumberParams = z.object({
@@ -68,6 +69,7 @@ const NumberParams = z.object({
   unit: z.literal("GB"),
   hint: z.string().optional(),
   figure: z.string().optional(),
+  fact: z.string().optional(),
 });
 
 const RunConfirmParams = z.object({ cmd: z.string(), explain: z.string() });
@@ -79,6 +81,7 @@ const ChoiceParams = z.object({
   items: z.array(z.string()),
   options: z.array(z.string()),
   figure: z.string().optional(),
+  fact: z.string().optional(),
 });
 
 const ConsentParams = z.object({
@@ -207,6 +210,7 @@ export const useCoachUI = () => {
         hint={args.hint}
         hasDoIt={args.has_do_it}
         figure={args.figure || undefined}
+        fact={args.fact || undefined}
         status={status as CardStatus}
         respond={respond ? (value) => void respond(value) : undefined}
         result={result}
@@ -224,6 +228,7 @@ export const useCoachUI = () => {
         unit={args.unit}
         hint={args.hint}
         figure={args.figure || undefined}
+        fact={args.fact || undefined}
         platform={platform()}
         status={status as CardStatus}
         respond={respond ? (value) => void respond(value) : undefined}
@@ -243,6 +248,7 @@ export const useCoachUI = () => {
         items={args.items}
         options={args.options}
         figure={args.figure || undefined}
+        fact={args.fact || undefined}
         status={status as CardStatus}
         respond={respond ? (value) => void respond(value) : undefined}
         result={result}

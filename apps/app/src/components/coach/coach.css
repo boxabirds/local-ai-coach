@@ -33,6 +33,29 @@
   outline: none;
 }
 
+/* Story 25: a task is green, a stronger green while it waits for the learner. */
+.coach-card--task {
+  background: var(--coach-task-past);
+  border-color: var(--coach-task-past-edge);
+  color: var(--text-primary);
+}
+.coach-card--task.coach-card--active {
+  background: var(--coach-task-now);
+  border-color: var(--coach-task-now-edge);
+  box-shadow: 0 0 0 3px var(--coach-task-past-edge), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* A fact: something to know before the task, in a pale yellow bubble led by a light bulb. */
+.coach-fact {
+  max-width: 640px;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--coach-fact-edge);
+  border-radius: var(--radius-lg);
+  background: var(--coach-fact-bg);
+  line-height: 1.55;
+}
+
 .coach-record {
   margin: 0;
   font-size: 14px;
@@ -176,9 +199,22 @@
   --crit-amber: #ffb000;
   --crit-amber-edge: #92400e;
   --crit-red: #b91c1c;
+  /* Story 25: what to know (yellow) and what to do (green: stronger while it waits). */
+  --coach-fact-bg: #fef9c3;
+  --coach-fact-edge: #fde68a;
+  --coach-task-now: #dcfce7;
+  --coach-task-now-edge: #4ade80;
+  --coach-task-past: #f0fdf4;
+  --coach-task-past-edge: #bbf7d0;
 }
 
 :root.dark {
+  --coach-fact-bg: #3a3413;
+  --coach-fact-edge: #6b5b17;
+  --coach-task-now: #14361f;
+  --coach-task-now-edge: #2f8a4f;
+  --coach-task-past: #10241a;
+  --coach-task-past-edge: #1f4430;
   --coach-paper: #1a1a2e;
   --coach-accent: #8fb0ff;
   --coach-accent-ink: #0b1020;

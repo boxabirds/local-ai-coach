@@ -18,6 +18,8 @@ export function CoachCard({
   tone = "plain",
   state = "plain",
   variant = "card",
+  kind,
+  quietLabel = false,
   cardRef,
 }: {
   label: string;
@@ -27,18 +29,22 @@ export function CoachCard({
   state?: CardState;
   /** "thread" drops the frame, for content shown as a run of chat bubbles. */
   variant?: "card" | "thread";
+  /** "task": a thing for the learner to do, drawn green (story 25). */
+  kind?: "task";
+  /** The label is for screen readers only, when it would only repeat the card. */
+  quietLabel?: boolean;
   cardRef?: RefObject<HTMLElement | null>;
 }) {
   return (
     <section
       ref={cardRef as RefObject<HTMLElement>}
-      className={`coach-card coach-card--${tone} coach-card--${state} coach-card--${variant}`}
+      className={`coach-card coach-card--${tone} coach-card--${state} coach-card--${variant}${kind ? ` coach-card--${kind}` : ""}`}
       data-testid={testId}
       data-state={state}
       aria-label={label}
       tabIndex={-1}
     >
-      <p className="coach-card__label">{label}</p>
+      <p className={`coach-card__label${quietLabel ? " coach-sr-only" : ""}`}>{label}</p>
       {children}
     </section>
   );

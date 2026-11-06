@@ -18,6 +18,7 @@ type Step = {
   where?: string;
   hint?: string;
   figure?: string;
+  fact?: string;
   doIt?: unknown;
   check?: { kind?: string; compare?: string; choices?: { items: { label: string }[]; options: string[] } };
 };
@@ -91,11 +92,11 @@ export function NextStepCard({ station, step, status, respond, result }: {
   const figure = s.figure || undefined;
   const kind = cardFor(s);
   if (kind === "number") {
-    return <NumberCard prompt={s.text} unit={UNIT} hint={s.hint} figure={figure} platform={detectPlatform(typeof navigator === "undefined" ? "" : navigator.userAgent)} status={status} respond={respond} result={result} />;
+    return <NumberCard fact={s.fact} prompt={s.text} unit={UNIT} hint={s.hint} figure={figure} platform={detectPlatform(typeof navigator === "undefined" ? "" : navigator.userAgent)} status={status} respond={respond} result={result} />;
   }
   if (kind === "choice") {
     const choices = s.check!.choices!;
-    return <ChoiceCard stepId={s.id} text={s.text} items={choices.items.map((i) => i.label)} options={choices.options} figure={figure} status={status} respond={respond} result={result} />;
+    return <ChoiceCard fact={s.fact} stepId={s.id} text={s.text} items={choices.items.map((i) => i.label)} options={choices.options} figure={figure} status={status} respond={respond} result={result} />;
   }
-  return <StepCard stationId={station!} stepId={s.id} text={s.text} where={s.where ?? "coach"} hint={s.hint} hasDoIt={Boolean(s.doIt)} figure={figure} status={status} respond={respond} result={result} />;
+  return <StepCard fact={s.fact} stationId={station!} stepId={s.id} text={s.text} where={s.where ?? "coach"} hint={s.hint} hasDoIt={Boolean(s.doIt)} figure={figure} status={status} respond={respond} result={result} />;
 }

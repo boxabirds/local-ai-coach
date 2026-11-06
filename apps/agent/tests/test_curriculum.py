@@ -411,3 +411,35 @@ def test_s14_tc03_a_stale_or_unknown_app_name_fails(root: Path, tmp_path: Path, 
 
 def test_s14_tc03_a_copy_elsewhere_is_not_checked_against_the_app(root: Path) -> None:
     assert "APP_STATION_NAME" not in [i.code for i in validate_mod.validate(root, PROBES, STYLECHECK)]
+
+
+# ---------------------------------------------------------------- a step's fact (story 25, TC-01 to TC-04)
+# Made-up wording on the fixture copy: these test the rule, not the lessons.
+
+def test_story25_tc01_a_string_fact_is_valid(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2").__setitem__("fact", "A sample fact to know before the task."))
+    assert errors(run(root)) == []
+
+
+def test_story25_tc02_a_fact_that_is_not_text_is_refused(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2").__setitem__("fact", 42))
+    assert errors(run(root)) == ["STEP_FIELD"]
+
+
+@pytest.mark.parametrize("aside", ["(A sample word is a made-up thing.)", "(the sample means something else)", "(Samples are plentiful here.)"])
+def test_story25_tc03_a_definition_in_brackets_inside_the_task_is_refused(root: Path, aside: str) -> None:
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2").__setitem__("text", f"Type the sample figure. {aside}"))
+    assert errors(run(root)) == ["STEP_TEXT_MIXED"]
+
+
+def test_story25_tc03_an_aside_that_defines_nothing_is_fine(root: Path) -> None:
+    edit(root, "lessons/machine.json", lambda d: step(d, "machine.2").__setitem__("text", "Type the sample figure (on a Mac, press Return when done)."))
+    assert errors(run(root)) == []
+
+
+def test_story25_tc04_a_term_defined_in_the_fact_counts_for_the_task(root: Path) -> None:
+    def move(d: dict[str, Any]) -> None:
+        first = step(d, "machine.1")
+        first["fact"], first["text"] = "**Memory** is a sample definition.", "Find a sample number for memory."
+    edit(root, "lessons/machine.json", move)
+    assert errors(run(root)) == []

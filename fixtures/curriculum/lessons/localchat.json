@@ -16,7 +16,8 @@
   "steps": [
     {
       "id": "localchat.1",
-      "text": "First, a practice run. This is a **terminal** (a window where you type a command and the machine types back), and it's a pretend one, so nothing you type here can break anything. Ask your **server** which models it has: `curl http://{server}/v1/models` (The server is the program on the model's machine that holds the model in memory and answers.)",
+      "fact": "The server is the program on the model's machine that holds the model in memory and answers.",
+      "text": "First, a practice run. This is a **terminal** (a window where you type a command and the machine types back), and it's a pretend one, so nothing you type here can break anything. Ask your **server** which models it has: `curl http://{server}/v1/models`",
       "where": "sandbox",
       "hint": "Type it exactly and press Return. The bit after http:// is the server's **address**: the name or number a machine is found by on a network.",
       "doIt": { "kind": "sim", "cmd": "curl http://{server}/v1/models" },

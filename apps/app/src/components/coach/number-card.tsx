@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnswerRecord, CoachCard, parseResult, useCardFocus, type CardStatus, type Respond } from "./card";
 import { Figure } from "./figure";
+import { FactBubble } from "./fact-bubble";
 import { inline } from "./markdown";
 
 export type Platform = "mac" | "linux" | "other";
@@ -25,13 +26,15 @@ export type NumberCardProps = {
   unit?: string;
   hint?: string;
   figure?: string;
+  /** What to know first (story 25), shown in a fact bubble before the task. */
+  fact?: string;
   platform: Platform;
   status: CardStatus;
   respond?: Respond;
   result?: string;
 };
 
-export function NumberCard({ prompt = "", unit = "GB", hint, figure, platform, status, respond, result }: NumberCardProps) {
+export function NumberCard({ prompt = "", unit = "GB", hint, figure, fact, platform, status, respond, result }: NumberCardProps) {
   const [draft, setDraft] = useState("");
   const [sent, setSent] = useState<number | null>(null);
   const answered = parseResult<{ value?: number }>(result)?.value ?? sent;
@@ -48,14 +51,19 @@ export function NumberCard({ prompt = "", unit = "GB", hint, figure, platform, s
 
   if (answered !== null) {
     return (
-      <CoachCard label="Memory, in GB" testId="coach-number" state="answered">
+      <>
+      <FactBubble text={fact} />
+      <CoachCard label="Memory, in GB" testId="coach-number" state="answered" kind="task">
         <AnswerRecord label="You said:" value={`${answered} ${unit}`} />
       </CoachCard>
+      </>
     );
   }
 
   return (
-    <CoachCard label="Memory, in GB" testId="coach-number" state={active ? "active" : "plain"} cardRef={cardRef}>
+    <>
+    <FactBubble text={fact} />
+    <CoachCard label="Memory, in GB" testId="coach-number" state={active ? "active" : "plain"} cardRef={cardRef} kind="task">
       {figure && <Figure id={figure} />}
       <p className="coach-step__text">{inline(prompt)}</p>
       <p className="coach-muted" data-testid="coach-where-to-look">
@@ -88,5 +96,6 @@ export function NumberCard({ prompt = "", unit = "GB", hint, figure, platform, s
         </button>
       </form>
     </CoachCard>
+    </>
   );
 }

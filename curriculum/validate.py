@@ -55,6 +55,9 @@ COMMAND_KINDS = {"shell", "sim"}
 PLACEHOLDERS = {"server", "server_name", "chat_app", "measured", "typed", "address"}
 LESSON_REQUIRED = ("station", "status", "untested", "teaches", "previews", "why", "mnem", "steps", "recap")
 STEP_REQUIRED = ("id", "text", "where", "hint", "doIt", "check")
+# Story 25: a step's text says what to do; what to know goes in its optional "fact", shown first.
+# A bracketed aside that defines something ("(Memory is ...)", "(... means ...)") belongs there.
+BRACKETED_DEFINITION = re.compile(r"\((?:[^()]*?)\b(?:is|are|means)\b[^()]*\)", re.IGNORECASE)
 MAP_REQUIRED = ("term", "forms", "definedIn", "firstAt", "gloss", "analogy", "recap", "station", "avoid")
 CHAPTER_COMPARED = ("gloss", "analogy", "recap", "station")
 
@@ -193,7 +196,7 @@ def lesson_texts(lesson: dict[str, Any]) -> list[tuple[str, str]]:
         if not isinstance(step, dict):
             continue
         sid = str(step.get("id", "?"))
-        for key in ("text", "hint"):
+        for key in ("fact", "text", "hint"):  # the fact is shown first, so it is read first
             if isinstance(step.get(key), str):
                 out.append((f"{sid}.{key}", step[key]))
         on_fail = step.get("onFail")
@@ -403,6 +406,12 @@ def check_step(step: Any, station: str, seen: set[str], rel: str, probes: dict[s
         seen.add(sid)
     if "where" in step and step["where"] not in WHERE_VALUES:
         report.error("STEP_WHERE", where, f"where {step['where']!r} is not one of {sorted(WHERE_VALUES)}")
+    if "fact" in step and not isinstance(step["fact"], str):
+        report.error("STEP_FIELD", where, "fact must be text")
+    if isinstance(step.get("text"), str):
+        mixed = BRACKETED_DEFINITION.search(step["text"])
+        if mixed:
+            report.error("STEP_TEXT_MIXED", where, f"the task explains something in brackets, {mixed.group(0)[:60]!r}; put it in the step's fact")
 
     do_it = step.get("doIt")
     if isinstance(do_it, dict):

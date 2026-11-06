@@ -30,6 +30,10 @@ const PAPER = "rgb(255, 255, 255)";
 /** The reserved criticality colours (coach.css --crit-*), light theme. */
 // Outline colours: amber is drawn with its dark edge (#92400e), the fill being too light for 3:1.
 const CRIT = { grey: "rgb(107, 114, 128)", amber: "rgb(146, 64, 14)", red: "rgb(185, 28, 28)" } as const;
+/** Story 25: what to know and what to do (coach.css --coach-fact-bg, --coach-task-now, --coach-task-past). */
+const FACT_BG = "rgb(254, 249, 195)";
+const TASK_NOW = "rgb(220, 252, 231)";
+const TASK_PAST = "rgb(240, 253, 244)";
 /** Amber's fill: a true amber (coach.css --crit-amber). */
 const AMBER_FILL = "rgb(255, 176, 0)";
 /** A one-line user message: bubble plus breathing room, no reserved toolbar. */
@@ -196,7 +200,13 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     const claim = page.getByRole("button", { name: "I did it" });
     await expect(claim).toBeFocused();
     await expect(claim).toHaveCSS("background-color", ACCENT);
+    // Story 25, TC-11: the fact is a yellow bubble; the waiting task the stronger green.
+    const firstTask = page.getByTestId("coach-step").last();
+    await expect(page.getByTestId("coach-fact").last()).toHaveCSS("background-color", FACT_BG);
+    await expect(firstTask).toHaveCSS("background-color", TASK_NOW);
     await claim.click();
+    // Once answered, the same task is the paler green.
+    await expect(page.locator('[data-testid="coach-step"][data-state="answered"]').last()).toHaveCSS("background-color", TASK_PAST);
 
     const number = page.getByLabel("Memory in GB");
     await expect(number).toBeFocused();

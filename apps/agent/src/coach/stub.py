@@ -135,10 +135,11 @@ def _step_turn(step: dict[str, Any], station: str, text: str | None = None, reco
             "items": [item["label"] for item in choices["items"]],
             "options": list(choices["options"]),
             "figure": step.get("figure", ""),
+            "fact": step.get("fact", ""),
         }
         return Turn(text=text, tool=CHOICE_CARD, args=args, record=record)
     if step["id"] == NUMBER_STEP:
-        args = {"station_id": station, "step_id": step["id"], "prompt": step["text"], "unit": UNIT, "hint": step.get("hint", ""), "figure": step.get("figure", "")}
+        args = {"station_id": station, "step_id": step["id"], "prompt": step["text"], "unit": UNIT, "hint": step.get("hint", ""), "figure": step.get("figure", ""), "fact": step.get("fact", "")}
         return Turn(text=text, tool=NUMBER_CARD, args=args, record=record)
     args = {
         "station_id": station,
@@ -148,6 +149,7 @@ def _step_turn(step: dict[str, Any], station: str, text: str | None = None, reco
         "hint": step.get("hint", ""),
         "has_do_it": "doIt" in step,
         "figure": step.get("figure", ""),
+        "fact": step.get("fact", ""),
     }
     return Turn(text=text, tool=STEP_CARD, args=args, record=record)
 

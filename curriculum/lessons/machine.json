@@ -20,7 +20,8 @@
   "steps": [
     {
       "id": "machine.1",
-      "text": "Fact one: how much **memory** your computer has, in GB. (Memory is the space your computer works in. Whatever it's doing right now has to be in there.) On a Mac: Apple menu, About This Mac, the line that says Memory.",
+      "fact": "**Memory** is the space your computer works in. Whatever it's doing right now has to be in there.",
+      "text": "Find how much memory your computer has, in GB. On a Mac: Apple menu, About This Mac, the line that says Memory.",
       "where": "settings",
       "hint": "It might say RAM instead. Same thing. On Linux you already know, and I know you know (`free -h`, the Mem line).",
       "doIt": {
@@ -58,7 +59,8 @@
     },
     {
       "id": "machine.3",
-      "text": "Fact two: **graphics card memory**, if your computer has any. (Graphics card memory is separate from normal memory: much smaller and much faster. Macs and office laptops have none, and that's fine.) On Windows: Task Manager, Performance, GPU, Dedicated GPU memory.",
+      "fact": "**Graphics card memory** is separate from normal memory: much smaller and much faster. Macs and office laptops have none, and that's fine.",
+      "text": "Find how much graphics card memory your computer has, if it has any. On Windows: Task Manager, Performance, GPU, Dedicated GPU memory.",
       "where": "settings",
       "hint": "On Linux with an Nvidia card, `nvidia-smi` prints it. If there's no graphics card, write \"none\".",
       "doIt": {
@@ -75,7 +77,8 @@
     {
       "id": "machine.4",
       "figure": "will-it-fit",
-      "text": "Now the test. For each of these, say fits, depends or doesn't fit, against your memory: a 2 GB **model file**, a 5 GB one, a 20 GB one. (The model file is the single file a model is downloaded as. A running model also needs **working space** beyond its file: the program that runs it, and the conversation so far.)",
+      "fact": "A **model file** is the single file a model is downloaded as. A running model also needs **working space** beyond its file: the program that runs it, and the conversation so far.",
+      "text": "Now the test. For each of these, say fits, depends or doesn't fit, against your memory: a 2 GB model file, a 5 GB one, a 20 GB one.",
       "where": "coach",
       "hint": "My **rule of thumb**, wide on purpose: under half your memory fits; bigger than your memory doesn't; anywhere between, it depends.",
       "doIt": {
