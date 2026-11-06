@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
@@ -312,5 +314,31 @@ describe("typing stays in the message box (story 22, TC-09)", () => {
     for (const text of ["a", "ab", "abc"]) fireEvent.change(screen.getByLabelText("Message"), { target: { value: text } });
     expect(screen.getByLabelText("Message")).toHaveValue("abc");
     expect(commits.keys).toBe(before);
+  });
+});
+
+describe("the dialog's order (story 21, as asked 2026-11-06)", () => {
+  /** The labels of the dialog's fields, top to bottom. */
+  const fieldOrder = () => [...document.querySelectorAll("dialog input")].map((input) => {
+    const label = input.closest("label") ?? document.querySelector(`label[for="${input.id}"]`);
+    return label?.textContent?.trim();
+  });
+
+  it("Jev key, OpenAI key, the checkbox; address and model appear below it only when ticked", async () => {
+    serve();
+    await setup();
+    expect(fieldOrder()).toEqual(["Jev API key", "OpenAI API key", "Other OpenAI-compatible server"]);
+    fireEvent.click(screen.getByLabelText("Other OpenAI-compatible server"));
+    expect(fieldOrder()).toEqual(["Jev API key", "API key for that server", "Other OpenAI-compatible server", "Server address", "Model name"]);
+  });
+
+  it("the checkbox sits beside its words, not styled as a text box", async () => {
+    serve();
+    await setup();
+    const box = screen.getByLabelText("Other OpenAI-compatible server");
+    expect(box.closest("label")).toHaveClass("provider-keys-other");
+    const css = readFileSync(resolve(process.cwd(), "src/components/chat/provider-keys.css"), "utf8");
+    expect(css).toMatch(/\.provider-keys-dialog input:not\(\[type="checkbox"\]\)/);
+    expect(css).toMatch(/\.provider-keys-other\s*\{[^}]*display:\s*flex/);
   });
 });

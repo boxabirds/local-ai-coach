@@ -85,6 +85,10 @@ export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () 
       <p id="provider-keys-privacy">{KEPT_SENTENCE(saved, where)} They go from this computer straight to each provider, and the usage is charged to your own accounts.</p>
       <p>Saving or clearing keys starts a new chat.</p>
       <form onSubmit={(event) => { event.preventDefault(); void testConnection(); }}>
+        <label htmlFor="provider-jev-key">Jev API key</label>
+        <input id="provider-jev-key" type="password" maxLength={4096} autoComplete="off" spellCheck={false} autoCapitalize="none" value={jev} onChange={(event) => edit(setJev, event.target.value)} disabled={pending || disabled} />
+        <label htmlFor="provider-openai-key">{other ? "API key for that server" : "OpenAI API key"}</label>
+        <input id="provider-openai-key" type="password" maxLength={4096} autoComplete="off" spellCheck={false} autoCapitalize="none" value={openai} onChange={(event) => edit(setOpenai, event.target.value)} disabled={pending || disabled} />
         <label className="provider-keys-other">
           <input
             type="checkbox"
@@ -106,10 +110,6 @@ export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () 
             <input id="provider-model" type="text" placeholder="zai-org/GLM-5.3-Flash" maxLength={512} autoComplete="off" spellCheck={false} autoCapitalize="none" value={model} onChange={(event) => edit(setModel, event.target.value)} disabled={pending || disabled} />
           </>
         )}
-        <label htmlFor="provider-openai-key">{other ? "API key for that server" : "OpenAI API key"}</label>
-        <input id="provider-openai-key" type="password" maxLength={4096} autoComplete="off" spellCheck={false} autoCapitalize="none" value={openai} onChange={(event) => edit(setOpenai, event.target.value)} disabled={pending || disabled} />
-        <label htmlFor="provider-jev-key">Jev API key</label>
-        <input id="provider-jev-key" type="password" maxLength={4096} autoComplete="off" spellCheck={false} autoCapitalize="none" value={jev} onChange={(event) => edit(setJev, event.target.value)} disabled={pending || disabled} />
         {error && <p role="alert">{error}</p>}
         {notSaved && <p role="alert">{notSaved}</p>}
         <p role="status" aria-live="polite">{pending ? "Checking both providers…" : validated ? "Both keys work. Save to start a new chat." : hasKeys ? "Your own keys are active for this session." : "Both keys are required to start chatting."}</p>
