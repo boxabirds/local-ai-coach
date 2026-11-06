@@ -34,6 +34,16 @@ Start step 1 in plan mode and show the plan before writing code.
 - Keep upstream's streaming tool contract text in `src/prompt.py` verbatim; `test_canonical_contract.py` and `test_skills_contract.py` must stay green.
 - Pin every dependency at the versions in the lockfiles. No upgrades during V1.
 
+## No explanatory metadata in the UI
+
+Never add visible words that describe the interface instead of being the content or a control: card-type labels ("Story", "In your settings"), headings over a figure, captions that restate it, footer lines saying which model answers or where keys live. Julian has removed every one of these by hand. Examples, in his words:
+
+- The step card's label "In your settings": "not needed" (story 25).
+- The word "Station" before a figure's choice buttons, and the heading "Priya's week, on the map" with its caption: "I don't know what the word 'Station' is doing there remove it", "both unnecessary chatter kill them" (the three-stations figure).
+- The line under the message box ("My answers come from ... Your keys are in this Mac's Keychain."): "The last row of text does not need to be there. We can add a help menu that explains all these things."
+
+Also the grey "Story" above the chapter 0 bubbles. What to do instead: a name a screen reader needs goes in `aria-label` or `coach-sr-only` (`CoachCard`'s `quietLabel`); an explanation goes in the help menu, not in the chat. A new visible label, caption or helper line needs Julian to ask for it.
+
 ## Any change to what is taught: check its reach before changing anything
 
 This applies wherever the change starts and whatever the medium: feedback on a coach card, a lesson, a figure, a story, the book text, the station graph, the table of contents, a test, or a conversation about the curriculum. A change in one artefact is rarely about that artefact alone. **Changes flow both ways.** A change to the coach goes back into the book, the book's changes go into the coach, and either can change the curriculum and the TOC. The coach never teaches something the book contradicts.

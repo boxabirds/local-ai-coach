@@ -12,14 +12,15 @@ const NOT_DONE = "I couldn't restart, so nothing changed.";
 
 export function RestartDialog({ onClose, onRestarted }: { onClose: () => void; onRestarted: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const cancel = useRef<HTMLButtonElement>(null);
+  // Restart has the focus, so Enter restarts (Julian); Escape and Cancel keep everything.
+  const confirm = useRef<HTMLButtonElement>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     dialog.current?.showModal();
-    cancel.current?.focus();
+    confirm.current?.focus();
     return () => opener?.focus();
   }, []);
 
@@ -61,8 +62,8 @@ export function RestartDialog({ onClose, onRestarted }: { onClose: () => void; o
       <p>Your keys and server stay. I keep a copy of your progress in the coach&apos;s old folder, in case you change your mind.</p>
       {error && <p role="alert">{error}</p>}
       <div className="provider-keys-actions">
-        <button ref={cancel} type="button" onClick={onClose} disabled={pending}>Cancel</button>
-        <button type="button" className="provider-keys-save" onClick={() => void restart()} disabled={pending}>
+        <button type="button" onClick={onClose} disabled={pending}>Cancel</button>
+        <button ref={confirm} type="button" className="provider-keys-save" onClick={() => void restart()} disabled={pending}>
           {pending ? "Restarting…" : "Restart"}
         </button>
       </div>

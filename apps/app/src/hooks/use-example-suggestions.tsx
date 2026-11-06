@@ -1,6 +1,7 @@
 import { useConfigureSuggestions } from "@copilotkit/react-core/v2";
 
-/** The first-run entry points (docs/design.md, Frontend design). */
+/** The first-run entry points (docs/design.md, Frontend design): on the start screen only. Once
+ * the conversation is under way the coach says what comes next (Julian, 2026-11-06). */
 export const COACH_STARTERS = [
   { title: "Read Priya's story", message: "Read Priya's story" },
   { title: "What can my computer do?", message: "What can my computer do?" },
@@ -10,6 +11,6 @@ export const COACH_STARTERS = [
 export const useExampleSuggestions = () => {
   useConfigureSuggestions({
     suggestions: COACH_STARTERS.map(({ title, message }) => ({ title, message })),
-    available: "always",
+    available: "before-first-message",
   });
 };

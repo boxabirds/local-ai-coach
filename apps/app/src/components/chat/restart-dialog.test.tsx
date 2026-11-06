@@ -19,12 +19,12 @@ function open(reply: () => Promise<Response> | Response = () => Response.json({ 
 }
 
 describe("Restart coach", () => {
-  it("TC-08 says what goes and what stays, with Cancel focused", () => {
+  it("TC-08 says what goes and what stays, with Restart focused, so Enter restarts (Julian, 2026-11-06)", () => {
     open();
     expect(screen.getByRole("dialog", { name: "Start the coach again?" })).toBeVisible();
     expect(screen.getByText(/This clears your progress/)).toBeInTheDocument();
     expect(screen.getByText(/keys and server stay/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Restart" })).toHaveFocus();
   });
 
   it("TC-09 Cancel sends nothing and changes nothing", () => {

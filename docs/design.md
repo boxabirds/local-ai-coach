@@ -60,7 +60,7 @@ Fork `CopilotKit/OpenIntelligentUI` into `boxabirds/local-ai-coach` (name is a p
 | `apps/agent/src/db.csv` | Delete | Sample data |
 | `apps/app/src/hooks/use-generative-ui-examples.tsx` | Replace with `use-coach-ui.tsx`: the eight registrations | Our components |
 | `apps/app/src/components/coach/` | Add: `story.tsx`, `step-card.tsx`, `sandbox-terminal/` (fake shell), `terminal-transcript.tsx`, `number-card.tsx`, `tube-map.tsx` (ports the existing map's SVG), `check-result.tsx`, `recap-card.tsx`, `run-confirm.tsx` | Plain React, no CopilotKit inside them |
-| `apps/app/src/hooks/use-example-suggestions.tsx` | Edit: three starters, "Read Priya's story", "Find my number", "Where am I on the map?" | First-run entry points |
+| `apps/app/src/hooks/use-example-suggestions.tsx` | Edit: three starters, "Read Priya's story", "What can my computer do?", "Where am I on the map?", on the start screen only | First-run entry points |
 | `apps/app/src/app/page.tsx` | Edit: title, remove GitHub and CopilotKit header links, keep the key dialog and New chat | Shell |
 | `apps/app/src/components/{demo-gallery,template-library,qr-modal,explainer-cards,desktop-tip-modal,example-layout}` and `app/pick/`, `app/api/pick/` | Delete | Unused or demo |
 | `apps/app/src/lib/launch-telemetry.ts`, `components/posthog-analytics.tsx` | Delete; remove from `providers.tsx` and `route.ts` | No telemetry |

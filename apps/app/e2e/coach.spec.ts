@@ -62,6 +62,12 @@ async function inViewport(page: Page, testId: string) {
 }
 
 /** Starts clean: a browser of its own, no kept conversation. */
+/** Type into the message box and send, as a learner does once the conversation has started. */
+async function ask(page: Page, text: string) {
+  await page.getByTestId("copilot-chat-textarea").fill(text);
+  await page.getByTestId("copilot-chat-textarea").press("Enter");
+}
+
 test("home: the coach, the stub badge and the three starters, no demo", async () => {
   const { browser, page } = await openBrowser();
   try {
@@ -102,6 +108,8 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
 
   test("story: one sentence per bubble, Space to go on, and the answer sticks", async () => {
     await page.getByRole("button", { name: "Read Priya's story" }).click();
+    // The starters belong to the start screen; they don't follow into the conversation.
+    await expect(page.getByRole("button", { name: "Where am I on the map?" })).toHaveCount(0);
 
     const goOn = page.getByRole("button", { name: "Next" });
     await expect(goOn).toBeFocused();
@@ -190,7 +198,11 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await page.getByRole("button", { name: "Show the rest" }).click();
     await expect(page.getByText(QUESTION)).toBeVisible();
     await expect(page.getByRole("button", { name: ANSWER })).toBeFocused();
+    // Story 27, TC-04: the story's question waits like any task: the same waiting green, then pale.
+    const storyAsk = page.locator(".coach-story__ask").last();
+    await expect(storyAsk).toHaveCSS("background-color", TASK_NOW);
     await page.getByRole("button", { name: ANSWER }).click();
+    await expect(page.locator(".coach-story__ask").last()).toHaveCSS("background-color", TASK_PAST);
 
     // The coach replies, and the card stays answered: it must not reset.
     await expect(page.getByText("Thanks. That's Priya's story, chapter 0.")).toBeVisible();
@@ -206,7 +218,7 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
   });
 
   test("know your machine: step, number, permission, real check, map", async () => {
-    await page.getByRole("button", { name: "What can my computer do?" }).click();
+    await ask(page, "What can my computer do?"); // the starters are on the start screen only
 
     const claim = page.getByRole("button", { name: "I did it" });
     await expect(claim).toBeFocused();
@@ -218,10 +230,13 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     // The hint is a question-mark icon at the end of the step's text, inline with it.
     const hintIcon = firstTask.getByRole("button", { name: "Show a hint" });
     await expect(hintIcon).toHaveCount(1); // the first step has a hint
-    const text = (await firstTask.locator(".coach-step__text").boundingBox())!;
-    const icon = (await hintIcon.boundingBox())!;
-    expect(icon.y).toBeGreaterThanOrEqual(text.y);
-    expect(icon.y + icon.height).toBeLessThanOrEqual(text.y + text.height + 1);
+    // Both measured in one go: the card may still be scrolling into view.
+    const inside = await hintIcon.evaluate((icon) => {
+      const text = icon.closest(".coach-step__text")!.getBoundingClientRect();
+      const box = icon.getBoundingClientRect();
+      return box.top >= text.top && box.bottom <= text.bottom + 1;
+    });
+    expect(inside).toBe(true);
     await hintIcon.click();
     await expect(hintIcon).toHaveAttribute("aria-expanded", "true");
     await shot(page, "03b-step-hint");
@@ -420,13 +435,13 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
   });
 
   test("a card left waiting at reload does not come back dead", async () => {
-    await page.getByRole("button", { name: "What can my computer do?" }).click();
+    await ask(page, "What can my computer do?"); // the starters are on the start screen only
     await expect(page.getByRole("button", { name: "I did it" }).last()).toBeFocused();
     await page.waitForTimeout(500);
     await page.reload();
     await expect(page.getByText(`You said: ${MEMORY_GB} GB`)).toBeVisible();
     await expect(page.locator(".coach-card--active")).toHaveCount(0);
-    await page.getByRole("button", { name: "What can my computer do?" }).click();
+    await ask(page, "What can my computer do?"); // the starters are on the start screen only
     await expect(page.getByRole("button", { name: "I did it" }).last()).toBeFocused();
   });
 
@@ -483,8 +498,9 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await page.getByRole("button", { name: "Restart coach" }).click();
     const dialog = page.getByRole("dialog", { name: "Start the coach again?" });
     await expect(dialog).toBeVisible();
-    await expect(page.getByRole("button", { name: "Cancel" })).toBeFocused();
-    await dialog.getByRole("button", { name: "Restart" }).click();
+    // Enter restarts; Escape or Cancel keeps everything.
+    await expect(dialog.getByRole("button", { name: "Restart" })).toBeFocused();
+    await page.keyboard.press("Enter");
     await expect(dialog).toBeHidden();
     await expect(page.getByRole("button", { name: "Read Priya's story" })).toBeVisible();
     expect(progressRaw()).toBeNull();

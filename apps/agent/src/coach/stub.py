@@ -63,7 +63,7 @@ SHOW_MAP = "show_map"
 # panel/stylecheck.py --book, as the curriculum validator does for lessons.
 HELP = (
     "I'm the stub coach. I don't use a model, so I only know three things. "
-    "Press Read Priya's story, What can my computer do?, or Where am I on the map?"
+    "Type Read Priya's story, What can my computer do?, or Where am I on the map?"
 )
 STORY_QUESTION = "The day after, what did Priya check?"
 STORY_OPTIONS = (
@@ -73,7 +73,7 @@ STORY_OPTIONS = (
 )
 STORY_DONE = (
     "Thanks. That's Priya's story, chapter 0. "
-    "Next comes your own computer. Press What can my computer do? when you're ready."
+    "Next comes your own computer. Type What can my computer do? when you're ready."
 )
 CHECK_INTRO = "You typed {value} GB. Here's what the check found."
 MAP_TEXT = "That's where you are. Each station shows how far you've got."

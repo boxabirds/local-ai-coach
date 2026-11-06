@@ -195,7 +195,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   // it away read as the conversation being wiped (Julian, 2026-11-06).
   if (answered) {
     return (
-      <CoachCard label="Story" testId="coach-story" state="answered" variant="thread">
+      <CoachCard label="Story" quietLabel testId="coach-story" state="answered" variant="thread">
         {load.state === "ready" && <StoryBubbles units={beats} shown={beats.length} />}
         <div className="coach-story__ask">
           {question && <p className="coach-question">{question}</p>}
@@ -206,7 +206,7 @@ export function StoryCard({ storyId, question, options = [], status, respond, re
   }
 
   return (
-    <CoachCard label="Story" testId="coach-story" state={active ? "active" : "plain"} variant="thread" cardRef={cardRef}>
+    <CoachCard label="Story" quietLabel testId="coach-story" state={active ? "active" : "plain"} variant="thread" cardRef={cardRef}>
       {load.state === "loading" && <p className="coach-muted">Loading the story…</p>}
       {load.state === "failed" && (
         <p className="coach-error" role="alert">
