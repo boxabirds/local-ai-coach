@@ -128,6 +128,8 @@ def test_tc08_with_a_server_chosen_requests_go_there_with_the_key():
     assert model.model_name == MODEL
     assert str(model.openai_api_base).rstrip("/") == TOGETHER
     assert model.openai_api_key.get_secret_value() == KEY
+    # Streamed replies carry token usage only when asked for; without it the turn log has no counts.
+    assert model.stream_usage is True
 
 
 def test_tc09_without_a_choice_the_model_is_unchanged():

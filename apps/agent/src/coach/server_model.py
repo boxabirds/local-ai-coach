@@ -129,7 +129,8 @@ class ServerModel(AgentMiddleware):
             return request
         from langchain_openai import ChatOpenAI
 
-        return request.override(model=ChatOpenAI(model=setting["model"], base_url=setting["base_url"], api_key=credentials.openai))
+        # stream_usage: a streamed reply carries its token counts only when asked (turn log, story 21).
+        return request.override(model=ChatOpenAI(model=setting["model"], base_url=setting["base_url"], api_key=credentials.openai, stream_usage=True))
 
     def wrap_model_call(self, request, handler):
         return handler(self._model(request))
