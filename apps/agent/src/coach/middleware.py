@@ -20,7 +20,7 @@ from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
-from src.coach import curriculum, progress, thread
+from src.coach import whole_map, curriculum, progress, thread
 from src.coach import consent as consent_store
 from src.coach.tools import chapter_body
 
@@ -114,6 +114,11 @@ def coach_context(state: dict[str, Any]) -> str:
         "Map (the learner's status per station):",
         compressed_map(record),
     ]
+    # Story 29: the goal the learner chose on the whole map, and its route. What to do with it is
+    # the coach's call.
+    goal = whole_map.goal_line(record)
+    if goal:
+        parts.append(goal)
     return "\n\n".join(parts)
 
 

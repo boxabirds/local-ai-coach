@@ -909,3 +909,197 @@ dialog .coach-map-lightbox__title {
   font-weight: 600;
 }
 
+/* Story 29: the whole map, full screen. Covered stations and the route at full strength, the rest
+   at half; the route in the accent. Panning and zooming move the SVG's viewBox. */
+dialog.coach-whole-map {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--coach-paper);
+  color: var(--coach-ink);
+}
+
+dialog.coach-whole-map::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+
+.coach-whole-map__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.coach-whole-map__svg:active {
+  cursor: grabbing;
+}
+
+.coach-whole-map__tools {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.coach-whole-map__tools button,
+.coach-whole-map__panel button:not(.coach-link):not(.coach-button--primary) {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border, #d9d9e0);
+  border-radius: var(--radius-md);
+  background: var(--coach-paper);
+  color: var(--coach-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.coach-whole-map__note {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.coach-whole-map__link {
+  fill: none;
+  stroke: var(--coach-line);
+  stroke-width: 1;
+  opacity: 0.18;
+}
+
+/* The links into and out of the station the learner tapped. */
+.coach-whole-map__link--touched {
+  stroke: var(--coach-ink);
+  stroke-width: 1.5;
+  opacity: 0.8;
+}
+
+.coach-whole-map__link--route {
+  stroke: var(--coach-accent);
+  stroke-width: 3;
+  opacity: 1;
+}
+
+.coach-whole-map__station {
+  cursor: pointer;
+}
+
+.coach-whole-map__hit {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.coach-whole-map__station--faint {
+  opacity: 0.5;
+}
+
+.coach-whole-map__station:focus {
+  outline: none;
+}
+
+.coach-whole-map__station:focus-visible .coach-whole-map__name,
+.coach-whole-map__station--selected .coach-whole-map__name {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.coach-whole-map__dot {
+  fill: var(--coach-paper);
+  stroke-width: 2;
+}
+
+.coach-whole-map__dot.coach-crit--grey { stroke: var(--crit-grey); }
+.coach-whole-map__dot.coach-crit--amber { stroke: var(--crit-amber-edge); }
+.coach-whole-map__dot.coach-crit--red { stroke: var(--crit-red); }
+.coach-whole-map__dot.coach-crit--none { stroke: var(--coach-line); }
+.coach-whole-map__dot--covered.coach-crit--grey { fill: var(--crit-grey); }
+.coach-whole-map__dot--covered.coach-crit--amber { fill: var(--crit-amber); }
+.coach-whole-map__dot--covered.coach-crit--red { fill: var(--crit-red); }
+.coach-whole-map__dot--covered.coach-crit--none { fill: var(--coach-line); }
+
+.coach-whole-map__station--route .coach-whole-map__name {
+  fill: var(--coach-accent);
+  font-weight: 600;
+}
+
+.coach-whole-map__goal-ring {
+  fill: none;
+  stroke: var(--coach-accent);
+  stroke-width: 2.5;
+}
+
+.coach-whole-map__name {
+  font-size: 13px;
+  fill: currentColor;
+}
+
+.coach-whole-map__here {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--coach-accent);
+}
+
+.coach-whole-map__panel {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  width: min(340px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--color-border, #d9d9e0);
+  border-radius: var(--radius-lg);
+  background: var(--coach-paper);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.coach-whole-map__panel h2 {
+  margin: 0;
+  padding-right: 32px;
+  font-size: 1.05rem;
+}
+
+.coach-whole-map__panel p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.coach-whole-map__first {
+  color: var(--text-secondary, var(--coach-ink));
+  font-size: 0.875rem;
+}
+
+.coach-whole-map__needs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.coach-whole-map__route {
+  list-style: decimal;
+  margin: 0;
+  padding-left: 1.4em;
+  max-height: 40vh;
+  overflow-y: auto;
+  line-height: 1.7;
+}
+
+.coach-whole-map__panel-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+

@@ -1,4 +1,4 @@
-.PHONY: help install setup dev dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke rating-to-case ratings-export smoke release release-test clean
+.PHONY: help install setup dev dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -56,6 +56,9 @@ evals: ## Dispatch cases against the real model, 5 runs each (ONLY=D-11,D-13 for
 
 evals-smoke: ## D-01 to D-06 on the real curriculum (before a release)
 	cd apps/agent && COACH_EVALS=1 COACH_EVALS_SMOKE=1 COACH_EVALS_REAL_CURRICULUM=1 uv run pytest evals -q -s -p no:cacheprovider
+
+map-layout: ## Lay out the whole map again (curriculum/ and the tests' fixtures) after stations.json changes
+	node apps/app/scripts/layout-map.mjs curriculum fixtures/curriculum
 
 rating-to-case: ## Turn the newest rating (or RATING=<file>) into a draft eval case in apps/agent/evals/cases/drafts/
 	cd apps/agent && uv run python -m src.coach.rating_case $(if $(RATING),$(abspath $(RATING)))

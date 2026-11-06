@@ -550,6 +550,36 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(page.getByTestId("coach-palette")).toHaveCount(0);
   });
 
+  test("the whole map: every station, You are here, choose a goal and see its route (story 29, TC-23)", async () => {
+    const fixture = JSON.parse(readFileSync(join(__dirname, "../../../fixtures/curriculum/stations.json"), "utf8")) as { stations: { id: string; name: string; destination?: boolean }[] };
+    const destination = fixture.stations.find((s) => s.destination)!.id;
+    await page.getByRole("button", { name: "Map", exact: true }).click();
+    const map = page.getByTestId("coach-whole-map");
+    await expect(map).toBeVisible();
+    await expect(map.locator("[data-station]")).toHaveCount(fixture.stations.length);
+    await expect(map.getByTestId("coach-whole-map-here")).toHaveText("You are here");
+    await shot(page, "09-whole-map");
+    await map.locator(`[data-station="${destination}"]`).click();
+    await map.getByRole("button", { name: "Make this my goal" }).click();
+    await expect(map.getByRole("button", { name: "Clear my goal" })).toBeVisible();
+    await expect.poll(() => map.locator('[data-station][data-route="true"]').count()).toBeGreaterThan(0);
+    await expect(map.locator(`[data-station="${destination}"]`)).toHaveAttribute("data-route", "true");
+    // The way there, in order, readable at any zoom; it ends at the goal.
+    const steps = map.getByTestId("coach-whole-map-route").getByRole("button");
+    await expect(steps.last()).toHaveText(fixture.stations.find((s) => s.id === destination)!.name);
+    await shot(page, "09b-whole-map-goal");
+    expect(progress().goal.destination).toBe(destination);
+    // Escape closes the station, then the map; reopened, and after a reload, the goal is still there.
+    await page.keyboard.press("Escape");
+    await expect(map.getByTestId("coach-whole-map-panel")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(map).toHaveCount(0);
+    await page.reload();
+    await page.getByRole("button", { name: "Map", exact: true }).click();
+    await expect(page.getByTestId("coach-whole-map").getByTestId("coach-whole-map-goal")).toHaveCount(1);
+    await page.keyboard.press("Escape");
+  });
+
   test("Restart coach asks first, then puts progress and permission aside and starts again (story 23, TC-14)", async () => {
     const home = process.env.COACH_E2E_HOME!;
     const ratingsBefore = readdirSync(join(home, "ratings"));

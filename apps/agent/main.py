@@ -33,6 +33,7 @@ from src.coach.stored_keys import StoredKeys, router as keys_router
 from src.coach.turn_log import TurnLog
 from src.coach.restart import router as restart_router
 from src.coach.ratings import router as ratings_router
+from src.coach.whole_map import router as whole_map_router
 from src.coach.server_model import ServerModel, router as server_router
 
 load_dotenv()
@@ -68,6 +69,8 @@ app.include_router(server_router)
 app.include_router(restart_router)
 # Story 26: the author's ratings of the coach's turns, kept on this computer.
 app.include_router(ratings_router)
+# Story 29: the whole map, and the learner's goal.
+app.include_router(whole_map_router)
 
 
 @app.post("/credentials/validate")

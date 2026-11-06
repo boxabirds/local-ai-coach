@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProviderKeysDialog } from "@/components/chat/provider-keys-dialog";
 import { RestartDialog } from "@/components/chat/restart-dialog";
+import { WholeMap } from "@/components/coach/whole-map";
 import { useProviderKeys } from "@/components/chat/provider-keys";
 import { COACH_STUB, KeyGatedChatView, StubBadge } from "@/components/chat/key-gated-chat-view";
 import { ReaderScrollView } from "@/components/chat/reader-scroll-view";
@@ -45,6 +46,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [restartOpen, setRestartOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const retryingRef = useRef(false);
   const chatRoot = useRef<HTMLDivElement>(null);
   // Story 8: click a coach bubble, Ask about this, and its words wait in the message box.
@@ -123,6 +125,9 @@ export default function HomePage() {
           <StubBadge />
         </span>
         <nav aria-label="Main navigation">
+          <button type="button" onClick={() => setMapOpen(true)} aria-haspopup="dialog">
+            Map
+          </button>
           <button type="button" onClick={() => stopThen(newChat)} disabled={retrying}>
             New chat
           </button>
@@ -134,6 +139,7 @@ export default function HomePage() {
           </button>
         </nav>
       </header>
+      {mapOpen && <WholeMap onClose={() => setMapOpen(false)} />}
       {restartOpen && <RestartDialog onClose={() => setRestartOpen(false)} onRestarted={newChat} />}
       {keysOpen && <ProviderKeysDialog onClose={() => setKeysOpen(false)} disabled={retrying} />}
       <main id="main-content" className="chat-main">

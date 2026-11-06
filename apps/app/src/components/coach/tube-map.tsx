@@ -88,7 +88,7 @@ export function nameLines(name: string): string[] {
   return [name.slice(0, cut), name.slice(cut + 1)];
 }
 
-function shapePath(criticality: Criticality | undefined, x: number, y: number, r: number): string {
+export function shapePath(criticality: Criticality | undefined, x: number, y: number, r: number): string {
   if (criticality === "amber") return `M ${x} ${y - r} L ${x + r} ${y} L ${x} ${y + r} L ${x - r} ${y} Z`;
   if (criticality === "red") return `M ${x} ${y - r} L ${x + r * 1.1} ${y + r * TRIANGLE_BASE} L ${x - r * 1.1} ${y + r * TRIANGLE_BASE} Z`;
   // grey, or unrated: a circle
@@ -102,7 +102,7 @@ function shapeBounds(criticality: Criticality | undefined, y: number, r: number)
   return { top: y - r, bottom: y + r };
 }
 
-function critClass(criticality: Criticality | undefined): string {
+export function critClass(criticality: Criticality | undefined): string {
   return criticality ? `coach-crit coach-crit--${criticality}` : "coach-crit coach-crit--none";
 }
 

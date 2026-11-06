@@ -15,6 +15,7 @@ from __future__ import annotations
 import ast
 import importlib.util
 import json
+import math
 import re
 import subprocess
 import sys
@@ -957,6 +958,47 @@ def check_app_names(stations: dict[str, dict[str, Any]], tsx: Path, report: Repo
             report.error("APP_STATION_NAME", tsx.name, f"{sid!r} is shown as {name!r}; stations.json says {want!r}")
 
 
+MAP_LAYOUT_FILE = "map-layout.json"
+
+
+def _finite(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def check_map_layout(root: Path, stations: dict[str, dict[str, Any]], report: Report) -> None:
+    """Story 29: the whole map's generated layout places exactly the stations in stations.json and
+    draws exactly their needs links. Optional: a curriculum without one has no whole map."""
+    path = root / MAP_LAYOUT_FILE
+    if not path.is_file():
+        return
+    layout = _load_json(path, MAP_LAYOUT_FILE, report)
+    if not isinstance(layout, dict) or not isinstance(layout.get("stations"), dict) or not isinstance(layout.get("edges"), list):
+        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, "expected stations (an object) and edges (a list)")
+        return
+    placed = layout["stations"]
+    for sid in sorted(set(stations) - set(placed)):
+        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"station {sid!r} has no place; run make map-layout")
+    for sid in sorted(set(placed) - set(stations)):
+        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"{sid!r} is placed but is not in stations.json; run make map-layout")
+    for sid, box in placed.items():
+        if not isinstance(box, dict) or not all(_finite(box.get(k)) for k in ("x", "y", "w", "h")):
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"station {sid!r} needs finite x, y, w and h")
+    want = {(need, sid) for sid, st in stations.items() for need in st.get("needs") or []}
+    drawn: set[tuple[str, str]] = set()
+    for edge in layout["edges"]:
+        if not isinstance(edge, dict):
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, "every link must be an object")
+            continue
+        drawn.add((edge.get("from"), edge.get("to")))
+        points = edge.get("points")
+        if not isinstance(points, list) or not all(isinstance(p, list) and len(p) == 2 and all(_finite(v) for v in p) for p in points):
+            report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"link {edge.get('from')!r} to {edge.get('to')!r} needs finite points")
+    for need, sid in sorted(want - drawn):
+        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"the link from {need!r} to {sid!r} is not drawn; run make map-layout")
+    for need, sid in sorted(drawn - want):
+        report.error("MAP_LAYOUT", MAP_LAYOUT_FILE, f"a link from {need!r} to {sid!r} is drawn but {sid!r} doesn't need {need!r}")
+
+
 def validate(root: Path = DEFAULT_ROOT, probes_path: Path = DEFAULT_PROBES, stylecheck_path: Path = DEFAULT_STYLECHECK,
              app_stations: Path | None = None) -> list[Issue]:
     """app_stations: the app file whose default station names must match; checked for the real
@@ -972,6 +1014,10 @@ def validate(root: Path = DEFAULT_ROOT, probes_path: Path = DEFAULT_PROBES, styl
         stations = check_graph(stations_doc["stations"], report, "stations.json")
     elif stations_doc is not None:
         report.error("FILE_PARSE", "stations.json", "expected an object with a stations list")
+
+    # The layout is drawn from the graph: a broken graph is reported once, as itself.
+    if stations is not None and not any(i.code.startswith("GRAPH_") for i in report.issues):
+        check_map_layout(root, stations, report)
 
     probes = _load_probes(Path(probes_path), report)
     if app_stations is not None and stations is not None:
