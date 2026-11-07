@@ -53,5 +53,8 @@ are pinned with their SHA-256 in `scripts/build-release.sh` and kept in
 `~/.cache/local-ai-coach-release`. `make release-test` builds this machine's archive,
 installs it from scratch into a temporary home and runs the browser suite against the
 installed coach; with `COACH_RELEASE_ALL_PLATFORMS=1` it also builds all four and checks
-each one's Python is built for its own computer. Publish by attaching every
-`dist/local-ai-coach-*.tar.gz`, its `.sha256` and `install.sh` to a GitHub release.
+each one's Python is built for its own computer. Publish with
+`make publish VERSION=x.y.z TITLE="what changed" NOTES=notes.md`: it refuses unless the
+tree is committed, main is pushed and the tag is new, then runs `make release-test`,
+builds all four archives, and only then creates the GitHub release with every
+`dist/local-ai-coach-*.tar.gz`, its `.sha256` and `install.sh`.

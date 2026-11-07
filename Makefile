@@ -1,4 +1,4 @@
-.PHONY: help install setup dev serve dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test clean
+.PHONY: help install setup dev serve dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test publish clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -52,6 +52,15 @@ release: ## Build the tester release, one archive per platform: make release VER
 release-test: ## Build this machine's archive (its Python bundled), install it from scratch and run the browser suite against the install; then the smoke test if make dev is running
 	COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_release.py
 	@if curl -s -m 5 -o /dev/null "$(SMOKE_URL)/api/health"; then $(MAKE) smoke; else echo "SMOKE NOT RUN: nothing answers at $(SMOKE_URL). Start make dev and run make smoke."; fi
+
+publish: ## Test, build all four archives and publish a GitHub release: make publish VERSION=0.1.7 TITLE="what changed" NOTES=notes.md
+	@test -n "$(VERSION)" && test -n "$(TITLE)" && test -f "$(NOTES)" || (echo "Set VERSION, TITLE and NOTES (a file): make publish VERSION=0.1.7 TITLE='one download' NOTES=notes.md"; exit 1)
+	@test -z "$$(git status --porcelain)" || (echo "publish: commit first; a release is built from what is committed"; exit 1)
+	@git fetch -q origin && test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/main)" || (echo "publish: push main first; the release is tagged on what GitHub has"; exit 1)
+	@! git ls-remote --exit-code --tags origin "v$(VERSION)" >/dev/null || (echo "publish: v$(VERSION) already exists"; exit 1)
+	$(MAKE) release-test
+	$(MAKE) release VERSION=$(VERSION)
+	gh release create "v$(VERSION)" --target "$$(git rev-parse HEAD)" --title "v$(VERSION): $(TITLE)" --notes-file "$(NOTES)" dist/local-ai-coach-*.tar.gz dist/local-ai-coach-*.tar.gz.sha256 install.sh
 
 SMOKE_URL ?= http://127.0.0.1:3000
 smoke: ## Real-browser smoke test of the running coach (make dev): load, API keys, typing, reload. Never types a key
