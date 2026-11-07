@@ -1,6 +1,6 @@
 {
  "asOf": "2026-11-07",
- "note": "Draft placements and criticality ratings, not measured facts. Zones: 1 any recent laptop; 2 24-32 GB GPU or 32 GB+ unified memory; 3 128 GB unified memory or multi-GPU. Round 2 (31 Oct 2026) applied the completeness and integrity audit against OWASP LLM 2025 / Agentic 2026, NCSC, NIST AI 600-1, ICO guidance and tool docs. Round 3 (7 Nov 2026) added the topics from Julian's cross-check (docs/curriculum-cross-check.md) as 32 stations and 6 destinations; a station whose subject is knowledge rather than a skill is proved by a quiz score. No existing station gained a need. Round 3b (7 Nov 2026) wired the new stations into the destinations they belong to; Private legal drafting's route is unchanged.",
+ "note": "Draft placements and criticality ratings, not measured facts. Zones: 1 any recent laptop; 2 24-32 GB GPU or 32 GB+ unified memory; 3 128 GB unified memory or multi-GPU. Round 2 (31 Oct 2026) applied the completeness and integrity audit against OWASP LLM 2025 / Agentic 2026, NCSC, NIST AI 600-1, ICO guidance and tool docs. Round 3 (7 Nov 2026) added the topics from Julian's cross-check (docs/curriculum-cross-check.md) as 32 stations and 6 destinations; a station whose subject is knowledge rather than a skill is proved by a quiz score. No existing station gained a need. Round 3b (7 Nov 2026) wired the new stations into the destinations they belong to; Private legal drafting's route is unchanged. Round 3c (7 Nov 2026): Compare and choose is benchmarking in plain English, a core loop: every destination that uses a model needs it (Benchmarks that matter folded into it), and Backtest against what you do now added for destinations that replace a workflow.",
  "areas": [
   {
    "id": "trunk",
@@ -488,7 +488,27 @@
    "unlocks": "Switching when a new model lands.",
    "proof": "Two candidates on the same set, results written down.",
    "ifSkipped": "Churn with every release, no basis to decide.",
-   "headNote": "Same set, same scoring, write it down.",
+   "headNote": "Benchmarking, in plain English. You never just pick a model: you pick one and evaluate it, and again when a new one lands. Public benchmarks give you a shortlist; your own set decides. Same set, same scoring, write it down.",
+   "destination": false
+  },
+  {
+   "id": "backtest",
+   "name": "Backtest against what you do now",
+   "area": "models",
+   "needs": [
+    "compare",
+    "evalharness"
+   ],
+   "betterWith": [
+    "classify",
+    "review"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Replacing a workflow you already run, knowing what the model will get wrong before it does.",
+   "proof": "Run the candidate over 100 past cases your current workflow already handled, show the confusion matrix, and say which mistake costs most and how you'll catch it.",
+   "ifSkipped": "A model that matches the old workflow's score and makes different, worse mistakes.",
+   "headNote": "To backtest is to run a model over past cases where you already know the right answer. A confusion matrix is the table of what it said against what was right: it shows which mistakes it makes, not just how many.",
    "destination": false
   },
   {
@@ -649,7 +669,8 @@
     "evalharness"
    ],
    "betterWith": [
-    "classify"
+    "classify",
+    "backtest"
    ],
    "inYourHead": "know what it does",
    "zone": 1,
@@ -2209,24 +2230,6 @@
    "destination": false
   },
   {
-   "id": "benchmarks",
-   "name": "Benchmarks that matter",
-   "area": "models",
-   "needs": [
-    "test"
-   ],
-   "betterWith": [
-    "compare"
-   ],
-   "inYourHead": "know what it does",
-   "zone": 1,
-   "unlocks": "Reading a leaderboard without being fooled by it.",
-   "proof": "For five benchmarks, say what each measures and one way its score could mislead you, then name the one closest to your job.",
-   "ifSkipped": "Picking the leaderboard winner and finding it worse at your job.",
-   "headNote": "A benchmark score says how a model did on someone else's test. Yours is the one that counts.",
-   "destination": false
-  },
-  {
    "id": "abliteration",
    "name": "Censorship and abliteration",
    "area": "models",
@@ -2680,7 +2683,9 @@
     "extract",
     "encrypt",
     "backups",
-    "prove"
+    "prove",
+    "compare",
+    "backtest"
    ],
    "betterWith": [
     "review"
@@ -2704,7 +2709,8 @@
     "grounding",
     "static",
     "pin",
-    "licence"
+    "licence",
+    "compare"
    ],
    "betterWith": [
     "image",
@@ -2734,7 +2740,9 @@
     "backups",
     "grounding",
     "retention",
-    "gpu"
+    "gpu",
+    "compare",
+    "backtest"
    ],
    "betterWith": [
     "dpia"
@@ -2760,7 +2768,8 @@
     "egress",
     "outputs",
     "ruleoftwo",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [
     "longdoc",
@@ -2786,7 +2795,8 @@
     "tables",
     "tts",
     "summarise",
-    "vision"
+    "vision",
+    "compare"
    ],
    "betterWith": [
     "streaming"
@@ -2817,7 +2827,9 @@
     "dpia",
     "licence",
     "apptests",
-    "gpu"
+    "gpu",
+    "compare",
+    "backtest"
    ],
    "betterWith": [
     "tunnelpublic",
@@ -2847,7 +2859,9 @@
     "encrypt",
     "backups",
     "retention",
-    "scripts"
+    "scripts",
+    "compare",
+    "backtest"
    ],
    "betterWith": [
     "classify",
@@ -2876,7 +2890,8 @@
     "retention",
     "dpia",
     "logs",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [
     "trace"
@@ -2900,7 +2915,8 @@
     "encrypt",
     "backups",
     "prove",
-    "retention"
+    "retention",
+    "compare"
    ],
    "betterWith": [],
    "inYourHead": "know what it does",
@@ -2924,7 +2940,8 @@
     "retention",
     "scripts",
     "gpu",
-    "disk"
+    "disk",
+    "compare"
    ],
    "betterWith": [],
    "inYourHead": "know what it does",
@@ -2946,7 +2963,8 @@
     "agentloop",
     "budgets",
     "prove",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [
     "small",
@@ -2976,7 +2994,8 @@
     "prove",
     "scripts",
     "gpu",
-    "disk"
+    "disk",
+    "compare"
    ],
    "betterWith": [
     "restore",
@@ -3002,7 +3021,8 @@
     "write",
     "memory",
     "memhygiene",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [
     "voiceclone"
@@ -3029,7 +3049,8 @@
     "dpia",
     "sensors",
     "gpu",
-    "disk"
+    "disk",
+    "compare"
    ],
    "betterWith": [
     "vision",
@@ -3054,7 +3075,8 @@
     "extract",
     "longdoc",
     "backups",
-    "scripts"
+    "scripts",
+    "compare"
    ],
    "betterWith": [
     "stems"
@@ -3078,7 +3100,8 @@
     "tts",
     "stitch",
     "backups",
-    "licence"
+    "licence",
+    "compare"
    ],
    "betterWith": [
     "consent"
@@ -3099,7 +3122,8 @@
     "write",
     "consistency",
     "backups",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [],
    "inYourHead": "know what it does",
@@ -3121,7 +3145,8 @@
     "lipsync",
     "backups",
     "consent",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [],
    "inYourHead": "know what it does",
@@ -3145,7 +3170,8 @@
     "stitch",
     "backups",
     "licence",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [
     "comfy",
@@ -3172,7 +3198,9 @@
     "outputs",
     "secrets",
     "ruleoftwo",
-    "gpu"
+    "gpu",
+    "compare",
+    "backtest"
    ],
    "betterWith": [
     "evalharness",
@@ -3213,7 +3241,8 @@
     "redteam",
     "ruleoftwo",
     "skills",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [
     "trace",
@@ -3250,7 +3279,8 @@
     "killswitch",
     "ruleoftwo",
     "sensors",
-    "gpu"
+    "gpu",
+    "compare"
    ],
    "betterWith": [
     "mcp",
@@ -3280,7 +3310,9 @@
     "encrypt",
     "retention",
     "audit",
-    "ruleoftwo"
+    "ruleoftwo",
+    "compare",
+    "backtest"
    ],
    "betterWith": [
     "route",
@@ -3307,7 +3339,8 @@
     "backups",
     "guided",
     "scopes",
-    "approvals"
+    "approvals",
+    "compare"
    ],
    "betterWith": [
     "review"
@@ -3351,7 +3384,8 @@
     "sql",
     "prove",
     "ux",
-    "reuse"
+    "reuse",
+    "compare"
    ],
    "betterWith": [
     "stt",
@@ -3375,7 +3409,8 @@
     "segment",
     "wifi",
     "summarise",
-    "reuse"
+    "reuse",
+    "compare"
    ],
    "betterWith": [
     "scheduled",
@@ -3457,8 +3492,8 @@
     "retention",
     "prove",
     "gpu",
-    "benchmarks",
-    "cloud"
+    "cloud",
+    "compare"
    ],
    "betterWith": [
     "route",
@@ -3487,7 +3522,8 @@
     "rag",
     "oldhw",
     "gpu",
-    "repair"
+    "repair",
+    "compare"
    ],
    "betterWith": [
     "power",

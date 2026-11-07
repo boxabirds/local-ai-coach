@@ -5,7 +5,7 @@ Julian's instruction: "integrate the material I identified that was missing into
 
 ## Decision taken
 
-- Every topic in the cross-check that no station covered is now a station or a destination: 32 stations, 6 destinations. `stations.json` goes from 141 to 179.
+- Every topic in the cross-check that no station covered is now a station or a destination: 32 stations, 6 destinations. `stations.json` goes from 141 to 179. (Round 3c swaps one station for another; the count stays 179.)
 - A topic that is knowledge, not a skill, is proved by a quiz score ("Quiz: 8 of 10 or better on ..."). That fits the book's colour test in chapter 0: amber is "you can say in a sentence what it did", and every quiz station is amber. Five stations are proved by a quiz: `cloud`, `transformers`, `hats`, `apt` and `standards`. The proof field stays free text, so the schema and the validator are unchanged.
 - In the first pass no existing station gained a need. That left 18 new stations off every route, so Julian approved wiring them in (round 3b, below). Priya's route to Private legal drafting is unchanged; the script that applied the wiring checks it. Existing stations only gained better-with links to new ones: `localchat` to `prompting`, `run` to `gpu` and `harness`, `codingagent` to `specs` and `apptests`, `static` to `fullstack`, `power` to `ups`.
 - No new area: each station sits on an existing line, so the map's line colours are unchanged.
@@ -21,7 +21,8 @@ Julian's instruction: "integrate the material I identified that was missing into
 | `cloud` | Cloud or local | trunk | machine, web | know what it does | 1 | quiz |
 | `prompting` | Prompt engineering | trunk | localchat | know what it does | 1 | task |
 | `transformers` | Why transformers changed everything | models | lmbasics | know what it does | 1 | quiz |
-| `benchmarks` | Benchmarks that matter | models | test | know what it does | 1 | task |
+| ~~`benchmarks`~~ | Benchmarks that matter: folded into `compare` in round 3c | | | | | |
+| `backtest` | Backtest against what you do now (round 3c) | models | compare, evalharness | must understand | 1 | task |
 | `abliteration` | Censorship and abliteration | models | download, test | must understand | 1 | task |
 | `harness` | Inference servers and harnesses | models | run | know what it does | 1 | task |
 | `monitor` | Monitoring and capacity | ops | logs, processes | know what it does | 1 | task |
@@ -121,7 +122,7 @@ The first pass left 18 new stations that no destination needed, so no route went
 | `scripts` | needed by | `d_invoices`, `d_photos`, `d_family`, `d_shownotes` |
 | `gpu` | needed by | `d_bundle`, `d_research`, `d_support`, `d_teamkb`, `d_photos`, `d_voice`, `d_family`, `d_tutor`, `d_cctv`, `d_storybook`, `d_dubbing`, `d_musicvideo`, `d_codereview`, `d_agent`, `d_home`, `d_homechat`, `d_prepping` |
 | `disk` | needed by | `d_photos`, `d_family`, `d_cctv`, `d_familycloud`, `d_repurpose` |
-| `benchmarks` | needed by | `d_homechat` |
+| ~~`benchmarks`~~ | folded into `compare` | (round 3c) |
 | `repair` | needed by | `d_familycloud`, `d_repurpose`, `d_prepping` |
 | `reuse` | needed by | `d_familycloud`, `d_netmon`, `d_shopping` |
 | `cloud` | needed by | `d_familycloud`, `d_homechat` |
@@ -163,3 +164,44 @@ How much longer each changed route is (stations on the route, before and after):
 | `d_tutor` | Language tutor | 17 | 19 | +2 |
 | `d_voice` | Voice assistant | 15 | 17 | +2 |
 | `d_website` | Website live | 12 | 16 | +4 |
+
+## Round 3c: Compare and choose is the core loop (Julian, 2026-11-07)
+
+Julian: "compare and choose is plain English for benchmarking ... a core loop when working with AI. You don't just pick a model, you pick a model and you evaluate. If there's an existing workflow, then you also have to do backtesting and confusion matrix assessments."
+
+- **`compare` was a dead end before today**: no destination needed it. Now every destination that uses a model needs it: 28 of 32. Not Website live, Old hardware and Local cloud, which run no model, and not Private legal drafting, whose route is chapter 0's and is held fixed.
+- **`benchmarks` is gone.** I added it this morning and it duplicated `compare`. Its idea, public benchmarks give you a shortlist and your own set decides, is now in `compare`'s headNote. Its one link (needed by ChatGPT for home) now points to `compare`.
+- **New: `backtest`, Backtest against what you do now.** It needs `compare` and `evalharness`, and its headNote defines backtesting and the confusion matrix. Destinations that replace a workflow someone already runs need it: Email triage, Invoice and receipt processing, Customer support bot, Code review bot, Legal bundle review, Personal finance.
+- **Open for Julian:** should Priya's route include `compare`? In chapter 0 she uses one model and never compares. Adding it changes the story's route and the book's chapter 0 claims, so I left it.
+
+Route lengths, before and after round 3c:
+
+| destination | name | before | after | change |
+|---|---|---|---|---|
+| `d_agent` | Personal agent | 44 | 45 | +1 |
+| `d_bundle` | Legal bundle review | 25 | 27 | +2 |
+| `d_cctv` | CCTV event detection | 21 | 24 | +3 |
+| `d_codereview` | Code review bot | 19 | 24 | +5 |
+| `d_dubbing` | Video dubbing | 15 | 17 | +2 |
+| `d_family` | Family photo and video organiser | 18 | 20 | +2 |
+| `d_finance` | Personal finance over bank exports | 14 | 18 | +4 |
+| `d_home` | Home automation agent | 34 | 36 | +2 |
+| `d_invoices` | Invoice and receipt processing | 18 | 21 | +3 |
+| `d_minutes` | Meeting minutes | 15 | 17 | +2 |
+| `d_musicvideo` | Prompt to music video | 20 | 22 | +2 |
+| `d_netmon` | Network monitoring and diagnosis | 16 | 18 | +2 |
+| `d_newsletter` | Newsletter and blog pipeline | 19 | 20 | +1 |
+| `d_photos` | Searchable photo archive | 16 | 18 | +2 |
+| `d_podcast` | Document to podcast | 13 | 15 | +2 |
+| `d_prepping` | Digital prepping | 22 | 25 | +3 |
+| `d_reader` | Accessibility reader | 12 | 14 | +2 |
+| `d_research` | Research assistant with citations | 24 | 25 | +1 |
+| `d_shopping` | Shared shopping list | 23 | 25 | +2 |
+| `d_shownotes` | Podcast transcription and show notes | 16 | 18 | +2 |
+| `d_storybook` | Illustrated story book | 13 | 15 | +2 |
+| `d_support` | Customer support bot over company docs | 37 | 39 | +2 |
+| `d_tasks` | Meeting to tasks | 23 | 25 | +2 |
+| `d_teamkb` | Knowledge base for a small team | 27 | 28 | +1 |
+| `d_triage` | Email triage | 24 | 27 | +3 |
+| `d_tutor` | Language tutor | 19 | 21 | +2 |
+| `d_voice` | Voice assistant | 17 | 19 | +2 |
