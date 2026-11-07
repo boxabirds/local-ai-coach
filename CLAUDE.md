@@ -68,7 +68,7 @@ Code tests never assert curriculum content (wording, counts, labels): they use m
 ## Where things are
 
 - `docs/design.md`: the design, section by section (stack as it is, architecture, repo plan, agent, frontend, on-disk contracts, probes, session flow, running, testing, risks).
-- `curriculum/stations.json`: the 139-station graph, source of truth for the map.
+- `curriculum/stations.json`: the 179-station graph, source of truth for the map.
 - `curriculum/stories/legal-letter.md`: chapter 0, read by the `story` card.
 - `curriculum/chapters/know-your-machine.md`: chapter 1 with YAML front-matter (the front-matter is never shown to the learner).
 - `panel/`: authoring policy, style guide, the panel brief, the final chapter text, `stylecheck.py`.

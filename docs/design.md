@@ -149,7 +149,7 @@ Starter suggestions become: "Read Priya's story", "Find my number", "Where am I 
 
 ```
 curriculum/
-  stations.json        the existing file, 139 stations
+  stations.json        the existing file, 179 stations
   scope.json           V1 reading order (story, then the three lessons) and assumed stations
   map.json             term register for the four V1 stations only
   lessons/

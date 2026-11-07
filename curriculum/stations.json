@@ -1,6 +1,6 @@
 {
- "asOf": "2026-10-31",
- "note": "Draft placements and criticality ratings, not measured facts. Zones: 1 any recent laptop; 2 24-32 GB GPU or 32 GB+ unified memory; 3 128 GB unified memory or multi-GPU. Round 2 (31 Oct 2026) applied the completeness and integrity audit against OWASP LLM 2025 / Agentic 2026, NCSC, NIST AI 600-1, ICO guidance and tool docs.",
+ "asOf": "2026-11-07",
+ "note": "Draft placements and criticality ratings, not measured facts. Zones: 1 any recent laptop; 2 24-32 GB GPU or 32 GB+ unified memory; 3 128 GB unified memory or multi-GPU. Round 2 (31 Oct 2026) applied the completeness and integrity audit against OWASP LLM 2025 / Agentic 2026, NCSC, NIST AI 600-1, ICO guidance and tool docs. Round 3 (7 Nov 2026) added the topics from Julian's cross-check (docs/curriculum-cross-check.md) as 32 stations and 6 destinations; a station whose subject is knowledge rather than a skill is proved by a quiz score. No existing station gained a need.",
  "areas": [
   {
    "id": "trunk",
@@ -105,7 +105,8 @@
    ],
    "betterWith": [
     "download",
-    "quant"
+    "quant",
+    "prompting"
    ],
    "inYourHead": "press go",
    "zone": 1,
@@ -428,7 +429,9 @@
    ],
    "betterWith": [
     "quant",
-    "bind"
+    "bind",
+    "gpu",
+    "harness"
    ],
    "inYourHead": "press go",
    "zone": 1,
@@ -1459,7 +1462,10 @@
     "git",
     "toolcall"
    ],
-   "betterWith": [],
+   "betterWith": [
+    "specs",
+    "apptests"
+   ],
    "inYourHead": "know what it does",
    "zone": 2,
    "unlocks": "Repo-level multi-file edits with test loops.",
@@ -1976,7 +1982,9 @@
    "needs": [
     "machine"
    ],
-   "betterWith": [],
+   "betterWith": [
+    "ups"
+   ],
    "inYourHead": "know what it does",
    "zone": 1,
    "unlocks": "Knowing what the box costs to run and when it throttles.",
@@ -2014,7 +2022,8 @@
    ],
    "betterWith": [
     "codingagent",
-    "codechat"
+    "codechat",
+    "fullstack"
    ],
    "inYourHead": "know what it does",
    "zone": 1,
@@ -2076,6 +2085,570 @@
    "proof": "Access log shows hits; you know which are bots.",
    "ifSkipped": "Hackers knocking with no record.",
    "headNote": "Public means bots within minutes; read the log.",
+   "destination": false
+  },
+  {
+   "id": "processes",
+   "name": "What's running",
+   "area": "trunk",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Finding what is using the memory or the processor, and stopping it.",
+   "proof": "Name the process using the most memory right now, find your model server in the list, stop it and start it again.",
+   "ifSkipped": "A model that won't load because something else already holds the memory.",
+   "headNote": "Every program is a process, and a process holds its memory until it stops.",
+   "destination": false
+  },
+  {
+   "id": "disk",
+   "name": "Disks and space",
+   "area": "trunk",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Knowing where your models live and when the disk will fill.",
+   "proof": "Say how much free space you have, which folder holds your models and how big it is, and remove one model you no longer use.",
+   "ifSkipped": "Downloads that fail half way, and a computer that crawls when the disk fills.",
+   "headNote": "Models are the biggest files most people ever keep.",
+   "destination": false
+  },
+  {
+   "id": "gpu",
+   "name": "Graphics cards and drivers",
+   "area": "trunk",
+   "needs": [
+    "machine"
+   ],
+   "betterWith": [
+    "processes"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Knowing which inference servers will use your graphics card, and which will quietly fall back to the processor.",
+   "proof": "Name your graphics card's maker and its driver version, then show your model server using the card and not the processor.",
+   "ifSkipped": "A model running ten times slower than it should, on the processor, with nothing to say so.",
+   "headNote": "The card decides the software: Nvidia cards use CUDA, AMD cards use ROCm or Vulkan, Apple uses Metal.",
+   "destination": false
+  },
+  {
+   "id": "windows",
+   "name": "Windows: PowerShell and WSL2",
+   "area": "trunk",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [
+    "gpu"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Following Linux and Mac instructions on a Windows computer.",
+   "proof": "Run the same command in PowerShell and in WSL2, say which one your model server runs in, and show it can see the graphics card.",
+   "ifSkipped": "Instructions that never work, and a graphics card the model never uses.",
+   "headNote": "On Windows, most local AI tools run best inside WSL2: a Linux that Windows runs for you.",
+   "destination": false
+  },
+  {
+   "id": "cloud",
+   "name": "Cloud or local",
+   "area": "trunk",
+   "needs": [
+    "machine",
+    "web"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Deciding, job by job, what is worth running at home.",
+   "proof": "Quiz: 8 of 10 or better on which of ten jobs belong in the cloud and which at home, each with its reason.",
+   "ifSkipped": "Everything goes to the cloud by default, or a costly box sits idle at home.",
+   "headNote": "The cloud is someone else's computer: you rent it by the hour, and its owner can see what you send.",
+   "destination": false
+  },
+  {
+   "id": "prompting",
+   "name": "Prompt engineering",
+   "area": "trunk",
+   "needs": [
+    "localchat"
+   ],
+   "betterWith": [
+    "test"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Getting a usable answer the first time, from a small model as well as a big one.",
+   "proof": "Rewrite a prompt that gets a poor answer until it gets a good one on 4 of 5 of your own examples, and say which change made the difference.",
+   "ifSkipped": "Blaming the model for answers the prompt asked for.",
+   "headNote": "A prompt is all the model knows about your job. Say the task, who it's for, the format, and give one example.",
+   "destination": false
+  },
+  {
+   "id": "transformers",
+   "name": "Why transformers changed everything",
+   "area": "models",
+   "needs": [
+    "lmbasics"
+   ],
+   "betterWith": [
+    "context"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Understanding why models need so much memory, and why a longer context costs more.",
+   "proof": "Quiz: 8 of 10 or better on attention, tokens, and why a longer context needs more memory.",
+   "ifSkipped": "Every limit a model has feels arbitrary.",
+   "headNote": "One idea, attention, lets a model weigh every word against every other at once. It made today's models possible.",
+   "destination": false
+  },
+  {
+   "id": "benchmarks",
+   "name": "Benchmarks that matter",
+   "area": "models",
+   "needs": [
+    "test"
+   ],
+   "betterWith": [
+    "compare"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Reading a leaderboard without being fooled by it.",
+   "proof": "For five benchmarks, say what each measures and one way its score could mislead you, then name the one closest to your job.",
+   "ifSkipped": "Picking the leaderboard winner and finding it worse at your job.",
+   "headNote": "A benchmark score says how a model did on someone else's test. Yours is the one that counts.",
+   "destination": false
+  },
+  {
+   "id": "abliteration",
+   "name": "Censorship and abliteration",
+   "area": "models",
+   "needs": [
+    "download",
+    "test"
+   ],
+   "betterWith": [
+    "licence"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Knowing why a model refuses, and what changes with a version that doesn't.",
+   "proof": "Ask a model and its abliterated version the same five questions, and say what changed and one risk you took on.",
+   "ifSkipped": "A model that won't do legitimate work, or one that will do anything, and no idea why.",
+   "headNote": "Models refuse what their makers trained them to refuse. Abliteration removes the refusals, and some of the judgement with them.",
+   "destination": false
+  },
+  {
+   "id": "harness",
+   "name": "Inference servers and harnesses",
+   "area": "models",
+   "needs": [
+    "run"
+   ],
+   "betterWith": [
+    "parallel"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Swapping the server or the app you work in without starting again.",
+   "proof": "Name your server and your harness, then point the same harness at a second server and get an answer.",
+   "ifSkipped": "Locked to one app, and stuck when nobody maintains it any more.",
+   "headNote": "The server runs the model; the harness is the app you work in. Choose each for the job, separately.",
+   "destination": false
+  },
+  {
+   "id": "monitor",
+   "name": "Monitoring and capacity",
+   "area": "ops",
+   "needs": [
+    "logs",
+    "processes"
+   ],
+   "betterWith": [
+    "power",
+    "disk"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Seeing that the box is filling up before anyone complains.",
+   "proof": "A daily record of memory, disk and graphics card use, and one alert that has gone off for real.",
+   "ifSkipped": "The box fills up or slows down, and the first sign is an annoyed user.",
+   "headNote": "Know what normal looks like, so you notice when it changes.",
+   "destination": false
+  },
+  {
+   "id": "ups",
+   "name": "UPS and surge protection",
+   "area": "ops",
+   "needs": [
+    "power"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Riding out a power cut and shutting down cleanly.",
+   "proof": "Pull the plug at the wall: the box stays up on its UPS, then shuts itself down cleanly before the battery runs out.",
+   "ifSkipped": "A damaged disk after the first storm.",
+   "headNote": "A power cut in the middle of a write can damage a disk; a surge can kill the box. A UPS is a battery between the wall and the box.",
+   "destination": false
+  },
+  {
+   "id": "repair",
+   "name": "Wear, tear and repair",
+   "area": "ops",
+   "needs": [
+    "power",
+    "backups"
+   ],
+   "betterWith": [
+    "monitor"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Spotting a failing part before it fails.",
+   "proof": "Read your disk's health report, clean the fans, and say which part you'd replace first and how.",
+   "ifSkipped": "A dead box with no warning.",
+   "headNote": "Fans clog, disks wear out, batteries swell. Kittens are not only for Christmas.",
+   "destination": false
+  },
+  {
+   "id": "oldhw",
+   "name": "Give an old computer a job",
+   "area": "ops",
+   "needs": [
+    "machine",
+    "shell"
+   ],
+   "betterWith": [
+    "disk"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Turning a computer from the drawer into part of your setup.",
+   "proof": "Say what an old computer can and can't do from its memory and processor, install a server on it, and use it from another machine.",
+   "ifSkipped": "Useful hardware left in a drawer, and new hardware bought for a small job.",
+   "headNote": "An old laptop can still run a small model, share files or hold backups.",
+   "destination": false
+  },
+  {
+   "id": "ssh",
+   "name": "SSH",
+   "area": "net",
+   "needs": [
+    "shell",
+    "web"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Running and fixing the model box from your laptop.",
+   "proof": "Log in to a second machine with a key, then turn password logins off and show a password login is refused.",
+   "ifSkipped": "Walking to the box for every change, or a password login anyone can guess at.",
+   "headNote": "SSH lets you work on another machine as if you were sitting at it. Use keys, not passwords.",
+   "destination": false
+  },
+  {
+   "id": "wifi",
+   "name": "Wifi, mesh and throughput",
+   "area": "net",
+   "needs": [
+    "web"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Knowing whether a model box needs a cable.",
+   "proof": "Measure throughput between two machines over wifi and over a cable, and say how long a 5 GB model takes to copy on each.",
+   "ifSkipped": "A fast model behind a slow link, and the model gets the blame.",
+   "headNote": "Throughput is how much data a link moves each second. Your network is as fast as its slowest link, and that is usually the wifi.",
+   "destination": false
+  },
+  {
+   "id": "hats",
+   "name": "Black, grey and white hats",
+   "area": "govern",
+   "needs": [
+    "web"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Reading security news and knowing who is doing what to whom.",
+   "proof": "Quiz: 8 of 10 or better sorting ten real cases by hat, each with its reason.",
+   "ifSkipped": "Security advice sounds like either panic or fiction.",
+   "headNote": "Hackers are sorted by permission, not skill: the same tools, used with or without consent.",
+   "destination": false
+  },
+  {
+   "id": "apt",
+   "name": "Cyberpolitics and advanced persistent threats",
+   "area": "govern",
+   "needs": [
+    "hats"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Judging how much protection your situation really needs.",
+   "proof": "Quiz: 8 of 10 or better on who runs advanced persistent threats, what they want, and which of your suppliers they could come through.",
+   "ifSkipped": "Guarding against the wrong attacker, or ignoring the real one.",
+   "headNote": "An advanced persistent threat is an attacker, often a state, with patience and a budget. You are rarely the target; your suppliers might be.",
+   "destination": false
+  },
+  {
+   "id": "ruleoftwo",
+   "name": "The rule of two",
+   "area": "agents",
+   "needs": [
+    "injection"
+   ],
+   "betterWith": [
+    "sandbox"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Spotting a dangerous agent design before it's built.",
+   "proof": "For five agent designs, say which of the three each has, and what to remove or gate so it has at most two.",
+   "ifSkipped": "An agent that reads a stranger's email, sees your files and can send mail.",
+   "headNote": "An agent may have at most two of: input from strangers, your private data, and the power to act or send. All three needs a person to approve each action.",
+   "destination": false
+  },
+  {
+   "id": "skills",
+   "name": "Agent skills",
+   "area": "agents",
+   "needs": [
+    "toolcall"
+   ],
+   "betterWith": [
+    "mcp"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Teaching an agent a job once and reusing it.",
+   "proof": "Write a skill, show the agent loading it only when the job calls for it, and read what it ran.",
+   "ifSkipped": "The same long instructions pasted into every chat.",
+   "headNote": "A skill is a folder of instructions and scripts that an agent loads when the job needs it.",
+   "destination": false
+  },
+  {
+   "id": "standards",
+   "name": "Agent standards",
+   "area": "agents",
+   "needs": [
+    "mcp"
+   ],
+   "betterWith": [
+    "skills"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Choosing tools that work together.",
+   "proof": "Quiz: 8 of 10 or better matching agent standards (MCP, A2A, AG-UI, skills and others) to the connection each one covers.",
+   "ifSkipped": "Tools that can't talk to each other, chosen by logo.",
+   "headNote": "Each standard is an agreement about one connection: agent to tool, agent to agent, or agent to screen.",
+   "destination": false
+  },
+  {
+   "id": "scripts",
+   "name": "Scripts that call a model",
+   "area": "code",
+   "needs": [
+    "shell",
+    "run"
+   ],
+   "betterWith": [
+    "json"
+   ],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Batch jobs: every file in a folder, every night.",
+   "proof": "A script sends every file in a folder to your local model and saves each answer next to its file.",
+   "ifSkipped": "Copying and pasting into a chat window, one file at a time.",
+   "headNote": "A short script turns one chat into a job that runs over a thousand files.",
+   "destination": false
+  },
+  {
+   "id": "forge",
+   "name": "GitHub and GitLab",
+   "area": "build",
+   "needs": [
+    "git"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Reading an open project's issues and releases, and keeping your own work off a single disk.",
+   "proof": "Push a repository to a forge, open an issue on it, and find the latest release of a tool you use.",
+   "ifSkipped": "Work that lives on one laptop, and tools installed from the wrong place.",
+   "headNote": "A forge is a website that keeps repositories. Most of the open tools you'll use live on one.",
+   "destination": false
+  },
+  {
+   "id": "reuse",
+   "name": "Shoulders of giants",
+   "area": "build",
+   "needs": [
+    "forge",
+    "licence"
+   ],
+   "betterWith": [
+    "vet"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Starting from a working project instead of a blank page.",
+   "proof": "For one thing you want to build, find three existing projects and judge each on its licence, its last release and its open issues.",
+   "ifSkipped": "Months spent rebuilding what was free, or building on a dead project.",
+   "headNote": "Most of what you want to build already exists. Finding it, and judging it, is the skill.",
+   "destination": false
+  },
+  {
+   "id": "sql",
+   "name": "SQL databases: SQLite and Postgres",
+   "area": "build",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [
+    "json"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Keeping what your apps and agents produce, and finding it again.",
+   "proof": "Make a SQLite database, load 100 records into it, and answer three questions about them with SQL.",
+   "ifSkipped": "Everything in spreadsheets and loose files that nobody can search.",
+   "headNote": "A database keeps records you can ask questions of. SQLite is one file; Postgres is a server.",
+   "destination": false
+  },
+  {
+   "id": "docstore",
+   "name": "Document databases (NoSQL)",
+   "area": "build",
+   "needs": [
+    "json"
+   ],
+   "betterWith": [
+    "sql"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Storing model output whose shape keeps changing.",
+   "proof": "Store 50 extracted JSON records, find every one that matches a field, and say one thing SQL would have made easier.",
+   "ifSkipped": "The wrong kind of database, and a long fight with it.",
+   "headNote": "A document database stores whole JSON records with no fixed shape. Easy to start, hard to keep tidy.",
+   "destination": false
+  },
+  {
+   "id": "fullstack",
+   "name": "How an app fits together",
+   "area": "build",
+   "needs": [
+    "web"
+   ],
+   "betterWith": [
+    "static"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Knowing where a bug lives.",
+   "proof": "Draw your app's parts and the connections between them, then break each in turn and say what the person using it sees.",
+   "ifSkipped": "Every bug is a guess.",
+   "headNote": "Page, server, database, model: four parts, and you should be able to say which one failed.",
+   "destination": false
+  },
+  {
+   "id": "specs",
+   "name": "Write a specification",
+   "area": "build",
+   "needs": [
+    "fullstack"
+   ],
+   "betterWith": [],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Getting what you meant from a coding agent.",
+   "proof": "Write a one-page specification with acceptance criteria, and have someone else, or an agent, build from it without asking you anything.",
+   "ifSkipped": "An agent builds something else, quickly.",
+   "headNote": "A specification says what done looks like before anything is built. An acceptance criterion is one thing you can check. A coding agent needs both more than you do.",
+   "destination": false
+  },
+  {
+   "id": "ux",
+   "name": "Design for the person using it",
+   "area": "build",
+   "needs": [
+    "specs"
+   ],
+   "betterWith": [],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "Apps other people can use without you there.",
+   "proof": "Watch one person use your app without help, and fix the first place they got stuck.",
+   "ifSkipped": "An app only you can use.",
+   "headNote": "The person using your app doesn't know what you know.",
+   "destination": false
+  },
+  {
+   "id": "apptests",
+   "name": "Test your app",
+   "area": "build",
+   "needs": [
+    "specs"
+   ],
+   "betterWith": [
+    "codingagent"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Changing an app, or letting an agent change it, without breaking it.",
+   "proof": "Every acceptance criterion in your specification has a test, and a bug you add on purpose makes one fail.",
+   "ifSkipped": "Fixes that break something else, found by the people using it.",
+   "headNote": "A test is a promise the app keeps checking. Without tests, every change puts the last one at risk.",
+   "destination": false
+  },
+  {
+   "id": "users",
+   "name": "User accounts and sign-in",
+   "area": "build",
+   "needs": [
+    "fullstack",
+    "secrets"
+   ],
+   "betterWith": [
+    "hwkeys"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "An app several people share safely.",
+   "proof": "Two accounts each see only their own data, and a visitor who isn't signed in sees nothing.",
+   "ifSkipped": "Everyone sees everyone's data.",
+   "headNote": "Once two people use it, the app has to know who is who, and what each may see.",
+   "destination": false
+  },
+  {
+   "id": "sensors",
+   "name": "Cameras and sensors",
+   "area": "in",
+   "needs": [
+    "shell"
+   ],
+   "betterWith": [
+    "cv"
+   ],
+   "inYourHead": "press go",
+   "zone": 1,
+   "unlocks": "Feeding the real world into your setup.",
+   "proof": "In a script, read a frame from a camera and a value from one other sensor, and save both with the time.",
+   "ifSkipped": "Projects that only ever see files on disk.",
+   "headNote": "A webcam, a microphone and a temperature sensor are each a stream of data a model can read.",
    "destination": false
   },
   {
@@ -2724,6 +3297,154 @@
    "proof": "Friend opens it from their phone; access log shows the hit.",
    "ifSkipped": "Open door, no record.",
    "headNote": "Sandbox and both tunnel stations are red.",
+   "destination": true
+  },
+  {
+   "id": "d_shopping",
+   "name": "Shared shopping list",
+   "area": "build",
+   "needs": [
+    "users",
+    "vpn",
+    "extract",
+    "sql",
+    "prove"
+   ],
+   "betterWith": [
+    "stt",
+    "small"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "A list the household adds to by typing or speaking, on every phone.",
+   "proof": "Two people add items from their own phones for a week; the list is right, and nothing left your network.",
+   "ifSkipped": "Duplicates, missing items, and a list held by an app company.",
+   "headNote": "Typed or spoken items become one tidy list on a machine you own.",
+   "destination": true
+  },
+  {
+   "id": "d_netmon",
+   "name": "Network monitoring and diagnosis",
+   "area": "net",
+   "needs": [
+    "monitor",
+    "logs",
+    "segment",
+    "wifi",
+    "summarise"
+   ],
+   "betterWith": [
+    "scheduled",
+    "classify"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Knowing what is on your network, and what changed, in plain words.",
+   "proof": "A new device joins and you are told what it is within an hour; a slow link is named, with its cause.",
+   "ifSkipped": "Strange devices and slow links nobody notices.",
+   "headNote": "The model reads what your network tools collect and tells you what changed.",
+   "destination": true
+  },
+  {
+   "id": "d_repurpose",
+   "name": "Old hardware, new job",
+   "area": "ops",
+   "needs": [
+    "oldhw",
+    "ssh",
+    "vpn",
+    "backups"
+   ],
+   "betterWith": [
+    "small",
+    "monitor"
+   ],
+   "inYourHead": "know what it does",
+   "zone": 1,
+   "unlocks": "A computer from the drawer serving a model, files or backups for the house.",
+   "proof": "The old machine has done one job for a month, reached from other machines, with a tested backup.",
+   "ifSkipped": "It works for a week, then fails quietly.",
+   "headNote": "One old computer, one job, kept running.",
+   "destination": true
+  },
+  {
+   "id": "d_familycloud",
+   "name": "Local cloud for home and family",
+   "area": "ops",
+   "needs": [
+    "users",
+    "vpn",
+    "backups",
+    "encrypt",
+    "sql",
+    "ups",
+    "monitor",
+    "retention"
+   ],
+   "betterWith": [
+    "oldhw",
+    "hwkeys"
+   ],
+   "inYourHead": "must understand",
+   "zone": 1,
+   "unlocks": "Files, photos and calendars shared at home, on hardware you own.",
+   "proof": "Each person reaches their own files from home and away, a restore test passes, and a power cut loses nothing.",
+   "ifSkipped": "The family's only copy of everything on one disk nobody checks.",
+   "headNote": "What the big cloud companies sell, for a household, on its own hardware.",
+   "destination": true
+  },
+  {
+   "id": "d_homechat",
+   "name": "ChatGPT for home",
+   "area": "models",
+   "needs": [
+    "localchat",
+    "harness",
+    "users",
+    "vpn",
+    "parallel",
+    "prompting",
+    "retention",
+    "prove"
+   ],
+   "betterWith": [
+    "route",
+    "abliteration"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "A private chat app every person in the household uses, each with their own history.",
+   "proof": "Three people chat at the same time from their own devices; nobody sees anyone else's history, and nothing leaves your network.",
+   "ifSkipped": "One shared login, everyone's chats in one history, or a box too slow for more than one person.",
+   "headNote": "One model box, several people, separate histories.",
+   "destination": true
+  },
+  {
+   "id": "d_prepping",
+   "name": "Digital prepping",
+   "area": "net",
+   "needs": [
+    "users",
+    "harness",
+    "ups",
+    "wifi",
+    "backups",
+    "encrypt",
+    "rag",
+    "oldhw"
+   ],
+   "betterWith": [
+    "power",
+    "repair",
+    "stt",
+    "d_familycloud"
+   ],
+   "inYourHead": "must understand",
+   "zone": 2,
+   "unlocks": "A small group's information keeps working when the internet doesn't.",
+   "proof": "Unplug the internet for 48 hours: everyone can still chat with the model, search the group's documents and reach each other's devices.",
+   "ifSkipped": "The day the internet goes, so does everything you rely on.",
+   "headNote": "A specialist track: chat, documents and models for a small group, on its own power and its own network.",
    "destination": true
   }
  ]
