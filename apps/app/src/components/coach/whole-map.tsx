@@ -188,7 +188,7 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
       const current = view.current;
       if (!current || !fitted.current) return;
       const point = at ?? { x: current.x + current.w / 2, y: current.y + current.h / 2 };
-      show(zoomAt(current, factor, point, fitted.current));
+      show(zoomAt(current, factor, point, fitted.current, frameOf(svg.current)));
     },
     [show],
   );

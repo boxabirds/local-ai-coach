@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { GOAL_URL, MAP_URL, NOT_LOADED, NOT_SAVED, WholeMap, type WholeMapData } from "../whole-map";
-import { MAX_ZOOM, MIN_ZOOM, centreOn, fitView, pan, toMap, zoomAt, zoomOf } from "../whole-map-view";
+import { MAX_SCALE, MIN_ZOOM, centreOn, fitView, pan, scaleOf, toMap, zoomAt, zoomOf } from "../whole-map-view";
 
 /**
  * The whole map (Ceetrix story 29, TC-16 to TC-22). A small made-up map shaped like the agent's
@@ -26,17 +26,27 @@ describe("the view", () => {
     const fitted = fitView(box, frame);
     const at = { x: 300, y: 200 };
     const before = (at.x - fitted.x) / fitted.w;
-    const closer = zoomAt(fitted, 2, at, fitted);
+    const closer = zoomAt(fitted, 2, at, fitted, frame);
     expect(zoomOf(closer, fitted)).toBeCloseTo(2);
     expect((at.x - closer.x) / closer.w).toBeCloseTo(before);
   });
 
-  it("stops at both limits", () => {
+  it("stops at both limits: closest MAX_SCALE pixels per map unit, furthest a little past fit", () => {
     const fitted = fitView(box, frame);
-    expect(zoomOf(zoomAt(fitted, 1000, { x: 0, y: 0 }, fitted), fitted)).toBeCloseTo(MAX_ZOOM);
-    expect(zoomOf(zoomAt(fitted, 0.001, { x: 0, y: 0 }, fitted), fitted)).toBeCloseTo(MIN_ZOOM);
-    const atMax = zoomAt(fitted, MAX_ZOOM, { x: 0, y: 0 }, fitted);
-    expect(zoomOf(zoomAt(atMax, 2, { x: 0, y: 0 }, fitted), fitted)).toBeCloseTo(MAX_ZOOM);
+    const closest = zoomAt(fitted, 1000, { x: 0, y: 0 }, fitted, frame);
+    expect(scaleOf(closest, frame)).toBeCloseTo(MAX_SCALE);
+    expect(zoomOf(zoomAt(fitted, 0.001, { x: 0, y: 0 }, fitted, frame), fitted)).toBeCloseTo(MIN_ZOOM);
+    expect(scaleOf(zoomAt(closest, 2, { x: 0, y: 0 }, fitted, frame), frame)).toBeCloseTo(MAX_SCALE);
+  });
+
+  it("zooms in just as close on a map many times taller than the screen", () => {
+    // A tall map fitted on a wide screen shows ten map units or more per pixel; a limit set
+    // relative to that fit left every name smaller than its real size at the closest zoom.
+    const tall = { x: 0, y: 0, w: 1200, h: 7600 };
+    const wide = { width: 1400, height: 800 };
+    const fitted = fitView(tall, wide);
+    const closest = zoomAt(fitted, 1e6, { x: 600, y: 3800 }, fitted, wide);
+    expect(scaleOf(closest, wide)).toBeCloseTo(MAX_SCALE);
   });
 
   it("drags the map with the pointer, in map units", () => {
@@ -262,7 +272,7 @@ describe("the first view", () => {
 
 describe("framing a route", () => {
   it("frames every station on the route, and never closer than the zoom limit", async () => {
-    const { frameBoxes, boundsOf, zoomOf: zoom } = await import("../whole-map-view");
+    const { frameBoxes, boundsOf } = await import("../whole-map-view");
     const fitted = fitView({ x: 0, y: 0, w: 4000, h: 2000 }, { width: 1000, height: 500 });
     const route = [{ x: 100, y: 100, w: 100, h: 20 }, { x: 900, y: 600, w: 120, h: 20 }];
     const view = frameBoxes(route, { width: 1000, height: 500 }, fitted)!;
@@ -272,7 +282,7 @@ describe("framing a route", () => {
     expect(view.x + view.w).toBeGreaterThanOrEqual(all.x + all.w);
     expect(view.y + view.h).toBeGreaterThanOrEqual(all.y + all.h);
     const one = frameBoxes([{ x: 10, y: 10, w: 2, h: 2 }], { width: 1000, height: 500 }, fitted)!;
-    expect(zoom(one, fitted)).toBeLessThanOrEqual(MAX_ZOOM + 1e-9);
+    expect(scaleOf(one, { width: 1000, height: 500 })).toBeLessThanOrEqual(MAX_SCALE + 1e-9);
     expect(frameBoxes([], { width: 1000, height: 500 }, fitted)).toBeNull();
   });
 });
