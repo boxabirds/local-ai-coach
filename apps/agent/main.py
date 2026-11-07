@@ -131,15 +131,16 @@ add_langgraph_fastapi_endpoint(
 )
 
 
-add_langgraph_fastapi_endpoint(
-    app=app,
-    agent=CredentialScopedAgent(
-        name="sample_agent",
-        description="Open Generative UI by CopilotKit — answers you can interact with",
-        graph=agent,
-    ),
-    path="/",
+coach_agent = CredentialScopedAgent(
+    name="sample_agent",
+    description="Open Generative UI by CopilotKit — answers you can interact with",
+    graph=agent,
+    # ag_ui_langgraph fills each run's config with LangGraph's default limit of 25 steps,
+    # which wins over the graph's own; a turn with a check, a record and a reply crossed it.
+    config={"recursion_limit": agent.config["recursion_limit"]},
 )
+
+add_langgraph_fastapi_endpoint(app=app, agent=coach_agent, path="/")
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 

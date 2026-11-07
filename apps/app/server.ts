@@ -35,7 +35,18 @@ export function startServer(options: { port: number; webDir: string }) {
   });
 }
 
+/**
+ * One chat reply failing must not stop the server. When the agent drops a reply's stream,
+ * CopilotKit's agent client rethrows the error where nothing awaits it, and an unhandled
+ * rejection ends a Bun process: the map, the keys and every later reply went with it.
+ * That reply's stream simply ends early; here the error is only logged.
+ */
+export function keepServingAfterAFailedReply(error: unknown) {
+  console.error("A chat reply failed; the coach keeps running:", error instanceof Error ? error.message : String(error));
+}
+
 if (import.meta.main) {
+  process.on("unhandledRejection", keepServingAfterAFailedReply);
   const port = Number(process.env.PORT) || DEFAULT_PORT;
   const webDir = resolve(process.env.COACH_WEB_DIR ?? resolve(import.meta.dir, "dist", "web"));
   const server = startServer({ port, webDir });
