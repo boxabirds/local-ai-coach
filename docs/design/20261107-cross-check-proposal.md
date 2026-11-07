@@ -7,7 +7,7 @@ Julian's instruction: "integrate the material I identified that was missing into
 
 - Every topic in the cross-check that no station covered is now a station or a destination: 32 stations, 6 destinations. `stations.json` goes from 141 to 179.
 - A topic that is knowledge, not a skill, is proved by a quiz score ("Quiz: 8 of 10 or better on ..."). That fits the book's colour test in chapter 0: amber is "you can say in a sentence what it did", and every quiz station is amber. Five stations are proved by a quiz: `cloud`, `transformers`, `hats`, `apt` and `standards`. The proof field stays free text, so the schema and the validator are unchanged.
-- **No existing station gained a need.** Every route that exists today, Priya's included, is unchanged. Existing stations only gained better-with links to new ones: `localchat` to `prompting`, `run` to `gpu` and `harness`, `codingagent` to `specs` and `apptests`, `static` to `fullstack`, `power` to `ups`.
+- In the first pass no existing station gained a need. That left 18 new stations off every route, so Julian approved wiring them in (round 3b, below). Priya's route to Private legal drafting is unchanged; the script that applied the wiring checks it. Existing stations only gained better-with links to new ones: `localchat` to `prompting`, `run` to `gpu` and `harness`, `codingagent` to `specs` and `apptests`, `static` to `fullstack`, `power` to `ups`.
 - No new area: each station sits on an existing line, so the map's line colours are unchanged.
 
 ## What was added
@@ -106,3 +106,60 @@ New destinations: shared shopping list (`d_shopping`), network monitoring (`d_ne
 3. **The cross-check's Stages (Understand, Create, Own and Maintain)** are not stations. They describe the life of a learner's project, a different axis from a station's colour. Own and Maintain is now served by `monitor`, `ups`, `repair` and `oldhw`.
 4. **Windows in the coach.** The book's graph now teaches Windows; the coach's V1 scope stays macOS and Linux.
 5. **The fitted map.** At 179 stations the whole map, fitted to the screen, is a thin column 1229 by 7710 units. It was unreadable at 141 too. The layout's shape is a separate change.
+
+## Round 3b: the new stations on the routes (approved by Julian, 2026-11-07)
+
+The first pass left 18 new stations that no destination needed, so no route went through them. Each is now a need, or a better-with, of the destinations it belongs to. Rule for `gpu`: every destination in zone 2 or 3 that runs a model needs it (not Website live, which runs none). Existing stations other than destinations gained no needs.
+
+| station | link | destinations |
+|---|---|---|
+| `ruleoftwo` | needed by | `d_agent`, `d_home`, `d_triage`, `d_research`, `d_codereview` |
+| `apptests` | needed by | `d_website`, `d_support` |
+| `ux` | needed by | `d_website`, `d_shopping` |
+| `sensors` | needed by | `d_cctv`, `d_home` |
+| `skills` | needed by | `d_agent` |
+| `scripts` | needed by | `d_invoices`, `d_photos`, `d_family`, `d_shownotes` |
+| `gpu` | needed by | `d_bundle`, `d_research`, `d_support`, `d_teamkb`, `d_photos`, `d_voice`, `d_family`, `d_tutor`, `d_cctv`, `d_storybook`, `d_dubbing`, `d_musicvideo`, `d_codereview`, `d_agent`, `d_home`, `d_homechat`, `d_prepping` |
+| `disk` | needed by | `d_photos`, `d_family`, `d_cctv`, `d_familycloud`, `d_repurpose` |
+| `benchmarks` | needed by | `d_homechat` |
+| `repair` | needed by | `d_familycloud`, `d_repurpose`, `d_prepping` |
+| `reuse` | needed by | `d_familycloud`, `d_netmon`, `d_shopping` |
+| `cloud` | needed by | `d_familycloud`, `d_homechat` |
+| `standards` | better with, for | `d_agent`, `d_home` |
+| `skills` | better with, for | `d_codereview` |
+| `apptests` | better with, for | `d_codereview` |
+| `ux` | better with, for | `d_support`, `d_homechat` |
+| `docstore` | better with, for | `d_invoices`, `d_triage` |
+| `abliteration` | better with, for | `d_research` |
+
+Leaves on purpose, needed by nothing: `windows` (a platform branch), `transformers` and `apt` (background, quiz-proved), `abliteration`, `docstore` and `standards` (better-with only: useful, never required).
+
+How much longer each changed route is (stations on the route, before and after):
+
+| destination | name | before | after | change |
+|---|---|---|---|---|
+| `d_agent` | Personal agent | 41 | 44 | +3 |
+| `d_bundle` | Legal bundle review | 23 | 25 | +2 |
+| `d_cctv` | CCTV event detection | 18 | 21 | +3 |
+| `d_codereview` | Code review bot | 16 | 19 | +3 |
+| `d_dubbing` | Video dubbing | 13 | 15 | +2 |
+| `d_family` | Family photo and video organiser | 14 | 18 | +4 |
+| `d_familycloud` | Local cloud for home and family | 19 | 25 | +6 |
+| `d_home` | Home automation agent | 31 | 34 | +3 |
+| `d_homechat` | ChatGPT for home | 24 | 28 | +4 |
+| `d_invoices` | Invoice and receipt processing | 17 | 18 | +1 |
+| `d_musicvideo` | Prompt to music video | 18 | 20 | +2 |
+| `d_netmon` | Network monitoring and diagnosis | 12 | 16 | +4 |
+| `d_photos` | Searchable photo archive | 12 | 16 | +4 |
+| `d_prepping` | Digital prepping | 20 | 22 | +2 |
+| `d_repurpose` | Old hardware, new job | 9 | 12 | +3 |
+| `d_research` | Research assistant with citations | 22 | 24 | +2 |
+| `d_shopping` | Shared shopping list | 18 | 23 | +5 |
+| `d_shownotes` | Podcast transcription and show notes | 15 | 16 | +1 |
+| `d_storybook` | Illustrated story book | 11 | 13 | +2 |
+| `d_support` | Customer support bot over company docs | 33 | 37 | +4 |
+| `d_teamkb` | Knowledge base for a small team | 26 | 27 | +1 |
+| `d_triage` | Email triage | 23 | 24 | +1 |
+| `d_tutor` | Language tutor | 17 | 19 | +2 |
+| `d_voice` | Voice assistant | 15 | 17 | +2 |
+| `d_website` | Website live | 12 | 16 | +4 |

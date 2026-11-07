@@ -1,6 +1,6 @@
 {
  "asOf": "2026-11-07",
- "note": "Draft placements and criticality ratings, not measured facts. Zones: 1 any recent laptop; 2 24-32 GB GPU or 32 GB+ unified memory; 3 128 GB unified memory or multi-GPU. Round 2 (31 Oct 2026) applied the completeness and integrity audit against OWASP LLM 2025 / Agentic 2026, NCSC, NIST AI 600-1, ICO guidance and tool docs. Round 3 (7 Nov 2026) added the topics from Julian's cross-check (docs/curriculum-cross-check.md) as 32 stations and 6 destinations; a station whose subject is knowledge rather than a skill is proved by a quiz score. No existing station gained a need.",
+ "note": "Draft placements and criticality ratings, not measured facts. Zones: 1 any recent laptop; 2 24-32 GB GPU or 32 GB+ unified memory; 3 128 GB unified memory or multi-GPU. Round 2 (31 Oct 2026) applied the completeness and integrity audit against OWASP LLM 2025 / Agentic 2026, NCSC, NIST AI 600-1, ICO guidance and tool docs. Round 3 (7 Nov 2026) added the topics from Julian's cross-check (docs/curriculum-cross-check.md) as 32 stations and 6 destinations; a station whose subject is knowledge rather than a skill is proved by a quiz score. No existing station gained a need. Round 3b (7 Nov 2026) wired the new stations into the destinations they belong to; Private legal drafting's route is unchanged.",
  "areas": [
   {
    "id": "trunk",
@@ -2733,7 +2733,8 @@
     "prove",
     "backups",
     "grounding",
-    "retention"
+    "retention",
+    "gpu"
    ],
    "betterWith": [
     "dpia"
@@ -2757,12 +2758,15 @@
     "agentloop",
     "injection",
     "egress",
-    "outputs"
+    "outputs",
+    "ruleoftwo",
+    "gpu"
    ],
    "betterWith": [
     "longdoc",
     "kvcache",
-    "browseragent"
+    "browseragent",
+    "abliteration"
    ],
    "inYourHead": "must understand",
    "zone": 2,
@@ -2811,13 +2815,16 @@
     "logs",
     "retention",
     "dpia",
-    "licence"
+    "licence",
+    "apptests",
+    "gpu"
    ],
    "betterWith": [
     "tunnelpublic",
     "review",
     "redteam",
-    "trace"
+    "trace",
+    "ux"
    ],
    "inYourHead": "must understand",
    "zone": 2,
@@ -2839,10 +2846,12 @@
     "review",
     "encrypt",
     "backups",
-    "retention"
+    "retention",
+    "scripts"
    ],
    "betterWith": [
-    "classify"
+    "classify",
+    "docstore"
    ],
    "inYourHead": "must understand",
    "zone": 1,
@@ -2866,7 +2875,8 @@
     "backups",
     "retention",
     "dpia",
-    "logs"
+    "logs",
+    "gpu"
    ],
    "betterWith": [
     "trace"
@@ -2911,7 +2921,10 @@
     "encrypt",
     "backups",
     "prove",
-    "retention"
+    "retention",
+    "scripts",
+    "gpu",
+    "disk"
    ],
    "betterWith": [],
    "inYourHead": "know what it does",
@@ -2932,7 +2945,8 @@
     "tts",
     "agentloop",
     "budgets",
-    "prove"
+    "prove",
+    "gpu"
    ],
    "betterWith": [
     "small",
@@ -2959,7 +2973,10 @@
     "encrypt",
     "backups",
     "retention",
-    "prove"
+    "prove",
+    "scripts",
+    "gpu",
+    "disk"
    ],
    "betterWith": [
     "restore",
@@ -2984,7 +3001,8 @@
     "tts",
     "write",
     "memory",
-    "memhygiene"
+    "memhygiene",
+    "gpu"
    ],
    "betterWith": [
     "voiceclone"
@@ -3008,7 +3026,10 @@
     "bind",
     "encrypt",
     "retention",
-    "dpia"
+    "dpia",
+    "sensors",
+    "gpu",
+    "disk"
    ],
    "betterWith": [
     "vision",
@@ -3032,7 +3053,8 @@
     "summarise",
     "extract",
     "longdoc",
-    "backups"
+    "backups",
+    "scripts"
    ],
    "betterWith": [
     "stems"
@@ -3076,7 +3098,8 @@
    "needs": [
     "write",
     "consistency",
-    "backups"
+    "backups",
+    "gpu"
    ],
    "betterWith": [],
    "inYourHead": "know what it does",
@@ -3097,7 +3120,8 @@
     "tts",
     "lipsync",
     "backups",
-    "consent"
+    "consent",
+    "gpu"
    ],
    "betterWith": [],
    "inYourHead": "know what it does",
@@ -3120,7 +3144,8 @@
     "extract",
     "stitch",
     "backups",
-    "licence"
+    "licence",
+    "gpu"
    ],
    "betterWith": [
     "comfy",
@@ -3145,11 +3170,15 @@
     "readonly",
     "injection",
     "outputs",
-    "secrets"
+    "secrets",
+    "ruleoftwo",
+    "gpu"
    ],
    "betterWith": [
     "evalharness",
-    "route"
+    "route",
+    "skills",
+    "apptests"
    ],
    "inYourHead": "must understand",
    "zone": 2,
@@ -3181,14 +3210,18 @@
     "outputs",
     "vet",
     "retention",
-    "redteam"
+    "redteam",
+    "ruleoftwo",
+    "skills",
+    "gpu"
    ],
    "betterWith": [
     "trace",
     "sandbox",
     "segment",
     "mcp",
-    "workflow"
+    "workflow",
+    "standards"
    ],
    "inYourHead": "must understand",
    "zone": 2,
@@ -3214,10 +3247,14 @@
     "scopes",
     "segment",
     "audit",
-    "killswitch"
+    "killswitch",
+    "ruleoftwo",
+    "sensors",
+    "gpu"
    ],
    "betterWith": [
-    "mcp"
+    "mcp",
+    "standards"
    ],
    "inYourHead": "must understand",
    "zone": 2,
@@ -3242,11 +3279,13 @@
     "minimise",
     "encrypt",
     "retention",
-    "audit"
+    "audit",
+    "ruleoftwo"
    ],
    "betterWith": [
     "route",
-    "review"
+    "review",
+    "docstore"
    ],
    "inYourHead": "must understand",
    "zone": 1,
@@ -3288,7 +3327,9 @@
    "needs": [
     "tunnelpublic",
     "toggle",
-    "backups"
+    "backups",
+    "apptests",
+    "ux"
    ],
    "betterWith": [],
    "inYourHead": "must understand",
@@ -3308,7 +3349,9 @@
     "vpn",
     "extract",
     "sql",
-    "prove"
+    "prove",
+    "ux",
+    "reuse"
    ],
    "betterWith": [
     "stt",
@@ -3331,7 +3374,8 @@
     "logs",
     "segment",
     "wifi",
-    "summarise"
+    "summarise",
+    "reuse"
    ],
    "betterWith": [
     "scheduled",
@@ -3353,7 +3397,9 @@
     "oldhw",
     "ssh",
     "vpn",
-    "backups"
+    "backups",
+    "disk",
+    "repair"
    ],
    "betterWith": [
     "small",
@@ -3379,7 +3425,11 @@
     "sql",
     "ups",
     "monitor",
-    "retention"
+    "retention",
+    "disk",
+    "repair",
+    "reuse",
+    "cloud"
    ],
    "betterWith": [
     "oldhw",
@@ -3405,11 +3455,15 @@
     "parallel",
     "prompting",
     "retention",
-    "prove"
+    "prove",
+    "gpu",
+    "benchmarks",
+    "cloud"
    ],
    "betterWith": [
     "route",
-    "abliteration"
+    "abliteration",
+    "ux"
    ],
    "inYourHead": "must understand",
    "zone": 2,
@@ -3431,11 +3485,12 @@
     "backups",
     "encrypt",
     "rag",
-    "oldhw"
+    "oldhw",
+    "gpu",
+    "repair"
    ],
    "betterWith": [
     "power",
-    "repair",
     "stt",
     "d_familycloud"
    ],
