@@ -81,12 +81,12 @@ class Fakes:
     Each archive's bundled Python is a script that logs its arguments to python_log and
     either serves (for -m uvicorn) or answers the installer's check (exit 0 or 1)."""
 
-    def __init__(self, root: Path, *, agent_check_ok: bool = True, server_body: str = f"sleep {FAKE_SLEEP}", agent_body: str = f"sleep {FAKE_SLEEP}"):
+    def __init__(self, root: Path, *, agent_check_ok: bool = True, server_body: str = f"sleep {FAKE_SLEEP}", agent_body: str = f"sleep {FAKE_SLEEP}", check_says: str = ""):
         self.root = root
         self.release = root / "release"
         self.release.mkdir(parents=True, exist_ok=True)
         self.python_log = root / "python-args.log"
-        check = "exit 0" if agent_check_ok else "echo 'ImportError: this computer is too old' >&2; exit 1"
+        check = f"echo '{check_says}' >&2; exit 0" if agent_check_ok else "echo 'ImportError: this computer is too old' >&2; exit 1"
 
         for _, _, platform in SUPPORTED:
             tree = root / f"tree-{platform}"
@@ -246,6 +246,14 @@ def test_tc07_an_agent_that_cannot_run_here_keeps_the_earlier_install(tmp_path, 
     assert os.readlink(home / ".local-ai-coach" / "app") == link_before
     assert snapshot_tree(home / ".local-ai-coach") == before
     assert len(list((home / ".local-ai-coach").glob("app-*"))) == 1
+
+
+def test_s32_tc07d_a_working_agent_check_prints_nothing(tmp_path, home):
+    # v0.1.7 printed a library's deprecation warning in the middle of a good install.
+    noisy = Fakes(tmp_path, check_says="LangChainPendingDeprecationWarning: allowed_objects will change")
+    result = install(noisy, home)
+    assert result.returncode == 0, result.stderr
+    assert "DeprecationWarning" not in result.stdout + result.stderr
 
 
 def test_s32_tc07b_an_agent_that_cannot_run_here_installs_nothing(tmp_path, home):

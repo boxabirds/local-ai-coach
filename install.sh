@@ -78,9 +78,11 @@ mkdir -p "$NEW/release"
 tar -xzf "$WORK/$ARCHIVE" -C "$NEW/release"
 
 # The agent's Python is built for this kind of computer; check this one runs it
-# (an older Linux, for example, may not). Importing the agent writes nothing.
+# (an older Linux, for example, may not). Importing the agent writes nothing. Its messages
+# (libraries print warnings on import) are shown only if the check fails.
 say "Checking the coach runs on this computer"
-if ! (cd "$NEW/release/apps/agent" && "$NEW/release/python/bin/python3" -I -B -W ignore -c 'import sys; sys.path.insert(0, "."); import main'); then
+if ! (cd "$NEW/release/apps/agent" && "$NEW/release/python/bin/python3" -I -B -W ignore -c 'import sys; sys.path.insert(0, "."); import main') > "$WORK/agent-check.log" 2>&1; then
+  cat "$WORK/agent-check.log" >&2
   rm -rf "$NEW"
   fail "the coach's agent could not run on this computer (see the messages above). Any earlier install was kept."
 fi
