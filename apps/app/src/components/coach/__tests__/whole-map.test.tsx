@@ -146,6 +146,26 @@ describe("the whole map", () => {
     expect(within(screen.getByTestId("coach-whole-map-panel")).getByRole("heading", { name: "Made-up middle" })).toBeInTheDocument();
   });
 
+  it("a tapped station lights every link on its whole chain of needs, not only its own links", async () => {
+    serve(made());
+    await open();
+    fireEvent.click(station("far"));
+    const link = (from: string, to: string, kind = "") =>
+      document.querySelector(`.coach-whole-map__link[data-from="${from}"][data-to="${to}"]${kind ? `[data-kind="${kind}"]` : ""}`);
+    for (const [from, to] of [["start", "middle"], ["middle", "far"], ["side", "far"]]) {
+      expect(link(from, to)).toHaveClass("coach-whole-map__link--touched");
+    }
+    expect(link("start", "side", "better")).not.toHaveClass("coach-whole-map__link--touched");
+    // Its chain stands out; everything else steps back.
+    for (const id of ["start", "middle", "side", "far"]) expect(station(id)).not.toHaveClass("coach-whole-map__station--faint");
+    expect(station("alone")).toHaveClass("coach-whole-map__station--faint");
+
+    fireEvent.click(station("middle"));
+    expect(link("start", "middle")).toHaveClass("coach-whole-map__link--touched");
+    expect(link("middle", "far")).not.toHaveClass("coach-whole-map__link--touched");
+    expect(link("side", "far")).not.toHaveClass("coach-whole-map__link--touched");
+  });
+
   it("TC-18b a station that is not a destination offers no goal; Enter opens a station too", async () => {
     serve(made());
     await open();

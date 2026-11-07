@@ -17,6 +17,21 @@ const YOU_ARE_HERE = "You are here";
 const REACHED = "You've covered everything this needs.";
 
 const COVERED = new Set(["reported", "assisted", "verified", "skipped"]);
+
+/** A station and every station it needs, directly or through others. A better-with link is never a need. */
+export function needsChain(id: string, byId: Map<string, { needs?: string[] }>): Set<string> {
+  const seen = new Set<string>([id]);
+  const walk = [id];
+  while (walk.length) {
+    for (const need of byId.get(walk.pop() as string)?.needs ?? []) {
+      if (!seen.has(need)) {
+        seen.add(need);
+        walk.push(need);
+      }
+    }
+  }
+  return seen;
+}
 /** The station shape's half-size; destinations are bigger, as on the tube map. */
 const DOT_R = 8;
 const DEST_R = 11;
@@ -219,6 +234,8 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
   const data = load.state === "ready" ? load.data : null;
   const byId = useMemo(() => new Map((data?.stations ?? []).map((s) => [s.id, s])), [data]);
   const onRoute = useMemo(() => new Set(data?.route ?? []), [data]);
+  // The tapped station and everything it needs, all the way down, as on the tube map it came from.
+  const chain = useMemo(() => (selected ? needsChain(selected, byId) : null), [selected, byId]);
 
   const select = (id: string, centre = false) => {
     if (drag.current?.moved) return;
@@ -307,6 +324,7 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
           data-testid="coach-whole-map-svg"
           data-goal={data.goal ?? ""}
           data-has-route={data.route.length > 0 ? "true" : undefined}
+          data-chain={chain ? "true" : undefined}
           role="group"
           aria-label="Every station"
           onPointerDown={onPointerDown}
@@ -318,7 +336,9 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
             {data.layout.edges.map((edge) => {
               // A route is made of requirements: a better-with link is never part of it.
               const lit = edge.kind !== "better" && onRoute.has(edge.to) && (onRoute.has(edge.from) || COVERED.has(byId.get(edge.from)?.status ?? ""));
-              const touched = selected !== null && (edge.from === selected || edge.to === selected);
+              const touched =
+                chain !== null &&
+                (edge.kind === "better" ? edge.to === selected : chain.has(edge.from) && chain.has(edge.to));
               return (
                 <path
                   key={`${edge.kind}:${edge.from}>${edge.to}`}
@@ -327,6 +347,8 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
                   style={{ "--line": `var(--map-line-${edge.area}, var(--coach-line))` } as CSSProperties}
                   className={`coach-whole-map__link coach-whole-map__link--${edge.kind}${lit ? " coach-whole-map__link--route" : ""}${touched ? " coach-whole-map__link--touched" : ""}`}
                   data-kind={edge.kind}
+                  data-from={edge.from}
+                  data-to={edge.to}
                   data-area={edge.area}
                   data-route={lit ? "true" : undefined}
                 />
@@ -338,7 +360,9 @@ export function WholeMap({ onClose }: { onClose: () => void }) {
             if (!spot) return null;
             const covered = COVERED.has(station.status);
             const route = onRoute.has(station.id);
-            const strong = covered || route || station.id === data.current || station.id === data.goal;
+            const strong = chain
+              ? chain.has(station.id)
+              : covered || route || station.id === data.current || station.id === data.goal;
             const criticality = station.criticality ?? undefined;
             const r = spot.dest ? DEST_R : DOT_R;
             const plate = plateOf(spot);

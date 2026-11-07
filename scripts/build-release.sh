@@ -86,7 +86,7 @@ fresh_dist() {
   # fresh_dist DIR: an empty DIR, whatever was in it. The old one is moved aside first and
   # deleted as far as possible: Finder writes .DS_Store into a folder it is showing, which
   # can make rm -rf fail half way with "Directory not empty". Leftovers (.dist-old.*, ignored
-  # by git) go on the next build.
+  # by git) are removed by the build after this one.
   local old
   old="$(dirname "$1")/.dist-old"
   rm -rf "$old".* 2>/dev/null || true

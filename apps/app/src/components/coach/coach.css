@@ -1033,8 +1033,13 @@ dialog.coach-whole-map::backdrop {
   opacity: 1;
 }
 
-/* The links into and out of the station the learner tapped. */
-.coach-whole-map__svg .coach-whole-map__link--touched {
+/* The tapped station's whole chain of needs; every other link steps back. */
+.coach-whole-map__svg[data-chain="true"] .coach-whole-map__link {
+  opacity: 0.12;
+}
+
+.coach-whole-map__svg .coach-whole-map__link--touched,
+.coach-whole-map__svg[data-chain="true"] .coach-whole-map__link--touched {
   opacity: 1;
 }
 
