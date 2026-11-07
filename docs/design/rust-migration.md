@@ -75,6 +75,23 @@ These map well onto Rust, and some get stricter:
 
 The 6,300 lines of pytest call Python functions directly, so most of them would be rewritten in Rust. The ones that go through HTTP (`test_release.py`, the browser suite, `bun-tests/server.test.ts`) carry over unchanged and are the real proof the port is right. `test_canonical_contract.py` and `test_skills_contract.py` check upstream's prompt text stays verbatim. The text moves into a file both versions read, and the check moves to Rust. The dispatch evals (`make evals`) drive the real model through the agent and need porting to keep regression coverage of the coach's behaviour.
 
+## Measured: what Python costs today (2026-11-07, Apple M2, 16 GB)
+
+Julian's reason for asking is the resource overhead of Python. Measured on the live coach (`make serve`), with macOS `footprint` (resident set size undercounts on macOS because idle pages get compressed):
+
+| Process | Memory (phys_footprint) |
+|---|---|
+| Agent worker (Python, after a session's use) | 111 MB |
+| Agent, fresh: peak while importing `main` (3 runs) | 128 MB, ready in 1.3 to 1.7 s |
+| Bare Python, for comparison | 13 MB |
+| Bun web server (`server.ts`, page and CopilotKit runtime) | 163 MB |
+| The agent's installed packages (`.venv`, 84 packages) | 109 MB on disk |
+| A local 8B model (qwen3:8b, Q4_K_M), for scale | 5.2 GB file |
+
+`make serve` also runs uv's `--reload` parent and a multiprocessing tracker (18 MB and 9 MB). The tester release runs uvicorn without reload, so those aren't there.
+
+What this says: the Python agent costs about 110 to 130 MB and starts in under two seconds. The Bun server costs more than that. Next to the local model the learner is there to run, both are about 2 to 3 %. A Rust agent would probably be tens of megabytes. I haven't built one, so that's an expectation, not a measurement. The saving would be roughly 100 MB.
+
 ## What it would gain
 
 - **One executable per platform for the whole coach.** Today `install.sh` downloads uv, uv downloads Python, and `uv sync` fetches the agent's packages from PyPI on the learner's machine during install ("the first time takes a minute"). That's the release's biggest moving part and its only install-time network dependency apart from the archive itself. With Rust, the release would be the Bun page server plus one agent binary, which also simplifies the planned `.dmg` and signing.
