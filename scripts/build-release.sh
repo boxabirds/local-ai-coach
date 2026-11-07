@@ -4,6 +4,7 @@
 #   scripts/build-release.sh <version>        build dist/local-ai-coach-<platform>.tar.gz and .sha256 for each platform
 #   scripts/build-release.sh --check-tree DIR refuse if DIR holds a native module or an env file
 #   scripts/build-release.sh --fetch-pinned URL FILE SHA256   fetch one build input as the build does
+#   scripts/build-release.sh --fresh-dist DIR                 empty DIR as the build does
 #
 # One archive per kind of computer (story 31): the page's server compiled by Bun
 # into one executable for that computer, the built page, the agent source, the
@@ -81,6 +82,19 @@ fetch_pinned() {
   mv "$file.part" "$file"
 }
 
+fresh_dist() {
+  # fresh_dist DIR: an empty DIR, whatever was in it. The old one is moved aside first and
+  # deleted as far as possible: Finder writes .DS_Store into a folder it is showing, which
+  # can make rm -rf fail half way with "Directory not empty". Leftovers (.dist-old.*, ignored
+  # by git) go on the next build.
+  local old
+  old="$(dirname "$1")/.dist-old"
+  rm -rf "$old".* 2>/dev/null || true
+  if [ -e "$1" ]; then mv "$1" "$old.$$"; fi
+  rm -rf "$old.$$" 2>/dev/null || true
+  mkdir -p "$1"
+}
+
 python_file() { echo "cpython-$PYTHON_VERSION+$PYTHON_BUILD-$1-install_only_stripped.tar.gz"; }
 
 # Files that must never ship: native modules tie the archive to one machine, and
@@ -97,6 +111,10 @@ check_tree() {
 
 if [ "${1:-}" = "--check-tree" ]; then
   check_tree "${2:?usage: build-release.sh --check-tree DIR}"
+  exit $?
+fi
+if [ "${1:-}" = "--fresh-dist" ]; then
+  fresh_dist "${2:?usage: build-release.sh --fresh-dist DIR}"
   exit $?
 fi
 if [ "${1:-}" = "--fetch-pinned" ]; then
@@ -148,8 +166,7 @@ HOST_PY="$TOOLS/host/python/bin/python3"
 
 echo "Building the stub coach's page ($VERSION)"
 WEB="$DIST/web"
-rm -rf "$DIST"
-mkdir -p "$DIST"
+fresh_dist "$DIST"
 (cd "$APP" && COACH_STUB=1 COACH_WEB_OUT="$WEB" pnpm exec bun build.ts >/dev/null)
 # Source maps help development only.
 find "$WEB" -name '*.map' -delete

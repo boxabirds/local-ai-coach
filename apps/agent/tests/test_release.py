@@ -506,6 +506,26 @@ def test_s32_tc18c_a_good_cached_input_is_used_without_downloading(tmp_path):
     assert target.read_bytes() == good
 
 
+def test_s32_a_fresh_dist_survives_a_folder_that_cannot_be_emptied(tmp_path):
+    """Bug, 2026-11-07: the build failed with "rm: dist/...: Directory not empty" when Finder
+    wrote a .DS_Store into dist while it was being deleted. Here a folder inside the old dist
+    cannot be emptied (no write permission), which fails a plain rm -rf the same way."""
+    dist = tmp_path / "dist"
+    stuck = dist / "release-darwin-arm64" / "python"
+    stuck.mkdir(parents=True)
+    (stuck / ".DS_Store").write_text("x")
+    (dist / "local-ai-coach-darwin-arm64.tar.gz").write_text("old")
+    stuck.chmod(0o500)
+    try:
+        result = subprocess.run(["bash", str(BUILD), "--fresh-dist", str(dist)], capture_output=True, text=True, check=False)
+        assert result.returncode == 0, result.stderr
+        assert dist.is_dir() and list(dist.iterdir()) == []
+    finally:
+        for p in tmp_path.rglob("*"):
+            if p.is_dir():
+                p.chmod(0o700)
+
+
 def test_s32_tc18d_the_build_stops_before_building_when_an_input_fails(tmp_path):
     site = tmp_path / "site" / "0.13.7"
     site.mkdir(parents=True)
@@ -624,6 +644,34 @@ def test_s32_tc21_the_environment_cannot_change_what_the_bundled_python_loads(bu
                             cwd=planted, env=env, capture_output=True, text=True, check=False)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip().startswith(str(tree.resolve() / "python")), result.stdout
+
+
+@e2e
+def test_s32_tc07c_a_real_bundle_that_cannot_import_the_agent_is_refused(built_release, tmp_path):
+    """The real check with the real bundled Python: an archive missing one of the agent's
+    packages is refused, and the earlier (good) install stays in place and runs."""
+    home = tmp_path / "home"
+    home.mkdir()
+    assert real_install(built_release, home).returncode == 0
+    link_before = os.readlink(home / ".local-ai-coach" / "app")
+
+    broken = tmp_path / "broken-site"
+    broken.mkdir()
+    tree = unpacked(built_release, this_platform(), tmp_path / "tree")
+    shutil.rmtree(tree / "python" / "lib" / "python3.12" / "site-packages" / "fastapi")
+    name = archive_name(this_platform())
+    with tarfile.open(broken / name, "w:gz") as tar:
+        for child in tree.iterdir():
+            tar.add(child, arcname=f"./{child.name}")
+    (broken / f"{name}.sha256").write_text(f"{sha256(broken / name)}  {name}\n")
+
+    result = real_install(broken, home)
+    assert result.returncode != 0
+    assert "the coach's agent could not run on this computer" in result.stderr
+    assert "fastapi" in result.stderr  # Python's own reason is passed on
+    assert os.readlink(home / ".local-ai-coach" / "app") == link_before
+    assert len(list((home / ".local-ai-coach").glob("app-*"))) == 1
+    assert run([command(home), "--version"], {**os.environ, "HOME": str(home)}).stdout.strip() == VERSION
 
 
 # What `file` says a native extension built for each platform is.
