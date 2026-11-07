@@ -11,9 +11,10 @@ Open Terminal (on a Mac: press Command and Space, type Terminal, press Return) a
 curl -fsSL https://github.com/boxabirds/local-ai-coach/releases/latest/download/install.sh | sh
 ```
 
-It takes a minute or two. It installs into a folder called `.local-ai-coach` in your
-home folder. It doesn't need your password, Homebrew or anything else installed first,
-and it checks every download before using it.
+It downloads one file, checks it, and checks the coach runs on your computer. It installs
+into a folder called `.local-ai-coach` in your home folder. It doesn't need your password,
+Homebrew, Python or anything else installed first, and it doesn't change any Python you
+already have.
 
 ## Start it
 
@@ -45,7 +46,12 @@ If Terminal says `command not found`, use the full path the installer printed
 `make release VERSION=x.y.z` builds one archive per kind of computer,
 `dist/local-ai-coach-<platform>.tar.gz` and its `.sha256`, for darwin-arm64, darwin-x64,
 linux-x64 and linux-arm64. Each holds the page's server as a single Bun executable for
-that computer, so testers download no Node. `make release-test` builds this machine's
-archive, installs it from scratch into a temporary home with the real pinned uv, and runs
-the browser suite against the installed coach. Publish by attaching every
+that computer, and the agent's own Python (CPython 3.12.16 from python-build-standalone)
+with its locked packages installed and compiled for that computer (story 32), so testers
+download nothing but the archive: no Node, no uv, no Python packages. The build's inputs
+are pinned with their SHA-256 in `scripts/build-release.sh` and kept in
+`~/.cache/local-ai-coach-release`. `make release-test` builds this machine's archive,
+installs it from scratch into a temporary home and runs the browser suite against the
+installed coach; with `COACH_RELEASE_ALL_PLATFORMS=1` it also builds all four and checks
+each one's Python is built for its own computer. Publish by attaching every
 `dist/local-ai-coach-*.tar.gz`, its `.sha256` and `install.sh` to a GitHub release.

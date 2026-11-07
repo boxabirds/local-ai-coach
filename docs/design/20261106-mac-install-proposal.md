@@ -33,10 +33,8 @@ A `.app` whose executable is a short program that, on first launch, uses a bundl
 ### 2. The same launcher after the Bun migration (recommended)
 Done in story 31: `bun build --compile` turns the web server (routes and the CopilotKit runtime) into **one executable file** with no Node and no `node_modules`; the built page is a folder of static files beside it. The app bundle then holds:
 - `coach-web` (the Bun binary),
-- the agent's source and lockfile, plus the `uv` binary,
-- a launcher that runs `uv sync` once (it fetches a standalone Python 3.12 and the locked packages into Application Support), then starts both on free ports bound to 127.0.0.1, opens the page, and shows a menu-bar icon with Open and Quit.
-
-Later, Python can be bundled too (a relocatable standalone Python with the packages preinstalled), so the first launch needs no internet. That makes the download bigger.
+- the agent's source and its Python: since story 32 the release archive carries a standalone CPython 3.12 with the locked packages installed and compiled, so there is no `uv` and nothing to set up on first launch,
+- a launcher that starts both on free ports bound to 127.0.0.1, opens the page, and shows a menu-bar icon with Open and Quit.
 - For: one runtime fewer, a much smaller app, and the web side becomes a single file that is easy to sign.
 - Against: none left; the Bun migration is done.
 
@@ -48,11 +46,10 @@ Tauri (a native webview plus "sidecar" processes) or Electron (bundles Chromium)
 ## The launcher itself
 
 For options 1 and 2: a small Swift program (no dependencies), about one screen of code, that:
-1. on first launch, shows "Setting up the coach…" with a progress bar while `uv sync` runs, and says so plainly if there is no internet;
-2. picks two free ports, starts the agent and the web server bound to 127.0.0.1, and waits until both answer;
-3. opens the coach in the default browser;
-4. puts an icon in the menu bar with Open coach and Quit (Quit stops both servers);
-5. writes its logs to `~/.local-ai-coach/logs/`.
+1. picks two free ports, starts the agent and the web server bound to 127.0.0.1, and waits until both answer;
+2. opens the coach in the default browser;
+3. puts an icon in the menu bar with Open coach and Quit (Quit stops both servers);
+4. writes its logs to `~/.local-ai-coach/logs/`.
 
 The release script builds the `.app`, signs it, optionally notarises it, and wraps it in a `.dmg` with the usual Applications shortcut, so the learner sees the familiar drag-to-install window.
 
@@ -61,14 +58,14 @@ The release script builds the `.app`, signs it, optionally notarises it, and wra
 1. ~~The Bun migration~~ (done, story 31).
 2. The launcher and a `.dmg` for friendly testers, unsigned, with the Open Anyway paragraph.
 3. Signing and notarisation, once it goes beyond friendly testers.
-4. Bundled Python for offline install, if testers have trouble with the first launch.
+4. ~~Bundled Python for offline install~~ (done, story 32: the archive carries it).
 
 ## Signing and notarising: reuse macscreencap's pipeline
 
 Julian already signs and notarises Cutaway (`~/expts/macscreencap`: `ScreencapMenuBar/build-app.sh` and `scripts/release.sh`). The coach reuses the same pieces, so testers get a normal, notarised download from the start:
 
 - the Developer ID Application certificate in the login Keychain (found with `security find-identity -v -p codesigning`), and the stored `notarytool-profile`;
-- sign inside out: every nested executable first (here the Bun binary and the `uv` binary), each with `codesign --force --options runtime --timestamp`, then the app with its entitlements, then `codesign --verify --deep --strict`;
+- sign inside out: every nested executable first (here the Bun binary, the bundled `python3.12`, and every `.so` and `.dylib` in the bundled Python), each with `codesign --force --options runtime --timestamp`, then the app with its entitlements, then `codesign --verify --deep --strict`;
 - zip, `xcrun notarytool submit … --keychain-profile notarytool-profile --wait`, `xcrun stapler staple`;
 - the `.dmg` built with `hdiutil`, signed, notarised and stapled the same way;
 - later, Sparkle and an appcast for updates, as Cutaway does.
@@ -76,7 +73,7 @@ Julian already signs and notarises Cutaway (`~/expts/macscreencap`: `ScreencapMe
 Two things differ from Cutaway:
 
 1. **The Bun binary needs JIT entitlements** under the hardened runtime (its JavaScript engine compiles code at run time). As far as I recall Bun's documentation lists `com.apple.security.cs.allow-jit` and related entitlements for compiled executables; to be confirmed when it is first signed.
-2. **The Python packages are not in the bundle.** `uv` installs them into Application Support on first launch, so notarisation covers only what we ship. Files `uv` downloads are not quarantined, so Gatekeeper does not check them. If Python is bundled later for offline installs, every `.so` and `.dylib` in it must be signed too, which is exactly the "sign nested binaries" loop Cutaway's script already has.
+2. **The bundled Python has many native files.** Since story 32 Python and the packages are in the archive, so every `.so` and `.dylib` in it must be signed too, which is exactly the "sign nested binaries" loop Cutaway's script already has. Nothing is downloaded at first launch, so everything that runs is covered by notarisation.
 
 ## Decisions that are Julian's
 

@@ -1,14 +1,15 @@
-"""The release: build, installer and launcher (Ceetrix stories 6 and 31).
+"""The release: build, installer and launcher (Ceetrix stories 6, 31 and 32).
 
 Unit cases run the real install.sh and launcher as subprocesses against a fake
-release (one archive per platform, its page server a fake executable) and fake
-uv served from file:// URLs, with uname faked, so they test the scripts'
-decisions without the network.
+release (one archive per platform, its page server and its bundled Python fake
+executables) served from file:// URLs, with uname faked, so they test the
+scripts' decisions without the network.
 
 The end-to-end cases (COACH_RELEASE_E2E=1) build the real release for this
-machine, install it into a temporary HOME with the real pinned uv, start it and
-run the Playwright suite against it. They download Python and the agent's
-packages.
+machine, install it into a temporary HOME, start it and run the Playwright
+suite against it. The build downloads its pinned inputs (CPython, uv and the
+agent's wheels) once into its cache; the install downloads nothing but the
+archive. COACH_RELEASE_ALL_PLATFORMS=1 also builds and inspects all four.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ import signal
 import shutil
 import socket
 import subprocess
+import sys
 import tarfile
 import time
 from pathlib import Path
@@ -31,17 +33,17 @@ REPO = Path(__file__).resolve().parents[3]
 INSTALL = REPO / "install.sh"
 LAUNCHER = REPO / "scripts" / "local-ai-coach"
 BUILD = REPO / "scripts" / "build-release.sh"
-UV_VERSION = "0.13.7"
 RUN_TIMEOUT = 60
 VERSION = "9.9.9-test"
 FAKE_SLEEP = 6017  # an unusual number, so the leftover-process check matches only our fakes
 
 SUPPORTED = [
-    ("Darwin", "arm64", "darwin-arm64", "aarch64-apple-darwin"),
-    ("Darwin", "x86_64", "darwin-x64", "x86_64-apple-darwin"),
-    ("Linux", "x86_64", "linux-x64", "x86_64-unknown-linux-gnu"),
-    ("Linux", "aarch64", "linux-arm64", "aarch64-unknown-linux-gnu"),
+    ("Darwin", "arm64", "darwin-arm64"),
+    ("Darwin", "x86_64", "darwin-x64"),
+    ("Linux", "x86_64", "linux-x64"),
+    ("Linux", "aarch64", "linux-arm64"),
 ]
+BUNDLED_PYTHON = Path("python") / "bin" / "python3"
 
 # The platform the fakes' default uname (Darwin arm64) asks for.
 HERE_PLATFORM = "darwin-arm64"
@@ -74,32 +76,35 @@ def tar_dir(src: Path, out: Path, top: str | None = None) -> None:
 
 
 class Fakes:
-    """A fake release (one archive per platform) and uv, laid out like their real download sites."""
+    """A fake release (one archive per platform), laid out like its real download site.
 
-    def __init__(self, root: Path, *, uv_sync_ok: bool = True, server_body: str = f"sleep {FAKE_SLEEP}", uv_run_body: str = f"sleep {FAKE_SLEEP}"):
+    Each archive's bundled Python is a script that logs its arguments to python_log and
+    either serves (for -m uvicorn) or answers the installer's check (exit 0 or 1)."""
+
+    def __init__(self, root: Path, *, agent_check_ok: bool = True, server_body: str = f"sleep {FAKE_SLEEP}", agent_body: str = f"sleep {FAKE_SLEEP}"):
         self.root = root
         self.release = root / "release"
-        self.uv = root / "uv"
-        for d in (self.release, self.uv / UV_VERSION):
-            d.mkdir(parents=True, exist_ok=True)
+        self.release.mkdir(parents=True, exist_ok=True)
+        self.python_log = root / "python-args.log"
+        check = "exit 0" if agent_check_ok else "echo 'ImportError: this computer is too old' >&2; exit 1"
 
-        for _, _, platform, uv_target in SUPPORTED:
+        for _, _, platform in SUPPORTED:
             tree = root / f"tree-{platform}"
             shutil.copy(LAUNCHER, (tree / "bin").mkdir(parents=True) or tree / "bin" / "local-ai-coach")
             (tree / "bin" / "local-ai-coach").chmod(0o755)
             write_exe(tree / "bin" / "coach-web", f"# fake page server for {platform}\n{server_body}")
             (tree / "VERSION").write_text(VERSION + "\n")
             (tree / "apps" / "agent").mkdir(parents=True)
+            (tree / "apps" / "agent" / "main.py").write_text("app = None\n")
+            write_exe(
+                tree / BUNDLED_PYTHON,
+                f'printf "%s\\n" "$*" >> "{self.python_log}"\ncase "$*" in *"-m uvicorn"*) {agent_body} ;; *) {check} ;; esac',
+            )
+            (tree / "python" / "lib" / "python3.12" / "site-packages").mkdir(parents=True)
             (tree / "web").mkdir()
             (tree / "web" / "index.html").write_text("<!doctype html>\n")
             tar_dir(tree, self.release / archive_name(platform))
             self.write_release_sum(platform)
-            utree = root / f"uv-tree-{uv_target}"
-            sync = "exit 0" if uv_sync_ok else "echo 'uv: failed to resolve' >&2; exit 1"
-            write_exe(utree / "uv", f'case "$1" in sync) {sync} ;; run) {uv_run_body} ;; esac')
-            uname = f"uv-{uv_target}.tar.gz"
-            tar_dir(utree, self.uv / UV_VERSION / uname, top=f"uv-{uv_target}")
-            (self.uv / UV_VERSION / f"{uname}.sha256").write_text(f"{sha256(self.uv / UV_VERSION / uname)}  {uname}\n")
 
     def write_release_sum(self, platform: str = HERE_PLATFORM, value: str | None = None) -> None:
         archive = self.release / archive_name(platform)
@@ -113,8 +118,10 @@ class Fakes:
             "HOME": str(home),
             "PATH": f"{shim}:{os.environ['PATH']}",
             "COACH_RELEASE_BASE": f"file://{self.release}",
-            "COACH_UV_BASE": f"file://{self.uv}",
         }
+
+    def python_calls(self) -> list[str]:
+        return self.python_log.read_text().splitlines() if self.python_log.exists() else []
 
 
 def run(cmd: list[str], env: dict[str, str], timeout: int = RUN_TIMEOUT) -> subprocess.CompletedProcess[str]:
@@ -141,20 +148,50 @@ def home(tmp_path: Path) -> Path:
 # ------------------------------------------------------------------ installer (unit)
 
 
-@pytest.mark.parametrize("os_name,cpu,platform,uv_target", SUPPORTED)
-def test_tc01_plan_picks_the_assets_for_each_supported_system(tmp_path, home, os_name, cpu, platform, uv_target):
+@pytest.mark.parametrize("os_name,cpu,platform", SUPPORTED)
+def test_tc01_plan_picks_the_assets_for_each_supported_system(tmp_path, home, os_name, cpu, platform):
     fakes = Fakes(tmp_path)
     result = run(["sh", str(INSTALL), "--plan"], fakes.env(home, os_name=os_name, cpu=cpu))
     assert result.returncode == 0, result.stderr
-    assert f"/{archive_name(platform)}" in result.stdout
-    assert f"{UV_VERSION}/uv-{uv_target}.tar.gz" in result.stdout
-    # Story 31 (TC-11): the page's server is in the archive, so nothing else is fetched.
-    assert len(result.stdout.strip().splitlines()) == 2
-    assert "node" not in result.stdout.lower()
+    # Stories 31 and 32: the page's server and the agent's Python are in the archive, so it is the only download.
+    assert result.stdout.strip().splitlines() == [f"release file://{fakes.release}/{archive_name(platform)}"]
+    assert "node" not in result.stdout.lower() and "uv" not in result.stdout.lower()
 
 
-@pytest.mark.parametrize("os_name,cpu,platform,uv_target", SUPPORTED)
-def test_s31_tc11_install_unpacks_this_machines_server_and_downloads_no_node(tmp_path, home, os_name, cpu, platform, uv_target):
+@pytest.mark.parametrize("os_name,cpu,platform", SUPPORTED)
+def test_s32_tc16_install_fetches_only_the_archive_and_sets_up_no_python(tmp_path, home, os_name, cpu, platform):
+    fakes = Fakes(tmp_path)
+    env = fakes.env(home, os_name=os_name, cpu=cpu)
+    fetched = tmp_path / "fetched.log"
+    write_exe(fakes.root / "shim" / "curl", f'printf "%s\\n" "$*" >> "{fetched}"\nexec {shutil.which("curl")} "$@"')
+    result = run(["sh", str(INSTALL)], env)
+    assert result.returncode == 0, result.stderr
+    urls = [arg for line in fetched.read_text().splitlines() for arg in line.split() if arg.startswith("file://")]
+    assert urls == [f"file://{fakes.release}/{archive_name(platform)}", f"file://{fakes.release}/{archive_name(platform)}.sha256"]
+    out = result.stdout + result.stderr
+    assert "uv" not in out.lower() and "Checking the coach runs on this computer" in out
+    root = home / ".local-ai-coach"
+    assert not (root / "python").exists() and not (root / "app" / "uv").exists()
+    # The check ran the platform's own bundled Python, isolated, on the agent.
+    assert len(fakes.python_calls()) == 1 and fakes.python_calls()[0].startswith("-I -B")
+    assert (root / "app" / "release" / BUNDLED_PYTHON).exists()
+
+
+def test_s32_tc16b_an_install_tidies_the_python_older_installs_kept(tmp_path, home):
+    """Installs before story 32 had uv put a Python in ~/.local-ai-coach/python."""
+    fakes = Fakes(tmp_path)
+    old_python = home / ".local-ai-coach" / "python" / "cpython-3.12-macos" / "bin" / "python3"
+    old_python.parent.mkdir(parents=True)
+    old_python.write_text("x")
+    progress = home / ".local-ai-coach" / "progress.json"
+    progress.write_text("{}")
+    assert install(fakes, home).returncode == 0
+    assert not (home / ".local-ai-coach" / "python").exists()
+    assert progress.read_text() == "{}"
+
+
+@pytest.mark.parametrize("os_name,cpu,platform", SUPPORTED)
+def test_s31_tc11_install_unpacks_this_machines_server_and_downloads_no_node(tmp_path, home, os_name, cpu, platform):
     fakes = Fakes(tmp_path)
     result = install(fakes, home, os_name=os_name, cpu=cpu)
     assert result.returncode == 0, result.stderr
@@ -195,18 +232,30 @@ def test_tc04_a_missing_download_leaves_the_earlier_install(tmp_path, home):
     assert snapshot_tree(home / ".local-ai-coach") == before
 
 
-def test_tc07_a_failed_agent_set_up_keeps_the_earlier_install(tmp_path, home):
+def test_tc07_an_agent_that_cannot_run_here_keeps_the_earlier_install(tmp_path, home):
     good = Fakes(tmp_path / "good")
     assert install(good, home).returncode == 0
     before = snapshot_tree(home / ".local-ai-coach")
     link_before = os.readlink(home / ".local-ai-coach" / "app")
-    bad = Fakes(tmp_path / "bad", uv_sync_ok=False)
+    bad = Fakes(tmp_path / "bad", agent_check_ok=False)
     result = install(bad, home)
     assert result.returncode != 0
-    assert "setting up the coach's agent failed" in result.stderr
+    assert "the coach's agent could not run on this computer" in result.stderr
+    assert "Any earlier install was kept" in result.stderr
+    assert "this computer is too old" in result.stderr  # the reason is passed on
     assert os.readlink(home / ".local-ai-coach" / "app") == link_before
     assert snapshot_tree(home / ".local-ai-coach") == before
     assert len(list((home / ".local-ai-coach").glob("app-*"))) == 1
+
+
+def test_s32_tc07b_an_agent_that_cannot_run_here_installs_nothing(tmp_path, home):
+    bad = Fakes(tmp_path, agent_check_ok=False)
+    result = install(bad, home)
+    assert result.returncode != 0
+    assert "the coach's agent could not run on this computer" in result.stderr
+    assert not (home / ".local-ai-coach" / "app").exists()
+    assert list((home / ".local-ai-coach").glob("app-*")) == []
+    assert not (home / ".local" / "bin" / "local-ai-coach").exists()
 
 
 def test_install_links_the_command_and_a_reinstall_replaces_the_version(tmp_path, home):
@@ -345,6 +394,22 @@ def test_tc15_stopping_from_the_terminal_is_clean(tmp_path, home, stop, bash):
     assert not fake_processes_running(), "a fake server was left running"
 
 
+def test_s32_tc17_the_launcher_runs_the_bundled_python_isolated(tmp_path, home):
+    fakes = Fakes(tmp_path)
+    assert install(fakes, home).returncode == 0
+    env = healthy_env(fakes, home)
+    pid, fd, out = start_in_terminal(["/bin/bash", command(home), "--no-open"], env, b"Press Ctrl-C")
+    try:
+        assert b"The coach is running at" in out, out
+        release = home / ".local-ai-coach" / "app" / "release"  # through the app link, as the command finds it
+        agent_call = [c for c in fakes.python_calls() if "-m uvicorn" in c]
+        assert agent_call == [f"-I -B -m uvicorn --app-dir {release}/apps/agent main:app --host 127.0.0.1 --port {env['COACH_AGENT_PORT']}"]
+    finally:
+        os.write(fd, CTRL_C)
+        wait_for_exit(pid, fd)
+        os.close(fd)
+
+
 def test_tc10_version(tmp_path, home):
     fakes = Fakes(tmp_path)
     assert install(fakes, home).returncode == 0
@@ -365,6 +430,14 @@ def test_tc11_uninstall_keeps_progress(tmp_path, home):
     assert list((home / ".local-ai-coach").glob("app-*")) == []
     assert not (home / ".local" / "bin" / "local-ai-coach").exists()
     assert progress.read_bytes() == before
+
+
+def test_s32_uninstall_also_removes_the_python_older_installs_kept(tmp_path, home):
+    fakes = Fakes(tmp_path)
+    assert install(fakes, home).returncode == 0
+    (home / ".local-ai-coach" / "python").mkdir()
+    assert run([command(home), "uninstall"], fakes.env(home)).returncode == 0
+    assert not (home / ".local-ai-coach" / "python").exists()
 
 
 def test_unknown_option_is_refused(tmp_path, home):
@@ -396,9 +469,63 @@ def test_tc06b_check_tree_accepts_a_clean_tree_with_an_env_template(tmp_path):
     assert result.returncode == 0, result.stderr
 
 
+def fetch_pinned(url: str, file: Path, want: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["bash", str(BUILD), "--fetch-pinned", url, str(file), want], capture_output=True, text=True, check=False)
+
+
+def test_s32_tc18_a_build_input_with_the_wrong_fingerprint_is_refused(tmp_path):
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "cpython.tar.gz").write_bytes(b"not the pinned build")
+    target = tmp_path / "cache" / "cpython.tar.gz"
+    target.parent.mkdir()
+    result = fetch_pinned(f"file://{site}/cpython.tar.gz", target, hashlib.sha256(b"the pinned build").hexdigest())
+    assert result.returncode != 0
+    assert "cpython.tar.gz could not be verified" in result.stderr
+    assert list(target.parent.iterdir()) == []  # nothing kept, not even the partial download
+
+
+def test_s32_tc18b_a_corrupt_cached_input_is_fetched_again(tmp_path):
+    good = b"the pinned build"
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "cpython.tar.gz").write_bytes(good)
+    target = tmp_path / "cpython.tar.gz"
+    target.write_bytes(b"truncated")
+    result = fetch_pinned(f"file://{site}/cpython.tar.gz", target, hashlib.sha256(good).hexdigest())
+    assert result.returncode == 0, result.stderr
+    assert target.read_bytes() == good
+
+
+def test_s32_tc18c_a_good_cached_input_is_used_without_downloading(tmp_path):
+    good = b"the pinned build"
+    target = tmp_path / "cpython.tar.gz"
+    target.write_bytes(good)
+    result = fetch_pinned(f"file://{tmp_path}/nowhere/cpython.tar.gz", target, hashlib.sha256(good).hexdigest())
+    assert result.returncode == 0, result.stderr
+    assert target.read_bytes() == good
+
+
+def test_s32_tc18d_the_build_stops_before_building_when_an_input_fails(tmp_path):
+    site = tmp_path / "site" / "0.13.7"
+    site.mkdir(parents=True)
+    for name in ("uv-aarch64-apple-darwin.tar.gz", "uv-x86_64-apple-darwin.tar.gz", "uv-x86_64-unknown-linux-gnu.tar.gz", "uv-aarch64-unknown-linux-gnu.tar.gz"):
+        (site / name).write_bytes(b"tampered")
+    env = {**os.environ, "COACH_RELEASE_CACHE": str(tmp_path / "cache"), "COACH_UV_BASE": f"file://{tmp_path / 'site'}", "COACH_RELEASE_PLATFORMS": "linux-x64"}
+    result = subprocess.run(["bash", str(BUILD), VERSION], env=env, capture_output=True, text=True, timeout=RUN_TIMEOUT, check=False)
+    assert result.returncode != 0
+    assert "could not be verified" in result.stderr and "uv-" in result.stderr
+    assert "Building the stub coach's page" not in result.stdout
+
+
 # ------------------------------------------------------------------ end to end (opt-in)
 
-e2e = pytest.mark.skipif(os.environ.get("COACH_RELEASE_E2E") != "1", reason="set COACH_RELEASE_E2E=1 (builds and downloads about 100 MB)")
+e2e = pytest.mark.skipif(os.environ.get("COACH_RELEASE_E2E") != "1", reason="set COACH_RELEASE_E2E=1 (builds; downloads the pinned inputs once)")
+all_platforms = pytest.mark.skipif(
+    os.environ.get("COACH_RELEASE_E2E") != "1" or os.environ.get("COACH_RELEASE_ALL_PLATFORMS") != "1",
+    reason="set COACH_RELEASE_E2E=1 and COACH_RELEASE_ALL_PLATFORMS=1 (builds all four archives)",
+)
+BUNDLED_VERSION = "3.12.16"
 BUILD_TIMEOUT = 900
 # What a reinstall must leave alone: the learner's record, Restart coach's archive and ratings.
 LEARNER_OWNS = ("progress.stub.json", "consent.json", "old", "ratings")
@@ -429,8 +556,12 @@ def test_tc05_archive_contents(built_release):
     archive = built_release / archive_name(this_platform())
     with tarfile.open(archive) as tar:
         names = tar.getnames()
-    for needed in ("./VERSION", "./bin/local-ai-coach", "./bin/coach-web", "./web/index.html", "./apps/agent/uv.lock", "./apps/agent/main.py", "./curriculum/stations.json"):
+    for needed in ("./VERSION", "./bin/local-ai-coach", "./bin/coach-web", "./web/index.html", "./apps/agent/main.py", "./curriculum/stations.json", f"./{BUNDLED_PYTHON}"):
         assert needed in names, needed
+    # Story 32: the agent's packages are installed and compiled, and no uv comes along.
+    assert any(n.startswith("./python/lib/python3.12/site-packages/fastapi/") for n in names)
+    assert any(n.startswith("./apps/agent/__pycache__/main.cpython-312") for n in names)
+    assert not [n for n in names if n.split("/")[-1] in ("uv", "uvx")]
     assert any(n.endswith(".js") and n.startswith("./web/") for n in names)
     assert not [n for n in names if n.endswith(".map")], "source maps in the archive"
     assert not [n for n in names if n.endswith(".node")]
@@ -438,6 +569,91 @@ def test_tc05_archive_contents(built_release):
     assert not [n for n in names if n.startswith(("./apps/agent/tests", "./apps/agent/.venv"))]
     assert not [n for n in names if n.split("/")[-1].startswith("._")], "macOS metadata files in the archive"
     assert (built_release / f"{archive.name}.sha256").read_text().split()[0] == sha256(archive)
+
+
+def unpacked(dist: Path, platform: str, into: Path) -> Path:
+    with tarfile.open(dist / archive_name(platform)) as tar:
+        tar.extractall(into, filter="tar")
+    return into
+
+
+def locked_pins() -> dict[str, str]:
+    """name -> version for every package uv.lock installs for the agent (no dev group) on
+    this computer: a package whose marker excludes it here (pywin32 on Windows only) is left out."""
+    from packaging.requirements import Requirement
+
+    out = subprocess.run(["uv", "export", "--frozen", "--no-dev", "--no-emit-project", "--no-hashes", "--format", "requirements-txt"],
+                         cwd=REPO / "apps" / "agent", capture_output=True, text=True, check=True).stdout
+    pins = {}
+    for line in out.splitlines():
+        line = line.strip()
+        if not line or line.startswith(("#", "-")):
+            continue
+        req = Requirement(line)
+        if req.marker is None or req.marker.evaluate():
+            pins[req.name.lower().replace("_", "-")] = str(req.specifier).removeprefix("==")
+    return pins
+
+
+@e2e
+def test_s32_tc20_the_bundled_packages_are_the_locked_ones(built_release, tmp_path):
+    tree = unpacked(built_release, this_platform(), tmp_path / "tree")
+    listing = subprocess.run(
+        [str(tree / BUNDLED_PYTHON), "-I", "-B", "-c",
+         "import importlib.metadata as m, platform; print(platform.python_version()); "
+         "[print(d.metadata['Name'], d.version) for d in m.distributions()]"],
+        capture_output=True, text=True, check=True,
+    ).stdout.splitlines()
+    assert listing[0] == BUNDLED_VERSION
+    bundled = {name.lower().replace("_", "-"): version for name, version in (line.rsplit(" ", 1) for line in listing[1:])}
+    pins = locked_pins()
+    # Every locked package is bundled at its locked version; nothing else is, apart from CPython's own pip.
+    assert {n: bundled.get(n) for n in pins} == pins
+    assert set(bundled) - set(pins) <= {"pip"}, sorted(set(bundled) - set(pins))
+
+
+@e2e
+def test_s32_tc21_the_environment_cannot_change_what_the_bundled_python_loads(built_release, tmp_path):
+    tree = unpacked(built_release, this_platform(), tmp_path / "tree")
+    planted = tmp_path / "planted"
+    (planted / "fastapi").mkdir(parents=True)
+    (planted / "fastapi" / "__init__.py").write_text("raise SystemExit('planted fastapi loaded')\n")
+    env = {**os.environ, "PYTHONPATH": str(planted), "PYTHONHOME": str(planted), "PYTHONSTARTUP": str(planted / "fastapi" / "__init__.py")}
+    # The launcher's flags, run from a folder that also holds the planted package.
+    result = subprocess.run([str(tree / BUNDLED_PYTHON), "-I", "-B", "-c", "import fastapi; print(fastapi.__file__)"],
+                            cwd=planted, env=env, capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip().startswith(str(tree.resolve() / "python")), result.stdout
+
+
+# What `file` says a native extension built for each platform is.
+NATIVE_KIND = {
+    "darwin-arm64": ("Mach-O", "arm64"),
+    "darwin-x64": ("Mach-O", "x86_64"),
+    "linux-x64": ("ELF", "x86-64"),
+    "linux-arm64": ("ELF", "aarch64"),
+}
+
+
+@pytest.fixture(scope="module")
+def all_built(tmp_path_factory) -> Path:
+    env = {**os.environ, "COACH_RELEASE_PLATFORMS": " ".join(NATIVE_KIND)}
+    result = subprocess.run(["bash", str(BUILD), VERSION], env=env, capture_output=True, text=True, timeout=BUILD_TIMEOUT * 4, check=False)
+    assert result.returncode == 0, result.stderr[-2000:]
+    return REPO / "dist"
+
+
+@all_platforms
+@pytest.mark.parametrize("platform", list(NATIVE_KIND))
+def test_s32_tc22_each_archive_bundles_its_own_platforms_python(all_built, platform, tmp_path):
+    tree = unpacked(all_built, platform, tmp_path / platform)
+    natives = sorted((tree / "python").rglob("*.so")) + [tree / BUNDLED_PYTHON.parent / "python3.12"]
+    assert len(natives) > 1
+    fmt, cpu = NATIVE_KIND[platform]
+    # One file at a time: a universal Mac binary (wheels built as universal2) prints a line per CPU.
+    kinds = {p: subprocess.run(["file", "-bL", str(p)], capture_output=True, text=True, check=True).stdout for p in natives}
+    wrong = [f"{p.name}: {k}" for p, k in kinds.items() if fmt not in k or cpu not in k]
+    assert not wrong, wrong[:5]
 
 
 @e2e

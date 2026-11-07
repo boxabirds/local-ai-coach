@@ -15,7 +15,7 @@
 # Both listen on 127.0.0.1 only: nothing on your network can reach them.
 set -uo pipefail
 # Each part runs in its own process group, so stopping it also stops anything it
-# started (uv starts Python; stopping uv alone could leave Python running).
+# started (uvicorn may start worker processes).
 # Job control (set -m) is on only while the two parts start: left on, every
 # foreground sleep in the wait loop gets its own group and the terminal, so
 # Ctrl-C reaches only that sleep. Bash 3.2 then ignores it; bash 5 leaves the
@@ -31,7 +31,8 @@ done
 RELEASE="$(cd "$(dirname "$SELF")/.." && pwd)"
 APP_DIR="$(cd "$RELEASE/.." && pwd -P)"
 INSTALL_ROOT="$(dirname "$APP_DIR")"
-UV="$APP_DIR/uv/uv"
+# The agent's own Python, shipped in the archive (story 32).
+PY="$RELEASE/python/bin/python3"
 
 APP_PORT="${COACH_APP_PORT:-3000}"
 AGENT_PORT="${COACH_AGENT_PORT:-8123}"
@@ -51,7 +52,8 @@ case "${1:-}" in
     ;;
   uninstall)
     rm -f "$HOME/.local/bin/local-ai-coach"
-    rm -rf "$INSTALL_ROOT/app" "$INSTALL_ROOT"/app-*
+    # python/ is where installs before story 32 kept their Python.
+    rm -rf "$INSTALL_ROOT/app" "$INSTALL_ROOT"/app-* "$INSTALL_ROOT/python"
     say "Removed the coach. Your progress is still in $COACH_HOME (delete that folder to remove it too)."
     exit 0
     ;;
@@ -88,7 +90,9 @@ say "Starting the coach (version $(cat "$RELEASE/VERSION"))"
 (
   cd "$RELEASE/apps/agent" || exit 1
   export COACH_HOME
-  exec "$UV" run --frozen --no-dev --quiet uvicorn main:app --host "$HOST" --port "$AGENT_PORT"
+  # -I: no PYTHON* settings, user packages or current folder decide what loads.
+  # -B: nothing is written into the install.
+  exec "$PY" -I -B -m uvicorn --app-dir "$RELEASE/apps/agent" main:app --host "$HOST" --port "$AGENT_PORT"
 ) </dev/null >"$LOGS/agent.log" 2>&1 &
 AGENT_PID=$!
 

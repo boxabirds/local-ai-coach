@@ -1,6 +1,8 @@
 # Moving the backend to Rust: what it would involve (2026-11-07)
 
-Asked by Julian: "investigate what would be involved in migrating the backend to Rust". This is an investigation, not a plan of record. Nothing has changed. Every decision below is Julian's.
+Asked by Julian: "investigate what would be involved in migrating the backend to Rust". This is an investigation, not a plan of record.
+
+**Decided (Julian, 2026-11-07): not Rust. Ship a prebuilt Python bundle instead** ("let's stick with a prebuilt python bundle"), after the measurements below showed Python's overhead is about 110 MB and the safety gains come from shipping one prebuilt artefact. Done in story 32: each release archive carries CPython 3.12.16 with the agent's locked packages, and install downloads nothing else.
 
 "Backend" here means the Python agent in `apps/agent` (port 8123). The Bun web server (`apps/app/server.ts`, 341 lines of route handlers in `src/api/`) is covered briefly at the end. Most of those handlers forward to the agent.
 
@@ -134,9 +136,9 @@ Its handlers are thin: they check the request's origin, forward to the agent, an
 
 ## Decisions that are Julian's
 
-1. Is the goal "no Python on the tester's machine", or Rust itself? If it's the first, option 1 or 2 above gets there without leaving upstream.
-2. Retire "the upstream stack runs unchanged" for the agent, and with it the three do-not-touch agent files?
-3. Run step 1 (the measurements) before deciding?
+1. ~~Is the goal "no Python on the tester's machine", or Rust itself?~~ Resource overhead and safety; measured, then decided: a prebuilt Python bundle (option 1 above), story 32.
+2. ~~Retire "the upstream stack runs unchanged" for the agent?~~ No: the agent stays Python and upstream.
+3. ~~Run step 1 (the measurements) before deciding?~~ Memory and start-up measured (above); the Deep Agents tool use was not needed for the decision.
 
 ## Sources
 
