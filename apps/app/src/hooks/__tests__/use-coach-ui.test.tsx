@@ -10,6 +10,7 @@ const captured = vi.hoisted(() => ({
   useHumanInTheLoop: [] as Array<{ name: string }>,
   useRenderTool: [] as Array<{ name: string }>,
   useDefaultRenderTool: 0,
+  defaultRender: null as null | ((p: { name: string; status: string; parameters?: unknown }) => React.ReactElement),
 }));
 
 vi.mock("@copilotkit/react-core/v2", () => ({
@@ -17,8 +18,9 @@ vi.mock("@copilotkit/react-core/v2", () => ({
   useFrontendTool: (config: { name: string }) => void captured.useFrontendTool.push(config),
   useHumanInTheLoop: (config: { name: string }) => void captured.useHumanInTheLoop.push(config),
   useRenderTool: (config: { name: string }) => void captured.useRenderTool.push(config),
-  useDefaultRenderTool: () => {
+  useDefaultRenderTool: (config: { render: typeof captured.defaultRender }) => {
     captured.useDefaultRenderTool += 1;
+    captured.defaultRender = config.render;
   },
   useAgent: useAgentMock,
   UseAgentUpdate: { OnMessagesChanged: "OnMessagesChanged", OnStateChanged: "OnStateChanged", OnRunStatusChanged: "OnRunStatusChanged" },
@@ -49,8 +51,36 @@ describe("useCoachUI (TC-57)", () => {
     expect(captured.useHumanInTheLoop.map((c) => c.name)).toEqual(["story", "show_next_step", "step_card", "number_card", "choice_card", "consent_card", "run_confirm", "recap_card"]);
     expect(captured.useComponent.map((c) => c.name)).toEqual(["check_result", "show_map"]);
     expect(captured.useRenderTool.map((c) => c.name)).toEqual(["run_check", "chapter_ended", "run_do_it"]);
-    expect(captured.useFrontendTool.map((c) => c.name)).toEqual(["sandbox_event"]);
+    expect(captured.useFrontendTool.map((c) => c.name)).toEqual(["show_big_map", "sandbox_event"]);
     expect(captured.useDefaultRenderTool).toBe(1);
+  });
+
+  // Story 38: the coach can open the whole map, exactly as the header's Map button does.
+  it("TC-01: show_big_map is a frontend tool with a description and no parameters", () => {
+    render(<Probe />);
+    const tool = captured.useFrontendTool.find((c) => c.name === "show_big_map") as unknown as { description: string; parameters: { safeParse: (v: unknown) => { success: boolean }; shape: object } };
+    expect(tool.description).toMatch(/whole map/i);
+    expect(Object.keys(tool.parameters.shape)).toEqual([]);
+    expect(tool.parameters.safeParse({}).success).toBe(true);
+  });
+
+  it("TC-02: its handler opens the map through the openMap it was given, once, and tells the model", async () => {
+    const openMap = vi.fn();
+    function WithMap() {
+      useCoachUI({ openMap });
+      return null;
+    }
+    render(<WithMap />);
+    const tool = captured.useFrontendTool.find((c) => c.name === "show_big_map") as unknown as { handler: (args: object) => Promise<string> };
+    const said = await tool.handler({});
+    expect(openMap).toHaveBeenCalledTimes(1);
+    expect(said).toMatch(/map is open/i);
+  });
+
+  it("TC-03: nothing is drawn in the conversation for show_big_map", () => {
+    render(<Probe />);
+    const { container } = render(captured.defaultRender!({ name: "show_big_map", status: "complete", parameters: {} }));
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("registers none of the deleted demo tools", () => {

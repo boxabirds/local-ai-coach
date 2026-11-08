@@ -119,8 +119,15 @@ const RunDoItParams = z.object({
 
 const SandboxEventParams = z.object({ step_id: z.string(), event: z.record(z.string(), z.unknown()) });
 
-/** Tools whose calls show the upstream reasoning card, so nothing the coach does is silent. */
-const SILENT_TOOLS = new Set<string>(["run_check"]);
+// Story 38: the coach opens the whole map itself, exactly as the header's Map button does.
+export const BIG_MAP_TOOL = "show_big_map"; // also written out in useFrontendTool below, where the eval harness's check reads it
+const BigMapParams = z.object({});
+const BIG_MAP_OPEN = "The whole map is open on the learner's screen, as if they had pressed Map. They close it themselves. Don't open it again unless they ask again.";
+const BIG_MAP_ALREADY = "The whole map was already shown for this message, so it wasn't opened again. Don't open it again unless the learner asks again.";
+
+/** Tools whose calls show the upstream reasoning card, so nothing the coach does is silent.
+ * show_big_map is the exception that proves it: what it does is the map itself. */
+const SILENT_TOOLS = new Set<string>(["run_check", BIG_MAP_TOOL]);
 
 // station and step since story 19; the old names stay accepted for conversations from before it.
 const RunCheckParams = z.object({ station: z.string().optional(), step: z.string().optional(), station_id: z.string().optional(), step_id: z.string().optional() });
@@ -162,7 +169,7 @@ function ShowMap({ focus }: { focus?: string }) {
   return <TubeMap stations={Array.isArray(snapshot) ? snapshot : undefined} focus={focus} />;
 }
 
-export const useCoachUI = () => {
+export const useCoachUI = ({ openMap }: { openMap?: () => boolean | void } = {}) => {
   useHumanInTheLoop({
     name: "story",
     description: "Show a story from the curriculum, with one closing question. Returns {read, answer}.",
@@ -338,6 +345,14 @@ export const useCoachUI = () => {
     render: ({ parameters, status, result }) => (
       <TerminalTranscript cmd={parameters.cmd ?? ""} output={result ?? ""} status={status as CardStatus} />
     ),
+  });
+
+  useFrontendTool({
+    name: "show_big_map",
+    description:
+      "Open the whole map over the page, exactly as the Map button does: every station in the book, how they connect, where the learner is and the route to their goal. For when the learner asks to see the whole map or where the journey leads. Not for the Where am I on the map? starter: that one is show_map, the small map of this version's stations in the conversation. Once per request.",
+    parameters: BigMapParams,
+    handler: async () => (openMap?.() === false ? BIG_MAP_ALREADY : BIG_MAP_OPEN),
   });
 
   useFrontendTool({

@@ -1,0 +1,19 @@
+{
+ "id": "D-16",
+ "kind": "steering",
+ "note": "the Where am I on the map? starter keeps the small map",
+ "history": [
+  {
+   "type": "human",
+   "content": "Where am I on the map?"
+  }
+ ],
+ "expect_tool": "show_map",
+ "expect_args": {},
+ "must_not": [
+  {
+   "tool": "show_big_map"
+  }
+ ],
+ "text_end_ok": false
+}

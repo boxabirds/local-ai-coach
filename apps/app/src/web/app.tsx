@@ -36,12 +36,27 @@ const COACH = COACH_STUB ? "stub" : "model";
 const PAGE_UPDATES = [UseAgentUpdate.OnRunStatusChanged];
 
 export default function HomePage() {
-  useCoachUI();
+  const [mapOpen, setMapOpen] = useState(false);
+  // The Map button and the coach's show_big_map tool open the same map the same way (story 38).
+  const openMap = useCallback(() => setMapOpen(true), []);
+  // The coach opens it at most once per learner message: a second call in the same turn (seen
+  // with the real model) would reopen a map the learner had just closed. The button always opens it.
+  const agentRef = useRef<{ messages: Array<{ role: string }> } | null>(null);
+  const coachOpenedFor = useRef(-1);
+  const openMapForCoach = useCallback(() => {
+    const asked = (agentRef.current?.messages ?? []).filter((m) => m.role === "user").length;
+    if (asked === coachOpenedFor.current) return false;
+    coachOpenedFor.current = asked;
+    openMap();
+    return true;
+  }, [openMap]);
+  useCoachUI({ openMap: openMapForCoach });
   useExampleSuggestions();
   // One thread id for the page's agent and the chat (new each load; see newThreadId),
   // so the restored conversation lands in the agent copy the chat actually renders.
   const [threadId] = useState(newThreadId);
   const { agent } = useAgent({ threadId, updates: PAGE_UPDATES });
+  agentRef.current = agent;
   // A restored conversation opens at its end: FollowEnd starts out following (story 28).
   const { kept } = usePersistedChat(agent as unknown as PersistableAgent);
   const { newChat, hasKeys, where, keysOpen, setKeysOpen } = useProviderKeys();
@@ -49,7 +64,6 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [restartOpen, setRestartOpen] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false);
   // Story 34: ratings and notes not yet in a feedback file, on the Send feedback button.
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [unsent, setUnsent] = useState<number | null>(null);
@@ -139,7 +153,7 @@ export default function HomePage() {
           <StubBadge />
         </span>
         <nav aria-label="Main navigation">
-          <button type="button" onClick={() => setMapOpen(true)} aria-haspopup="dialog">
+          <button type="button" onClick={openMap} aria-haspopup="dialog">
             Map
           </button>
           <button type="button" onClick={() => stopThen(newChat)} disabled={retrying}>

@@ -526,6 +526,7 @@ def test_s36_tca4_the_signed_apps_real_coach_answers_with_the_saved_keys(signed_
         shutil.copy(chosen, Path(env["COACH_HOME"]) / chosen.name)
     app = RunningApp(signed_app, env)
     try:
-        smoke(app.ready(), tmp_path, "e2e/real/turn.spec.ts", COACH_E2E_REAL="1")
+        # Story 38: and asked in words, it opens the whole map the Map button opens.
+        smoke(app.ready(), tmp_path, "e2e/real/turn.spec.ts", "e2e/real/map.spec.ts", COACH_E2E_REAL="1")
     finally:
         assert app.quit() == 0

@@ -98,7 +98,7 @@ def test_the_declared_card_tools_match_what_the_app_registers():
     from pathlib import Path
 
     hook = (Path(__file__).resolve().parents[3] / "apps" / "app" / "src" / "hooks" / "use-coach-ui.tsx").read_text(encoding="utf-8")
-    registered = set(re.findall(r'useHumanInTheLoop\(\{\s*name: "([^"]+)"', hook)) | set(re.findall(r'useComponent\(\{\s*name: "([^"]+)"', hook))
+    registered = set(re.findall(r'useHumanInTheLoop\(\{\s*name: "([^"]+)"', hook)) | set(re.findall(r'useComponent\(\{\s*name: "([^"]+)"', hook)) | set(re.findall(r'useFrontendTool\(\{\s*name: "([^"]+)"', hook))
     declared = {t.name for t in harness.BROWSER_TOOLS}
     assert declared <= registered, declared - registered
 

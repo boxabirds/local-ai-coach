@@ -1,0 +1,14 @@
+{
+ "id": "D-17",
+ "kind": "steering",
+ "note": "a fresh learner asks where it all leads, without saying map: open the whole map",
+ "history": [
+  {
+   "type": "human",
+   "content": "What else is there to learn after all this? Where does it lead?"
+  }
+ ],
+ "expect_tool": "show_big_map",
+ "expect_args": {},
+ "text_end_ok": true
+}

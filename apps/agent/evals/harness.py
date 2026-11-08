@@ -181,7 +181,13 @@ def show_map(focus: str = "") -> str:
     raise AssertionError("never executed")
 
 
-BROWSER_TOOLS = [story_card, show_next_step, step_card, number_card, choice_card, consent_card, show_map]
+@tool
+def show_big_map() -> str:
+    """Open the whole map over the page, exactly as the Map button does: every station in the book, how they connect, where the learner is and the route to their goal. For when the learner asks to see the whole map or where the journey leads. Not for the Where am I on the map? starter: that one is show_map, the small map of this version's stations in the conversation. Once per request."""
+    raise AssertionError("never executed")
+
+
+BROWSER_TOOLS = [story_card, show_next_step, step_card, number_card, choice_card, consent_card, show_map, show_big_map]
 
 
 # ------------------------------------------------------------------ cases
@@ -260,7 +266,7 @@ def build_agent(model: Any = None):
     )
 
 
-BROWSER_NAMES = {"story", "show_next_step", "step_card", "number_card", "choice_card", "consent_card", "show_map"}
+BROWSER_NAMES = {"story", "show_next_step", "step_card", "number_card", "choice_card", "consent_card", "show_map", "show_big_map"}
 
 
 def run_turn(agent: Any, history: list[dict[str, Any]], thread: str) -> Decision:

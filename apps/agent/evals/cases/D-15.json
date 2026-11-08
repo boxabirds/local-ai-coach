@@ -1,0 +1,14 @@
+{
+ "id": "D-15",
+ "kind": "steering",
+ "note": "a fresh learner asks to see the whole map: open it",
+ "history": [
+  {
+   "type": "human",
+   "content": "Can I see the whole map?"
+  }
+ ],
+ "expect_tool": "show_big_map",
+ "expect_args": {},
+ "text_end_ok": true
+}
