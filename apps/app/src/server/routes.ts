@@ -3,8 +3,11 @@
  * method. The paths are the ones the page has always used; the handlers live in src/api and take
  * a Request (plus the path's parameters) and return a Response.
  */
+import * as coachFeedback from "@/api/coach-feedback";
+import * as coachFeedbackFile from "@/api/coach-feedback-file";
 import * as coachGoal from "@/api/coach-goal";
 import * as coachKeys from "@/api/coach-keys";
+import * as coachNote from "@/api/coach-note";
 import * as coachProvider from "@/api/coach-provider";
 import * as coachProviderCheck from "@/api/coach-provider-check";
 import * as coachRating from "@/api/coach-rating";
@@ -41,6 +44,9 @@ export const ROUTES: Record<string, HandlerModule> = {
   "/api/coach-provider": coachProvider,
   "/api/coach-provider/check": coachProviderCheck,
   "/api/coach-rating": coachRating,
+  "/api/coach-note": coachNote,
+  "/api/coach-feedback": coachFeedback,
+  "/api/coach-feedback-file": coachFeedbackFile,
   "/api/coach-restart": coachRestart,
   "/api/coach-goal": coachGoal,
   "/api/curriculum/map": curriculumMap,

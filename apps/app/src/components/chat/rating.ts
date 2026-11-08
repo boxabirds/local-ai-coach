@@ -3,12 +3,14 @@
  * conversation as this browser holds it (agent.messages). The agent keeps it on this computer.
  */
 import type { RateRequest, RateResult } from "@/hooks/use-ask-about";
+import type { Coach } from "./feedback";
 
 export const RATING_ROUTE = "/api/coach-rating";
 const NOT_SAVED = "I couldn't save that rating.";
 
-export function ratingBody(threadId: string, messages: readonly unknown[], request: RateRequest) {
+export function ratingBody(threadId: string, messages: readonly unknown[], request: RateRequest, coach: Coach = "model") {
   return {
+    coach,
     thread_id: threadId,
     message_id: request.messageId,
     rating: request.rating,
@@ -18,12 +20,18 @@ export function ratingBody(threadId: string, messages: readonly unknown[], reque
   };
 }
 
-export async function sendRating(threadId: string, messages: readonly unknown[], request: RateRequest, post: typeof fetch = fetch): Promise<RateResult> {
+export async function sendRating(
+  threadId: string,
+  messages: readonly unknown[],
+  request: RateRequest,
+  post: typeof fetch = fetch,
+  coach: Coach = "model",
+): Promise<RateResult> {
   try {
     const response = await post(RATING_ROUTE, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(ratingBody(threadId, messages, request)),
+      body: JSON.stringify(ratingBody(threadId, messages, request, coach)),
     });
     if (response.ok) return { ok: true };
     const reply = (await response.json().catch(() => ({}))) as { error?: unknown };

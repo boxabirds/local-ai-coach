@@ -13,6 +13,10 @@ const OLD_ROUTES: Record<string, string[]> = {
   "/api/coach-provider": ["GET", "POST", "DELETE"],
   "/api/coach-provider/check": ["POST"],
   "/api/coach-rating": ["POST"],
+  // Story 34.
+  "/api/coach-note": ["POST"],
+  "/api/coach-feedback": ["GET"],
+  "/api/coach-feedback-file": ["POST"],
   "/api/coach-restart": ["POST"],
   "/api/coach-goal": ["POST"],
   "/api/curriculum/map": ["GET"],

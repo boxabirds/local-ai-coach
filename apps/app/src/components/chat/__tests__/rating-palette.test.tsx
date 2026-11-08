@@ -299,6 +299,14 @@ describe("what the browser sends", () => {
     expect(ratingBody("t1", messages, request)).toMatchObject({ thread_id: "t1", message_id: "a1", rating: "down", reason: "why", messages });
   });
 
+  it("story 34 TC-20: a rating says when the stub coach answered", async () => {
+    const post = vi.fn(async () => Response.json({ saved: "ratings/x.json" }));
+    await sendRating("t1", messages, request, post as unknown as typeof fetch, "stub");
+    const [, init] = post.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body)).coach).toBe("stub");
+    expect(ratingBody("t1", messages, request).coach).toBe("model");
+  });
+
   it("passes the coach's own error line on, or its own when there is none", async () => {
     const refused = vi.fn(async () => Response.json({ error: "Only the coach itself can save a rating." }, { status: 403 }));
     expect(await sendRating("t1", messages, request, refused as unknown as typeof fetch)).toEqual({ ok: false, error: "Only the coach itself can save a rating." });

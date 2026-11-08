@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProviderKeysDialog } from "@/components/chat/provider-keys-dialog";
 import { RestartDialog } from "@/components/chat/restart-dialog";
+import { FeedbackDialog, feedbackLabel } from "@/components/chat/feedback-dialog";
+import { unsentCount } from "@/components/chat/feedback";
 import { WholeMap } from "@/components/coach/whole-map";
 import { useProviderKeys } from "@/components/chat/provider-keys";
 import { COACH_STUB, KeyGatedChatView, StubBadge } from "@/components/chat/key-gated-chat-view";
@@ -27,6 +29,8 @@ import { newThreadId } from "@/lib/chat-store";
 const NOT_KEPT = "I can't keep this conversation in this browser, so a reload will lose it.";
 /** The chat's message renderers, one object for the page's life (story 22). */
 const MESSAGE_VIEW = { assistantMessage: { markdownRenderer: AnswerMarkdown }, userMessage: { messageRenderer: QuotedUserText } };
+/** Which coach answers, recorded with each rating and note (story 34). */
+const COACH = COACH_STUB ? "stub" : "model";
 /** The page redraws when a run starts or stops, not per streamed token (story 22). */
 const PAGE_UPDATES = [UseAgentUpdate.OnRunStatusChanged];
 
@@ -45,6 +49,13 @@ export default function HomePage() {
   const [retrying, setRetrying] = useState(false);
   const [restartOpen, setRestartOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  // Story 34: ratings and notes not yet in a feedback file, on the Send feedback button.
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [unsent, setUnsent] = useState<number | null>(null);
+  const recount = useCallback(() => {
+    void unsentCount().then(setUnsent);
+  }, []);
+  useEffect(recount, [recount]);
   const retryingRef = useRef(false);
   const chatRoot = useRef<HTMLDivElement>(null);
   // Story 8: click a coach bubble, Ask about this, and its words wait in the message box.
@@ -55,7 +66,11 @@ export default function HomePage() {
     requestAnimationFrame(() => chatRoot.current?.querySelector<HTMLTextAreaElement>('[data-testid="copilot-chat-textarea"]')?.focus());
   }, []);
   // Story 26: Good and Not good in the same palette, kept on this computer as test data.
-  const rate = useCallback((request: RateRequest) => sendRating(threadId, agent.messages, request), [threadId, agent]);
+  const rate = useCallback(async (request: RateRequest) => {
+    const result = await sendRating(threadId, agent.messages, request, fetch, COACH);
+    if (result.ok) recount();
+    return result;
+  }, [threadId, agent, recount]);
 
   useEffect(() => {
     const subscription = agent.subscribe({
@@ -132,6 +147,9 @@ export default function HomePage() {
           <button type="button" onClick={() => stopThen(() => setRestartOpen(true))} disabled={retrying} aria-haspopup="dialog">
             Restart coach
           </button>
+          <button type="button" onClick={() => setFeedbackOpen(true)} aria-haspopup="dialog">
+            {feedbackLabel(unsent)}
+          </button>
           <button type="button" onClick={openKeys} disabled={retrying} aria-haspopup="dialog">
             API keys{hasKeys ? " •" : ""}
           </button>
@@ -139,6 +157,16 @@ export default function HomePage() {
       </header>
       {mapOpen && <WholeMap onClose={() => setMapOpen(false)} />}
       {restartOpen && <RestartDialog onClose={() => setRestartOpen(false)} onRestarted={newChat} />}
+      {feedbackOpen && (
+        <FeedbackDialog
+          unsent={unsent}
+          threadId={threadId}
+          messages={agent.messages}
+          coach={COACH}
+          onClose={() => setFeedbackOpen(false)}
+          onSaved={recount}
+        />
+      )}
       {keysOpen && <ProviderKeysDialog onClose={() => setKeysOpen(false)} disabled={retrying} />}
       <main id="main-content" className="chat-main">
         {error && (

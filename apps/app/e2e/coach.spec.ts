@@ -550,6 +550,36 @@ test.describe("one conversation: story, Know your machine, reload, New chat", ()
     await expect(page.getByTestId("coach-palette")).toHaveCount(0);
   });
 
+  test("Send feedback saves one file of the rating and a note, and says the tester sends it (story 34, TC-29)", async () => {
+    const elsewhere: string[] = [];
+    const own = new URL(page.url()).origin;
+    const watch = (request: { url(): string }) => {
+      const url = request.url();
+      if (!url.startsWith(own) && !url.startsWith("data:") && !url.startsWith("blob:")) elsewhere.push(url);
+    };
+    page.on("request", watch);
+    const button = page.getByRole("button", { name: "Send feedback (1)" });
+    await expect(button).toBeVisible();
+    await button.click();
+    const dialog = page.getByRole("dialog", { name: "Send feedback" });
+    await dialog.getByRole("textbox", { name: "Your note" }).fill("made-up note for the test");
+    await shot(page, "07c-feedback-open");
+    const [download] = await Promise.all([page.waitForEvent("download"), dialog.getByRole("button", { name: "Save feedback file" }).click()]);
+    expect(download.suggestedFilename()).toMatch(/^coach-feedback-\d{8}-\d{6}\.json$/);
+    const file = JSON.parse(readFileSync((await download.path())!, "utf8"));
+    expect(file.ratings).toHaveLength(1);
+    expect(file.ratings[0].served_by).toEqual({ kind: "stub" });
+    expect(file.notes.map((n: { note: string }) => n.note)).toEqual(["made-up note for the test"]);
+    expect(file.notes[0].served_by).toEqual({ kind: "stub" });
+    await expect(dialog.getByRole("status")).toContainText(download.suggestedFilename());
+    await expect(dialog.getByRole("status")).toContainText("Nothing has been sent");
+    await shot(page, "07d-feedback-saved");
+    await dialog.getByRole("button", { name: "Close" }).click();
+    await expect(page.getByRole("button", { name: "Send feedback", exact: true })).toBeVisible();
+    page.off("request", watch);
+    expect(elsewhere).toEqual([]);
+  });
+
   test("the whole map: every station, You are here, choose a goal and see its route (story 29, TC-23)", async () => {
     const fixture = JSON.parse(readFileSync(join(__dirname, "../../../fixtures/curriculum/stations.json"), "utf8")) as { stations: { id: string; name: string; destination?: boolean }[] };
     const destination = fixture.stations.find((s) => s.destination)!.id;

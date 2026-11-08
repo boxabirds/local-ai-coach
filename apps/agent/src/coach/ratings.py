@@ -141,6 +141,15 @@ def served_by() -> dict[str, Any]:
     return {"kind": "hosted", "model": os.environ.get("LLM_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL}
 
 
+STUB = "stub"
+
+
+def answered_by(coach: Any) -> dict[str, Any]:
+    """Who answered this conversation: the page says when it is the stub coach (the release
+    runs it), which has no model; otherwise the model the agent would use now (story 34)."""
+    return {"kind": STUB} if coach == STUB else served_by()
+
+
 def build(body: Any, now: datetime | None = None) -> dict[str, Any]:
     """The record to keep for this rating. Raises Invalid."""
     if not isinstance(body, dict):
@@ -170,7 +179,7 @@ def build(body: Any, now: datetime | None = None) -> dict[str, Any]:
         "rating": rating,
         "reason": (reason or "").strip() or None,
         "item": {"kind": str(item.get("kind", ""))[:MAX_ITEM_TEXT], "text": str(item.get("text", ""))[:MAX_ITEM_TEXT]},
-        "served_by": served_by(),
+        "served_by": answered_by(body.get("coach")),
         "reasoning_effort": server_model.reasoning_effort(),
         "fingerprints": fingerprints(),
         "rated_index": index,
