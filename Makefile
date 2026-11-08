@@ -1,4 +1,4 @@
-.PHONY: help install setup dev serve dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test publish clean
+.PHONY: help install setup dev serve dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test notary-check publish clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -62,13 +62,20 @@ mac-app: ## Build Local AI Coach.app from the release trees in dist/: make mac-a
 	@test -n "$(VERSION)" || (echo "Set VERSION, for example: make mac-app VERSION=0.1.10"; exit 1)
 	scripts/build-mac-app.sh $(VERSION) $(MAC_SIGN)
 
+NOTARY_PROFILE ?= notarytool-profile
+notary-check: ## Check notarytool's stored credentials are in the Keychain (publish runs it before and between its stages)
+	@if [ "$$(uname -s)" = Darwin ]; then xcrun notarytool history --keychain-profile "$(NOTARY_PROFILE)" >/dev/null 2>&1 && echo "notary-check: $(NOTARY_PROFILE) present ($$(date +%H:%M:%S))" || (echo "notary-check: no $(NOTARY_PROFILE) in the Keychain ($$(date +%H:%M:%S)). Store it: xcrun notarytool store-credentials $(NOTARY_PROFILE) --apple-id <Apple ID> --team-id SANCRLNZFW"; exit 1); fi
+
 publish: ## Test, build all four archives and the notarised Mac app, and publish a GitHub release: make publish VERSION=0.1.7 TITLE="what changed" NOTES=notes.md
 	@test -n "$(VERSION)" && test -n "$(TITLE)" && test -f "$(NOTES)" || (echo "Set VERSION, TITLE and NOTES (a file): make publish VERSION=0.1.7 TITLE='one download' NOTES=notes.md"; exit 1)
 	@test -z "$$(git status --porcelain)" || (echo "publish: commit first; a release is built from what is committed"; exit 1)
 	@git fetch -q origin && test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/main)" || (echo "publish: push main first; the release is tagged on what GitHub has"; exit 1)
 	@! git ls-remote --exit-code --tags origin "v$(VERSION)" >/dev/null || (echo "publish: v$(VERSION) already exists"; exit 1)
+	$(MAKE) notary-check
 	$(MAKE) release-test
+	$(MAKE) notary-check
 	$(MAKE) release VERSION=$(VERSION)
+	$(MAKE) notary-check
 	$(MAKE) mac-app VERSION=$(VERSION) MAC_SIGN=--notarize
 	gh release create "v$(VERSION)" --target "$$(git rev-parse HEAD)" --title "v$(VERSION): $(TITLE)" --notes-file "$(NOTES)" dist/local-ai-coach-*.tar.gz dist/local-ai-coach-*.tar.gz.sha256 install.sh "dist/Local-AI-Coach-$(VERSION).dmg"
 

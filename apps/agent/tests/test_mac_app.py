@@ -318,6 +318,10 @@ def test_tcm1_publish_builds_the_notarised_app_after_the_release_and_uploads_the
     assert "--notarize" in lines[mac]
     assert "Local-AI-Coach-" in lines[upload] and ".dmg" in lines[upload]
     assert first("test_mac_app.py") < released
+    # The notary profile is checked before the long test run, and again after each stage, so a
+    # missing one fails in seconds and the log shows when it went (v0.1.10 and v0.1.11 lost it).
+    checks = [i for i, line in enumerate(lines) if "notarytool history --keychain-profile" in line]
+    assert checks and checks[0] < tested and any(released < i < mac for i in checks), dry.stdout
 
 
 # ---------------------------------------------------------------- end to end
