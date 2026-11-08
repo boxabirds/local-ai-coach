@@ -36,6 +36,8 @@ BUILD_APP = REPO / "scripts" / "build-mac-app.sh"
 BUILD_RELEASE = REPO / "scripts" / "build-release.sh"
 VERSION = "9.9.9-test"
 APP_NAME = "Local AI Coach.app"
+# Permanent once testers install it: macOS treats another ID as another app.
+BUNDLE_ID = "ai.sovereignlocal.coach"
 READY = "The coach is running at "
 ARCH = {"arm64": "arm64", "x86_64": "x64"}[os.uname().machine]
 BUILD_TIMEOUT = 1200
@@ -186,6 +188,7 @@ def test_tcb1_the_app_holds_this_macs_tree_its_icon_and_runs_on_both_kinds_of_ma
     assert info["LSUIElement"] is True
     assert info["LSMinimumSystemVersion"] == "13.0"
     assert info["CFBundleName"] == "Local AI Coach"
+    assert info["CFBundleIdentifier"] == BUNDLE_ID
     resources = built / "Contents" / "Resources"
     assert (resources / f"coach-{ARCH}" / "bin" / "local-ai-coach").is_file()
     assert (resources / "AppIcon.icns").stat().st_size > 0
@@ -287,6 +290,12 @@ def test_tci4_a_coach_that_cannot_start_leaves_the_app_up_until_quit(built, app_
     time.sleep(1)
     assert app.process.poll() is None, "the app crashed instead of showing the alert"
     assert app.quit() == 0
+
+
+# TC-B6: not gated, so a plain pytest catches a changed ID before any build.
+def test_tcb6_the_app_is_identified_by_the_projects_domain():
+    info = plistlib.loads((REPO / "apps" / "mac" / "Info.plist").read_bytes())
+    assert info["CFBundleIdentifier"] == BUNDLE_ID
 
 
 # TC-M1
