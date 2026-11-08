@@ -494,6 +494,8 @@ def test_s36_tca1_a3_the_signed_app_opens_the_real_coach_and_keeps_keys_in_the_k
         assert keys_call(agent, "POST", keys) == {"saved": True, "where": "keychain"}
         assert all(keychain_has(service, a) for a in ACCOUNTS)
         assert keys_call(agent, "GET") == {"saved": True, "where": "keychain"}
+        # Story 37: Jev refuses the made-up key, and the coach says so instead of going silent.
+        smoke(address, tmp_path, "e2e/real/refused.spec.ts", COACH_E2E_REFUSED="1")
         assert keys_call(agent, "DELETE") == {"saved": False, "where": "keychain"}
         # TC-N4: forgetting leaves nothing behind.
         assert not any(keychain_has(service, a) for a in ACCOUNTS)

@@ -18,7 +18,6 @@ from src.bounded_memory_saver import BoundedMemorySaver
 from src.model import build_model, RequestModelMiddleware, CredentialScopedModel
 from src.credentials import (
     CredentialsMiddleware,
-    CredentialScopedAgent,
     current_credentials,
     validate_credentials,
 )
@@ -29,6 +28,7 @@ from src.coach.curriculum import figure, story_markdown
 from src.coach.middleware import CoachStateMiddleware
 from src.coach.tools import COACH_TOOLS
 from src.coach.stub import stub_graph
+from src.coach.refusals import RefusalReportingAgent
 from src.coach.stored_keys import StoredKeys, router as keys_router
 from src.coach.turn_log import TurnLog
 from src.coach.restart import router as restart_router
@@ -134,7 +134,8 @@ add_langgraph_fastapi_endpoint(
 )
 
 
-coach_agent = CredentialScopedAgent(
+# Story 37: a turn a provider refuses ends with the coach saying so, not a stopped stream.
+coach_agent = RefusalReportingAgent(
     name="sample_agent",
     description="Open Generative UI by CopilotKit — answers you can interact with",
     graph=agent,

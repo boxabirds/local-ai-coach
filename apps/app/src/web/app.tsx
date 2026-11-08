@@ -24,6 +24,7 @@ import { useCoachUI } from "@/hooks/use-coach-ui";
 import { usePersistedChat, type PersistableAgent } from "@/hooks/use-persisted-chat";
 import { FollowEnd, type FollowAgent } from "@/components/chat/follow-end-view";
 import { newThreadId } from "@/lib/chat-store";
+import { turnErrorLine } from "@/components/chat/turn-error";
 
 /** Shown while the browser refuses to keep the conversation (story 22). */
 const NOT_KEPT = "I can't keep this conversation in this browser, so a reload will lose it.";
@@ -192,11 +193,7 @@ export default function HomePage() {
             scrollView={ReaderScrollView}
             messageView={MESSAGE_VIEW}
             input={QuotedInput}
-            onError={() =>
-              setError(
-                "Something cut my answer off. Try again, or ask me something else.",
-              )
-            }
+            onError={(event) => setError(turnErrorLine(event))}
             labels={labels}
           />
           </QuoteContext.Provider>
