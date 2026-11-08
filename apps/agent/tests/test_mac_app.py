@@ -44,6 +44,9 @@ STOP_WAIT = 20
 FAKE_SLEEP = 6029  # an unusual number, so the leftover check matches only our fakes
 LOGIN_BIN = "/fake/login/bin"
 PATH_MARKER = "__LOCAL_AI_COACH_PATH__"
+# What the app is started with: the few variables a Mac session always has, never the
+# shell's own (it may hold keys, and pytest prints a failing test's arguments).
+PASSED_ON = ("PATH", "TMPDIR", "USER", "LOGNAME", "LANG")
 
 FAKE_LAUNCHER = f"""#!/bin/bash
 # A stand-in for bin/local-ai-coach: records how it was started, prints the ready line, and
@@ -154,14 +157,17 @@ def built(tmp_path_factory) -> Path:
     return dist / APP_NAME
 
 
+def session_env() -> dict[str, str]:
+    return {k: os.environ[k] for k in PASSED_ON if k in os.environ}
+
+
 @pytest.fixture
 def app_env(tmp_path) -> dict[str, str]:
     home = tmp_path / "home"
     home.mkdir()
     shell = tmp_path / "login-shell"
     write_exe(shell, FAKE_SHELL)
-    env = {k: v for k, v in os.environ.items() if not k.startswith("COACH_")}
-    return {**env, "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach"), "SHELL": str(shell)}
+    return {**session_env(), "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach"), "SHELL": str(shell)}
 
 
 def fake_out(env: dict[str, str]) -> Path:
@@ -344,8 +350,7 @@ def test_tce1_e2_the_signed_app_runs_the_coach_the_browser_suite_passes_and_quit
         assert "Developer ID Application" in detail and "runtime" in detail, detail
     home = tmp_path / "home"
     home.mkdir()
-    env = {k: v for k, v in os.environ.items() if not k.startswith("COACH_")}
-    env.update({"HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach")})
+    env = {**session_env(), "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach")}
     # The browser suite is written against the tests' frozen curriculum (story 13), as in test_release.py.
     env["COACH_CURRICULUM"] = str(REPO / "fixtures" / "curriculum")
     app = RunningApp(signed_app, env)

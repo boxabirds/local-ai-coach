@@ -27,7 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var item: NSStatusItem!
     private let statusLine = NSMenuItem(title: Words.starting, action: nil, keyEquivalent: "")
     private let openItem = NSMenuItem(title: Words.openCoach, action: #selector(openCoach), keyEquivalent: "")
+    /// The running coach, and whether a quit has begun; read from the main thread, the
+    /// start-up thread and the signal handler, so behind a lock.
+    private let lock = NSLock()
     private var coach: Coach?
+    private var quitting = false
     private var address: URL?
     private var opened = false
     private var signals: [DispatchSourceSignal] = []
@@ -51,11 +55,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         [statusLine, openItem, logs, .separator(), quit].forEach { menu.addItem($0) }
         item.menu = menu
 
-        // A kill or Ctrl-C (the release test, a logout) quits the same way as the menu.
+        // A kill or Ctrl-C stops the coach and exits without AppKit, which may be inside an
+        // alert's modal loop and not run anything sent to the main queue until it closes.
         for number in [SIGTERM, SIGINT] {
             signal(number, SIG_IGN)
-            let source = DispatchSource.makeSignalSource(signal: number, queue: .main)
-            source.setEventHandler { NSApp.terminate(nil) }
+            let source = DispatchSource.makeSignalSource(signal: number, queue: .global(qos: .userInitiated))
+            source.setEventHandler { [self] in
+                takeCoach()?.stop(wait: Self.stopWait)
+                exit(0)
+            }
             source.resume()
             signals.append(source)
         }
@@ -79,8 +87,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }, onChange: { state in
             DispatchQueue.main.async { self.show(state) }
         })
-        DispatchQueue.main.sync { self.coach = coach }
-        coach.start()
+        let go: Bool = lock.withLock {
+            if quitting { return false }
+            self.coach = coach
+            return true
+        }
+        if go { coach.start() }
     }
 
     /// The learner's login shell: $SHELL, else their account's.
@@ -147,8 +159,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard let coach else { return .terminateNow }
-        self.coach = nil
+        guard let coach = takeCoach() else { return .terminateNow }
         DispatchQueue.global(qos: .userInitiated).async {
             coach.stop(wait: Self.stopWait)
             // While a reply is awaited AppKit runs the main run loop in the modal panel mode,
@@ -157,5 +168,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             CFRunLoopWakeUp(CFRunLoopGetMain())
         }
         return .terminateLater
+    }
+
+    /// Marks the quit and hands over the coach, once: whoever quits first stops it.
+    private func takeCoach() -> Coach? {
+        lock.withLock {
+            quitting = true
+            defer { coach = nil }
+            return coach
+        }
     }
 }
