@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 import plistlib
-import shutil
+import pwd
 import signal
 import socket
 import subprocess
@@ -351,6 +351,31 @@ def tree_pids(root: int) -> set[int]:
     return found
 
 
+def login_shell_path(env: dict[str, str]) -> list[str]:
+    """What this account's login shell sets PATH to, under the test's HOME, as the app asks it."""
+    shell = pwd.getpwuid(os.getuid()).pw_shell
+    out = subprocess.run([shell, "-i", "-l", "-c", f'printf "{PATH_MARKER}%s{PATH_MARKER}" "$PATH"'], env={**env, "TERM": "dumb"}, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=START_WAIT, check=False).stdout
+    folders = [f for f in out.split(PATH_MARKER)[1].strip().split(":") if f]
+    return list(dict.fromkeys(folders))  # once each, first place kept, as the app does
+
+
+RECORDER = """#!/bin/sh
+# Stands in for dirname, which the launcher runs first: records the PATH it was given, then is dirname.
+printf '%s' "$PATH" > "{record}"
+exec /usr/bin/dirname "$@"
+"""
+
+
+def login_folder_with_recorder(home: Path) -> tuple[Path, Path]:
+    """A folder only the test HOME's login shell puts first on PATH, holding RECORDER."""
+    folder, record = home / "login-bin", home / "launcher-path.txt"
+    folder.mkdir()
+    write_exe(folder / "dirname", RECORDER.format(record=record))
+    for profile in (".zprofile", ".bash_profile"):
+        (home / profile).write_text(f'export PATH="{folder}:$PATH"\n')
+    return folder, record
+
+
 # TC-E1, TC-E2
 @e2e
 def test_tce1_e2_the_signed_app_runs_the_coach_the_browser_suite_passes_and_quit_leaves_nothing(signed_app, tmp_path):
@@ -359,6 +384,7 @@ def test_tce1_e2_the_signed_app_runs_the_coach_the_browser_suite_passes_and_quit
         assert "Developer ID Application" in detail and "runtime" in detail, detail
     home = tmp_path / "home"
     home.mkdir()
+    folder, record = login_folder_with_recorder(home)
     env = {**session_env(), "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach")}
     # The browser suite is written against the tests' frozen curriculum (story 13), as in test_release.py.
     env["COACH_CURRICULUM"] = str(REPO / "fixtures" / "curriculum")
@@ -368,6 +394,9 @@ def test_tce1_e2_the_signed_app_runs_the_coach_the_browser_suite_passes_and_quit
         pids = tree_pids(app.process.pid)
         mine = listeners(pids)
         assert len(mine) >= 2 and all("127.0.0.1:" in line for line in mine), mine
+        # mac.path: the launcher in the signed app was given the login shell's PATH, first.
+        login, given = login_shell_path(env), record.read_text().split(":")
+        assert login[0] == str(folder) and given[: len(login)] == login, (login, given)
         browse = subprocess.run(
             ["npx", "playwright", "test"], cwd=REPO / "apps" / "app",
             env={**os.environ, "E2E_BASE_URL": address, "COACH_E2E_HOME": str(home / ".local-ai-coach")},
