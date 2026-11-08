@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { chromium, expect, test, type Page } from "@playwright/test";
 
 /**
  * Smoke test of the real coach (Ceetrix story 22, TC-18): the page `make dev` serves, against
@@ -35,3 +35,33 @@ test("the real page loads, API keys opens, typing works, and a reload keeps save
   expect(await savedState()).toEqual(before);
   expect(errors).toEqual([]);
 });
+
+test("the real coach, not the stub: no stub badge, and with no keys a message opens API keys and isn't sent (story 36)", async () => {
+  // A browser of its own: in --single-process mode a browser crashes if it opens a second context.
+  const browser = await chromium.launch({ args: ["--single-process"] });
+  try {
+    await realCoachAsksForKeys(await (await browser.newContext({ baseURL: test.info().project.use.baseURL })).newPage());
+  } finally {
+    await browser.close();
+  }
+});
+
+async function realCoachAsksForKeys(page: Page) {
+  await page.goto("/", { timeout: LOAD_MS });
+  await expect(page.getByText("Mastering Local AI coach")).toBeVisible({ timeout: LOAD_MS });
+  await expect(page.getByTestId("coach-stub-banner")).toHaveCount(0);
+
+  // Only where no keys are saved: with keys, sending would reach the model, and this test never does.
+  const { saved } = await (await page.request.get("/api/coach-keys")).json();
+  test.skip(saved === true, "keys are saved here, so sending would reach the model");
+  const box = page.getByTestId("copilot-chat-textarea");
+  await box.fill("A sample question, kept for later");
+  await box.press("Enter");
+  await expect(page.getByRole("dialog")).toBeVisible({ timeout: DIALOG_MS });
+  await expect(page.getByRole("link", { name: "Get an OpenAI key" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Get a Jev key" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(box).toHaveValue("A sample question, kept for later");
+  await expect(page.getByTestId("copilot-assistant-message")).toHaveCount(0);
+  await expect(page.getByTestId("copilot-user-message")).toHaveCount(0);
+}

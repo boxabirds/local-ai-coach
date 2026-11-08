@@ -11,6 +11,8 @@
 #   COACH_AGENT_PORT      the coach agent's port (default 8123)
 #   COACH_HOME            where progress is kept (default ~/.local-ai-coach)
 #   COACH_START_TIMEOUT   seconds to wait for both to start (default 60)
+#   COACH_STUB            1 starts the stub coach (no model, no keys) for the release's own
+#                         tests; anything else starts the real coach (story 36)
 #
 # Both listen on 127.0.0.1 only: nothing on your network can reach them.
 set -uo pipefail
@@ -98,8 +100,14 @@ AGENT_PID=$!
 
 (
   # The page's server is one Bun executable; it always listens on 127.0.0.1.
-  export PORT="$APP_PORT" COACH_WEB_DIR="$RELEASE/web" COACH_STUB=1 DO_NOT_TRACK=1
-  export LANGGRAPH_DEPLOYMENT_URL="http://$HOST:$AGENT_PORT/stub" COACH_AGENT_URL="http://$HOST:$AGENT_PORT"
+  export PORT="$APP_PORT" DO_NOT_TRACK=1 COACH_AGENT_URL="http://$HOST:$AGENT_PORT"
+  if [ "${COACH_STUB:-}" = 1 ]; then
+    export COACH_WEB_DIR="$RELEASE/web-stub" LANGGRAPH_DEPLOYMENT_URL="http://$HOST:$AGENT_PORT/stub"
+  else
+    # The real coach: the agent's own graph, which the keys saved on this computer unlock.
+    unset COACH_STUB
+    export COACH_WEB_DIR="$RELEASE/web" LANGGRAPH_DEPLOYMENT_URL="http://$HOST:$AGENT_PORT"
+  fi
   exec "$RELEASE/bin/coach-web"
 ) </dev/null >"$LOGS/app.log" 2>&1 &
 SERVER_PID=$!

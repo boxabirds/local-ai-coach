@@ -164,12 +164,16 @@ HOST_PY="$TOOLS/host/python/bin/python3"
 # The agent's packages exactly as locked, each with its hashes; the agent itself is source.
 (cd "$AGENT" && "$UV" export --frozen --no-dev --no-emit-project --format requirements-txt --quiet -o "$TOOLS/requirements.txt")
 
-echo "Building the stub coach's page ($VERSION)"
+# The real coach's page, and the stub's for the release's own tests (story 36).
 WEB="$DIST/web"
+WEB_STUB="$DIST/web-stub"
 fresh_dist "$DIST"
-(cd "$APP" && COACH_STUB=1 COACH_WEB_OUT="$WEB" pnpm exec bun build.ts >/dev/null)
+echo "Building the coach's page ($VERSION)"
+(cd "$APP" && env -u COACH_STUB COACH_WEB_OUT="$WEB" pnpm exec bun build.ts >/dev/null)
+echo "Building the stub coach's page ($VERSION)"
+(cd "$APP" && COACH_STUB=1 COACH_WEB_OUT="$WEB_STUB" pnpm exec bun build.ts >/dev/null)
 # Source maps help development only.
-find "$WEB" -name '*.map' -delete
+find "$WEB" "$WEB_STUB" -name '*.map' -delete
 
 for platform in "${platforms[@]}"; do
   archive="local-ai-coach-$platform.tar.gz"
@@ -180,6 +184,7 @@ for platform in "${platforms[@]}"; do
   # The page's server, compiled with the Bun runtime for this platform.
   "${BUN[@]}" build --compile --minify --target="bun-$platform" "$APP/server.ts" --outfile "$out/bin/coach-web" >/dev/null
   cp -a "$WEB" "$out/web"
+  cp -a "$WEB_STUB" "$out/web-stub"
 
   # The agent, without its virtualenv, tests or caches.
   rsync -a \

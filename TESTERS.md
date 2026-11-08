@@ -16,6 +16,18 @@ the screen has Open coach, Open logs and Quit Local AI Coach. To update, downloa
 version and drag it into Applications again. Your progress is kept, and it's the same
 progress as the Terminal install below.
 
+## Your API keys
+
+The coach answers with two hosted services, so you need a key from each:
+
+- An OpenAI key: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+- A Jev key: [console.typesafe.ai/keys](https://console.typesafe.ai/keys)
+
+The first time you send the coach a message, it asks for both. Paste them in and save. On a
+Mac they're kept in your Keychain, so you enter them once; on Linux they're kept for that
+session only. What you use is charged to your own OpenAI and TypeSafe (Jev's maker) accounts.
+The keys go only to OpenAI and TypeSafe, never to anyone else.
+
 ## Install with Terminal (Mac or Linux)
 
 Open Terminal (on a Mac: press Command and Space, type Terminal, press Return) and paste:
@@ -70,4 +82,8 @@ each one's Python is built for its own computer. Publish with
 `make publish VERSION=x.y.z TITLE="what changed" NOTES=notes.md`: it refuses unless the
 tree is committed, main is pushed and the tag is new, then runs `make release-test`,
 builds all four archives, and only then creates the GitHub release with every
-`dist/local-ai-coach-*.tar.gz`, its `.sha256` and `install.sh`.
+`dist/local-ai-coach-*.tar.gz`, its `.sha256`, `install.sh` and the Mac app's disk image.
+The release runs the real coach. `COACH_STUB=1 local-ai-coach` starts the stub coach (no
+model, no keys) from the same install; the release test uses it for the full browser suite.
+`COACH_RELEASE_REAL=1 make release-test` also sends one real message through the signed app,
+with the keys saved in this Mac's Keychain.

@@ -101,8 +101,9 @@ class Fakes:
                 f'printf "%s\\n" "$*" >> "{self.python_log}"\ncase "$*" in *"-m uvicorn"*) {agent_body} ;; *) {check} ;; esac',
             )
             (tree / "python" / "lib" / "python3.12" / "site-packages").mkdir(parents=True)
-            (tree / "web").mkdir()
-            (tree / "web" / "index.html").write_text("<!doctype html>\n")
+            for page in ("web", "web-stub"):
+                (tree / page).mkdir()
+                (tree / page / "index.html").write_text("<!doctype html>\n")
             tar_dir(tree, self.release / archive_name(platform))
             self.write_release_sum(platform)
 
@@ -418,6 +419,51 @@ def test_s32_tc17_the_launcher_runs_the_bundled_python_isolated(tmp_path, home):
         os.close(fd)
 
 
+# Story 36: the real coach unless COACH_STUB is exactly 1. The fake page server records what it was given.
+SERVED = ("COACH_WEB_DIR", "LANGGRAPH_DEPLOYMENT_URL", "COACH_STUB")
+
+
+def served_with(tmp_path: Path, home: Path, **extra: str) -> dict[str, str]:
+    record = tmp_path / "served.txt"
+    lines = "; ".join(f'printf "{name}=%s\\n" "${{{name}-<unset>}}" >> "{record}"' for name in SERVED)
+    fakes = Fakes(tmp_path, server_body=f"{lines}; sleep {FAKE_SLEEP}")
+    assert install(fakes, home).returncode == 0
+    env = healthy_env(fakes, home)
+    env.pop("COACH_STUB", None)
+    env.update(extra)
+    pid, fd, out = start_in_terminal(["/bin/bash", command(home), "--no-open"], env, b"Press Ctrl-C")
+    try:
+        assert b"The coach is running at" in out, out
+        # The fake curl answers healthy at once, so the page server may not have written yet.
+        deadline = time.monotonic() + RUN_TIMEOUT
+        while len(record.read_text().splitlines() if record.exists() else []) < len(SERVED) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        given = dict(line.split("=", 1) for line in record.read_text().splitlines())
+        given["agent"] = f"http://127.0.0.1:{env['COACH_AGENT_PORT']}"
+        return given
+    finally:
+        os.write(fd, CTRL_C)
+        wait_for_exit(pid, fd)
+        os.close(fd)
+
+
+@pytest.mark.parametrize("stub", [None, "", "0", "yes"])
+def test_s36_tc_r4_r6_the_launcher_starts_the_real_coach_unless_coach_stub_is_1(tmp_path, home, stub):
+    given = served_with(tmp_path, home, **({} if stub is None else {"COACH_STUB": stub}))
+    release = home / ".local-ai-coach" / "app" / "release"
+    assert given["COACH_WEB_DIR"] == f"{release}/web"
+    assert given["LANGGRAPH_DEPLOYMENT_URL"] == given["agent"]
+    assert given["COACH_STUB"] == "<unset>"
+
+
+def test_s36_tc_r5_coach_stub_1_starts_the_stub(tmp_path, home):
+    given = served_with(tmp_path, home, COACH_STUB="1")
+    release = home / ".local-ai-coach" / "app" / "release"
+    assert given["COACH_WEB_DIR"] == f"{release}/web-stub"
+    assert given["LANGGRAPH_DEPLOYMENT_URL"] == given["agent"] + "/stub"
+    assert given["COACH_STUB"] == "1"
+
+
 def test_tc10_version(tmp_path, home):
     fakes = Fakes(tmp_path)
     assert install(fakes, home).returncode == 0
@@ -543,7 +589,7 @@ def test_s32_tc18d_the_build_stops_before_building_when_an_input_fails(tmp_path)
     result = subprocess.run(["bash", str(BUILD), VERSION], env=env, capture_output=True, text=True, timeout=RUN_TIMEOUT, check=False)
     assert result.returncode != 0
     assert "could not be verified" in result.stderr and "uv-" in result.stderr
-    assert "Building the stub coach's page" not in result.stdout
+    assert "page (" not in result.stdout  # neither the coach's page nor the stub's was built
 
 
 # ------------------------------------------------------------------ end to end (opt-in)
@@ -591,6 +637,15 @@ def test_tc05_archive_contents(built_release):
     assert any(n.startswith("./apps/agent/__pycache__/main.cpython-312") for n in names)
     assert not [n for n in names if n.split("/")[-1] in ("uv", "uvx")]
     assert any(n.endswith(".js") and n.startswith("./web/") for n in names)
+    # Story 36, TC-R3: the real page and the stub page, built differently. Both bundles hold the
+    # badge's words (the component is bundled either way); that only the stub draws it is TC-R1's
+    # check, in a browser.
+    assert "./web-stub/index.html" in names
+    with tarfile.open(archive) as tar:
+        def scripts(page: str) -> bytes:
+            return b"".join(tar.extractfile(n).read() for n in sorted(names) if n.startswith(f"./{page}/") and n.endswith(".js"))
+
+        assert scripts("web") and scripts("web-stub") and scripts("web") != scripts("web-stub")
     assert not [n for n in names if n.endswith(".map")], "source maps in the archive"
     assert not [n for n in names if n.endswith(".node")]
     assert not [n for n in names if n.split("/")[-1] == ".env" or (n.split("/")[-1].startswith(".env.") and not n.endswith(".env.example"))]
@@ -712,6 +767,38 @@ def test_s32_tc22_each_archive_bundles_its_own_platforms_python(all_built, platf
     assert not wrong, wrong[:5]
 
 
+def start_installed(home: Path, env: dict[str, str], app_port: int, agent_port: int) -> subprocess.Popen[str]:
+    """The installed command, started as a tester would, once both parts answer."""
+    coach = subprocess.Popen([command(home), "--no-open"], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    deadline = time.monotonic() + START_WAIT
+    # Wait for both parts, as the launcher does before it opens the browser:
+    # the agent's first start after an install is slower than the page server's.
+    urls = [f"http://127.0.0.1:{app_port}/api/health", f"http://127.0.0.1:{agent_port}/health"]
+    while time.monotonic() < deadline:
+        if all(subprocess.run(["curl", "-fs", "-o", "/dev/null", url], check=False).returncode == 0 for url in urls):
+            return coach
+        time.sleep(1)
+    coach.terminate()
+    coach.wait(timeout=30)
+    pytest.fail("installed coach did not start")
+
+
+def browse(app_port: int, home: Path, *config: str, out: str) -> None:
+    """A Playwright suite against the installed coach; its output is kept in TMPDIR if it fails."""
+    done = subprocess.run(
+        ["npx", "playwright", "test", *config],
+        cwd=REPO / "apps" / "app",
+        env={**os.environ, "E2E_BASE_URL": f"http://127.0.0.1:{app_port}", "SMOKE_URL": f"http://127.0.0.1:{app_port}", "COACH_E2E_HOME": str(home / ".local-ai-coach")},
+        capture_output=True,
+        text=True,
+        timeout=BUILD_TIMEOUT,
+        check=False,
+    )
+    if done.returncode != 0:
+        (Path(os.environ.get("TMPDIR", "/tmp")) / out).write_text(done.stdout + done.stderr)
+    assert done.returncode == 0, done.stdout[-3000:]
+
+
 @e2e
 def test_tc12_to_tc14_install_run_browse_reinstall(built_release, tmp_path):
     home = tmp_path / "home"
@@ -723,41 +810,29 @@ def test_tc12_to_tc14_install_run_browse_reinstall(built_release, tmp_path):
     # The installed coach keeps progress in its default place, ~/.local-ai-coach under this HOME,
     # which is where the browser suite looks; the test-wide COACH_HOME must not leak in.
     env = {**os.environ, "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach"), "COACH_APP_PORT": str(app_port), "COACH_AGENT_PORT": str(agent_port)}
+    env.pop("COACH_STUB", None)
     # The browser suite is written against the tests' frozen curriculum (story 13), as it is
     # when it starts its own servers; that the release ships the real one is TC-05's check.
     env["COACH_CURRICULUM"] = str(REPO / "fixtures" / "curriculum")
-    coach = subprocess.Popen([command(home), "--no-open"], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    try:
-        deadline = time.monotonic() + START_WAIT
-        # Wait for both parts, as the launcher does before it opens the browser:
-        # the agent's first start after an install is slower than the page server's.
-        urls = [f"http://127.0.0.1:{app_port}/api/health", f"http://127.0.0.1:{agent_port}/health"]
-        while time.monotonic() < deadline:
-            ok = all(subprocess.run(["curl", "-fs", "-o", "/dev/null", url], check=False).returncode == 0 for url in urls)
-            if ok:
-                break
-            time.sleep(1)
-        else:
-            pytest.fail("installed coach did not start")
 
+    # Story 36, TC-R1: started as a tester starts it, the real coach, which asks for keys.
+    coach = start_installed(home, env, app_port, agent_port)
+    try:
+        browse(app_port, home, "-c", "playwright.smoke.config.ts", out="release-smoke.out")
+    finally:
+        coach.terminate()
+        coach.wait(timeout=30)
+
+    # TC-R2: the stub, from the same install, for the full browser suite with no keys.
+    coach = start_installed(home, {**env, "COACH_STUB": "1"}, app_port, agent_port)
+    try:
         # TC-12: both parts listen on loopback only.
         listeners = subprocess.run(["lsof", "-nP", "-iTCP", "-sTCP:LISTEN"], capture_output=True, text=True, check=False).stdout
         mine = [line for line in listeners.splitlines() if f":{app_port} " in line + " " or f":{agent_port} " in line + " "]
         assert mine and all("127.0.0.1:" in line for line in mine), mine
 
         # TC-13: the browser suite against the installed coach.
-        browse = subprocess.run(
-            ["npx", "playwright", "test"],
-            cwd=REPO / "apps" / "app",
-            env={**os.environ, "E2E_BASE_URL": f"http://127.0.0.1:{app_port}", "COACH_E2E_HOME": str(home / ".local-ai-coach")},
-            capture_output=True,
-            text=True,
-            timeout=BUILD_TIMEOUT,
-            check=False,
-        )
-        if browse.returncode != 0:
-            (Path(os.environ.get("TMPDIR", "/tmp")) / "release-browse.out").write_text(browse.stdout + browse.stderr)
-        assert browse.returncode == 0, browse.stdout[-3000:]
+        browse(app_port, home, out="release-browse.out")
     finally:
         coach.terminate()
         coach.wait(timeout=30)

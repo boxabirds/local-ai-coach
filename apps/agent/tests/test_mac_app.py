@@ -11,7 +11,11 @@ Mac only: the app is a Mac app.
 from __future__ import annotations
 
 import os
+import json
 import plistlib
+import secrets
+import shutil
+import urllib.request
 import pwd
 import signal
 import socket
@@ -388,6 +392,7 @@ def test_tce1_e2_the_signed_app_runs_the_coach_the_browser_suite_passes_and_quit
     env = {**session_env(), "HOME": str(home), "COACH_HOME": str(home / ".local-ai-coach")}
     # The browser suite is written against the tests' frozen curriculum (story 13), as in test_release.py.
     env["COACH_CURRICULUM"] = str(REPO / "fixtures" / "curriculum")
+    env["COACH_STUB"] = "1"  # story 36, TC-A2: the full suite needs the stub, chosen as the launcher allows
     app = RunningApp(signed_app, env)
     try:
         address = app.ready()
@@ -420,3 +425,101 @@ def test_tcm1_make_can_run_the_build_script_itself():
     assert os.access(BUILD_APP, os.X_OK)
     mode = subprocess.run(["git", "ls-files", "-s", str(BUILD_APP)], cwd=REPO, capture_output=True, text=True, check=True).stdout.split()[0]
     assert mode == "100755", mode
+
+
+# ---------------------------------------------------------------- story 36: the real coach from the app
+SECURITY = "/usr/bin/security"
+DEFAULT_SERVICE = "local-ai-coach"  # keystore.DEFAULT_SERVICE: the keys a tester saves
+ACCOUNTS = ("openai", "jev")
+real_turn = pytest.mark.skipif(os.environ.get("COACH_RELEASE_REAL") != "1", reason="set COACH_RELEASE_REAL=1: sends one real message with the keys saved on this Mac")
+
+
+def keychain_has(service: str, account: str) -> bool:
+    """Whether the login Keychain holds that item. Never asks for the secret (no -w)."""
+    return subprocess.run([SECURITY, "find-generic-password", "-s", service, "-a", account], capture_output=True, check=False).returncode == 0
+
+
+def real_env(tmp_path: Path, service: str | None) -> dict[str, str]:
+    """The real HOME (the login Keychain is found through it), but progress in a temporary
+    folder, so the tester's record is never touched; and keys under `service` if given."""
+    env = {**session_env(), "HOME": os.environ["HOME"], "COACH_HOME": str(tmp_path / "coach-home")}
+    if service:
+        env["COACH_KEYCHAIN_SERVICE"] = service
+    return env
+
+
+def agent_address(app: RunningApp, page: str) -> str:
+    """The agent's address: the app's other loopback listener."""
+    page_port = page.rsplit(":", 1)[1]
+    ports = {line.split()[8].rsplit(":", 1)[1] for line in listeners(tree_pids(app.process.pid))}
+    others = sorted(ports - {page_port})
+    assert len(others) == 1, ports
+    return f"http://127.0.0.1:{others[0]}"
+
+
+def keys_call(agent: str, method: str, body: dict[str, str] | None = None) -> dict:
+    # No browser headers: the agent's /coach/keys answers only the coach's own server, as here.
+    data = json.dumps(body).encode() if body is not None else None
+    request = urllib.request.Request(f"{agent}/coach/keys", data=data, method=method, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(request, timeout=STOP_WAIT) as reply:
+        return json.loads(reply.read())
+
+
+def smoke(address: str, home: Path, *specs: str, **extra: str) -> None:
+    done = subprocess.run(
+        ["npx", "playwright", "test", "-c", "playwright.smoke.config.ts", *specs], cwd=REPO / "apps" / "app",
+        env={**os.environ, "SMOKE_URL": address, **extra}, capture_output=True, text=True, timeout=BUILD_TIMEOUT, check=False,
+    )
+    if done.returncode != 0:
+        (Path(os.environ.get("TMPDIR", "/tmp")) / "mac-app-smoke.out").write_text(done.stdout + done.stderr)
+    assert done.returncode == 0, done.stdout[-3000:]
+
+
+# TC-A1, TC-A3, TC-N3, TC-N4, TC-N5
+@e2e
+def test_s36_tca1_a3_the_signed_app_opens_the_real_coach_and_keeps_keys_in_the_keychain(signed_app, tmp_path):
+    service = f"local-ai-coach-test-{secrets.token_hex(6)}"
+    default_before = [keychain_has(DEFAULT_SERVICE, a) for a in ACCOUNTS]
+    # Made up, in the shape both providers issue; /coach/keys stores without asking a provider.
+    keys = {a: f"sk-test-{secrets.token_hex(16)}" for a in ACCOUNTS}
+    env = real_env(tmp_path, service)
+    app = RunningApp(signed_app, env)
+    try:
+        address = app.ready()
+        # TC-A1: the real page, no stub badge, and with no keys under this service a message opens API keys.
+        smoke(address, tmp_path)
+        agent = agent_address(app, address)
+        # TC-A3: saved through the app's agent, under the hardened runtime, into the login Keychain.
+        assert keys_call(agent, "GET") == {"saved": False, "where": "keychain"}
+        assert keys_call(agent, "POST", keys) == {"saved": True, "where": "keychain"}
+        assert all(keychain_has(service, a) for a in ACCOUNTS)
+        assert keys_call(agent, "GET") == {"saved": True, "where": "keychain"}
+        assert keys_call(agent, "DELETE") == {"saved": False, "where": "keychain"}
+        # TC-N4: forgetting leaves nothing behind.
+        assert not any(keychain_has(service, a) for a in ACCOUNTS)
+    finally:
+        assert app.quit() == 0
+        for account in ACCOUNTS:
+            subprocess.run([SECURITY, "delete-generic-password", "-s", service, "-a", account], capture_output=True, check=False)
+    # TC-N3: the keys a tester saves were never touched. TC-N5: progress went to the temporary folder.
+    assert [keychain_has(DEFAULT_SERVICE, a) for a in ACCOUNTS] == default_before
+    assert (tmp_path / "coach-home").is_dir()
+
+
+# TC-A4
+@e2e
+@real_turn
+def test_s36_tca4_the_signed_apps_real_coach_answers_with_the_saved_keys(signed_app, tmp_path):
+    assert all(keychain_has(DEFAULT_SERVICE, a) for a in ACCOUNTS), "no coach keys are saved in this Mac's Keychain"
+    env = real_env(tmp_path, None)
+    # The saved "OpenAI" key may be for another server the tester chose (story 21); that choice
+    # isn't secret and lives beside their progress, so the temporary COACH_HOME gets a copy.
+    chosen = Path(os.environ["HOME"]) / ".local-ai-coach" / "provider.json"
+    if chosen.is_file():
+        Path(env["COACH_HOME"]).mkdir(parents=True)
+        shutil.copy(chosen, Path(env["COACH_HOME"]) / chosen.name)
+    app = RunningApp(signed_app, env)
+    try:
+        smoke(app.ready(), tmp_path, "e2e/real/turn.spec.ts", COACH_E2E_REAL="1")
+    finally:
+        assert app.quit() == 0
