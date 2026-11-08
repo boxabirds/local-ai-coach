@@ -9,6 +9,16 @@ export function KEPT_SENTENCE(saved: boolean, where: string | null): string {
   return "This computer can't keep keys yet, so I hold them only until you refresh.";
 }
 
+/** Where each provider makes keys. */
+export const KEY_PAGES = {
+  openai: "https://platform.openai.com/api-keys",
+  jev: "https://console.typesafe.ai/keys",
+} as const;
+
+function KeyPage({ href, children }: { href: string; children: string }) {
+  return <a className="provider-keys-get" href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
+}
+
 export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () => void; disabled?: boolean }) {
   const { hasKeys, saved, where, save, clear, server, setServer } = useProviderKeys();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -84,8 +94,10 @@ export function ProviderKeysDialog({ onClose, disabled = false }: { onClose: () 
       <p>Saving or clearing keys starts a new chat.</p>
       <form onSubmit={(event) => { event.preventDefault(); void testConnection(); }}>
         <label htmlFor="provider-jev-key">Jev API key</label>
+        <KeyPage href={KEY_PAGES.jev}>Get a Jev key</KeyPage>
         <input id="provider-jev-key" type="password" maxLength={4096} autoComplete="off" spellCheck={false} autoCapitalize="none" value={jev} onChange={(event) => edit(setJev, event.target.value)} disabled={pending || disabled} />
         <label htmlFor="provider-openai-key">{other ? "API key for that server" : "OpenAI API key"}</label>
+        {!other && <KeyPage href={KEY_PAGES.openai}>Get an OpenAI key</KeyPage>}
         <input id="provider-openai-key" type="password" maxLength={4096} autoComplete="off" spellCheck={false} autoCapitalize="none" value={openai} onChange={(event) => edit(setOpenai, event.target.value)} disabled={pending || disabled} />
         <label className="provider-keys-other">
           <input

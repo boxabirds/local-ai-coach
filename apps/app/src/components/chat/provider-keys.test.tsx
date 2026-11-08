@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import "@testing-library/jest-dom/vitest";
 import { useEffect, useState } from "react";
 import { KEYS_URL, SERVER_URL, ProviderKeysProvider, useDraft, useProviderKeys, type Server } from "./provider-keys";
-import { ProviderKeysDialog } from "./provider-keys-dialog";
+import { KEY_PAGES, ProviderKeysDialog } from "./provider-keys-dialog";
 
 /** A made-up server (story 21 fixtures). */
 const SERVER: Server = { base_url: "https://models.example.test/v1", model: "example-org/example-model" };
@@ -192,6 +192,22 @@ describe("keys kept in this Mac's Keychain (story 16, TC-21)", () => {
     expect(await screen.findByText(/Your Keychain didn't save the keys/)).toBeInTheDocument();
     expect(screen.getByTestId("active")).toHaveTextContent(OPENAI);
     expect(screen.getByLabelText("OpenAI API key")).toHaveValue("");
+  });
+});
+
+describe("where to get each key", () => {
+  it("links each key box to the provider's page for keys, in a new tab, and drops OpenAI's for another server", async () => {
+    serve();
+    await setup();
+    for (const [name, href] of [["Get a Jev key", KEY_PAGES.jev], ["Get an OpenAI key", KEY_PAGES.openai]]) {
+      const link = screen.getByRole("link", { name });
+      expect(link).toHaveAttribute("href", href);
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    }
+    fireEvent.click(screen.getByLabelText("Other OpenAI-compatible server"));
+    expect(screen.queryByRole("link", { name: "Get an OpenAI key" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Get a Jev key" })).toBeInTheDocument();
   });
 });
 

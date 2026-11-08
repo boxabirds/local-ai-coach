@@ -14,6 +14,7 @@
 .provider-keys-dialog h2 { margin: 0 0 12px; font-size: 20px; font-weight: 600; }
 .provider-keys-dialog p { margin: 12px 0; font-size: 13px; line-height: 1.6; }
 .provider-keys-dialog label { display: block; margin: 16px 0 6px; font-size: 13px; font-weight: 500; }
+.provider-keys-dialog .provider-keys-get { display: inline-block; margin: 0 0 6px; font-size: 13px; text-decoration: underline; }
 .provider-keys-dialog textarea,
 .provider-keys-dialog input:not([type="checkbox"]) { width: 100%; min-width: 0; border: 1px solid var(--border-default); border-radius: 8px; padding: 10px; background: var(--surface-primary); font-size: 16px; }
 /* Story 34: the feedback note grows downwards only, in the page's font. */
