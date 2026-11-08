@@ -370,3 +370,10 @@ def test_tce1_e2_the_signed_app_runs_the_coach_the_browser_suite_passes_and_quit
     port = int(address.rsplit(":", 1)[1])
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", port))
+
+
+def test_tcm1_make_can_run_the_build_script_itself():
+    """make runs scripts/build-mac-app.sh directly, not through bash (found when v0.1.10's publish stopped)."""
+    assert os.access(BUILD_APP, os.X_OK)
+    mode = subprocess.run(["git", "ls-files", "-s", str(BUILD_APP)], cwd=REPO, capture_output=True, text=True, check=True).stdout.split()[0]
+    assert mode == "100755", mode
