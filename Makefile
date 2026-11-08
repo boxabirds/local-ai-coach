@@ -49,18 +49,28 @@ release: ## Build the tester release, one archive per platform: make release VER
 	@test -n "$(VERSION)" || (echo "Set VERSION, for example: make release VERSION=0.1.0"; exit 1)
 	scripts/build-release.sh $(VERSION)
 
-release-test: ## Build this machine's archive (its Python bundled), install it from scratch and run the browser suite against the install; then the smoke test if make dev is running
+release-test: ## Build this machine's archive (its Python bundled), install it from scratch and run the browser suite against the install, and on a Mac against the coach Local AI Coach.app starts; then the smoke test if make dev is running
 	COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_release.py
+	@if [ "$$(uname -s)" = Darwin ]; then (cd apps/mac && swift test -q) && COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_mac_app.py; fi
 	@if curl -s -m 5 -o /dev/null "$(SMOKE_URL)/api/health"; then $(MAKE) smoke; else echo "SMOKE NOT RUN: nothing answers at $(SMOKE_URL). Start make dev and run make smoke."; fi
 
-publish: ## Test, build all four archives and publish a GitHub release: make publish VERSION=0.1.7 TITLE="what changed" NOTES=notes.md
+mac-test: ## Local AI Coach.app: the Swift unit tests, then build the app from fake release trees and run it (story 35)
+	cd apps/mac && swift test -q
+	COACH_MAC_APP=1 uv run --directory apps/agent pytest -q tests/test_mac_app.py
+
+mac-app: ## Build Local AI Coach.app from the release trees in dist/: make mac-app VERSION=0.1.10 [MAC_SIGN=--sign|--notarize] (story 35)
+	@test -n "$(VERSION)" || (echo "Set VERSION, for example: make mac-app VERSION=0.1.10"; exit 1)
+	scripts/build-mac-app.sh $(VERSION) $(MAC_SIGN)
+
+publish: ## Test, build all four archives and the notarised Mac app, and publish a GitHub release: make publish VERSION=0.1.7 TITLE="what changed" NOTES=notes.md
 	@test -n "$(VERSION)" && test -n "$(TITLE)" && test -f "$(NOTES)" || (echo "Set VERSION, TITLE and NOTES (a file): make publish VERSION=0.1.7 TITLE='one download' NOTES=notes.md"; exit 1)
 	@test -z "$$(git status --porcelain)" || (echo "publish: commit first; a release is built from what is committed"; exit 1)
 	@git fetch -q origin && test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/main)" || (echo "publish: push main first; the release is tagged on what GitHub has"; exit 1)
 	@! git ls-remote --exit-code --tags origin "v$(VERSION)" >/dev/null || (echo "publish: v$(VERSION) already exists"; exit 1)
 	$(MAKE) release-test
 	$(MAKE) release VERSION=$(VERSION)
-	gh release create "v$(VERSION)" --target "$$(git rev-parse HEAD)" --title "v$(VERSION): $(TITLE)" --notes-file "$(NOTES)" dist/local-ai-coach-*.tar.gz dist/local-ai-coach-*.tar.gz.sha256 install.sh
+	$(MAKE) mac-app VERSION=$(VERSION) MAC_SIGN=--notarize
+	gh release create "v$(VERSION)" --target "$$(git rev-parse HEAD)" --title "v$(VERSION): $(TITLE)" --notes-file "$(NOTES)" dist/local-ai-coach-*.tar.gz dist/local-ai-coach-*.tar.gz.sha256 install.sh "dist/Local-AI-Coach-$(VERSION).dmg"
 
 SMOKE_URL ?= http://127.0.0.1:3000
 smoke: ## Real-browser smoke test of the running coach (make dev): load, API keys, typing, reload. Never types a key

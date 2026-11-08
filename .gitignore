@@ -78,3 +78,7 @@ dist/
 
 # test and eval output
 test-results/
+
+# Swift build output (story 35)
+apps/mac/.build/
+apps/mac/.swiftpm/

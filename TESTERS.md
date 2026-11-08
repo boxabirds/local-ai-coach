@@ -3,7 +3,20 @@
 This is an early version for testers. It runs entirely on your own computer: the
 coach's checks look at your machine, so it can't run on a website.
 
-## Install
+## On a Mac: the app
+
+1. On the [latest release](https://github.com/boxabirds/local-ai-coach/releases/latest),
+   download `Local-AI-Coach-<version>.dmg`. It works on Apple silicon and Intel Macs.
+2. Open it and drag Local AI Coach onto Applications.
+3. Double-click Local AI Coach in Applications. The first time, your Mac asks whether to
+   open an app downloaded from the internet: choose Open.
+
+The coach opens in your browser once it's ready. A chip icon in the menu bar at the top of
+the screen has Open coach, Open logs and Quit Local AI Coach. To update, download the new
+version and drag it into Applications again. Your progress is kept, and it's the same
+progress as the Terminal install below.
+
+## Install with Terminal (Mac or Linux)
 
 Open Terminal (on a Mac: press Command and Space, type Terminal, press Return) and paste:
 
