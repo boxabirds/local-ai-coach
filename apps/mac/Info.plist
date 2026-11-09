@@ -29,5 +29,25 @@
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSAppleScriptEnabled</key>
+    <true/>
+    <key>OSAScriptingDefinition</key>
+    <string>LocalAICoach.sdef</string>
+    <!-- Sparkle (story 39). SUPublicEDKey is set from sparkle-public-key by build-mac-app.sh;
+         the feed is CoachCore's releaseFeed, given by the updater's delegate. -->
+    <key>SUPublicEDKey</key>
+    <string>PUBLIC_KEY</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
+    <key>SURequireSignedFeed</key>
+    <true/>
+    <key>SUVerifyUpdateBeforeExtraction</key>
+    <true/>
+    <key>SUSendProfileInfo</key>
+    <false/>
+    <key>SUAllowsAutomaticUpdates</key>
+    <false/>
 </dict>
 </plist>

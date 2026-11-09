@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<!-- Local AI Coach.app's AppleScript commands (Ceetrix story 39). Each one does what a menu item does. -->
+<dictionary title="Local AI Coach Terminology">
+    <suite name="Local AI Coach Suite" code="LAIC" description="Local AI Coach commands.">
+        <command name="check for updates" code="LAICchku" description="Check for a newer version now, as the menu's Check for updates does.">
+            <cocoa class="CheckForUpdatesCommand"/>
+        </command>
+    </suite>
+</dictionary>

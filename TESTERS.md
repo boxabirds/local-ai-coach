@@ -12,8 +12,10 @@ coach's checks look at your machine, so it can't run on a website.
    open an app downloaded from the internet: choose Open.
 
 The coach opens in your browser once it's ready. A chip icon in the menu bar at the top of
-the screen has Open coach, Open logs and Quit Local AI Coach. To update, download the new
-version and drag it into Applications again. Your progress is kept, and it's the same
+the screen has Open coach, Open logs, Check for updates and Quit Local AI Coach. The app
+looks for a new version once a day and asks before installing one. If yours is v0.1.11 or
+older it can't do that yet: download the new version and drag it into Applications again,
+once. Your progress is kept, and it's the same
 progress as the Terminal install below.
 
 ## Your API keys
@@ -82,7 +84,10 @@ each one's Python is built for its own computer. Publish with
 `make publish VERSION=x.y.z TITLE="what changed" NOTES=notes.md`: it refuses unless the
 tree is committed, main is pushed and the tag is new, then runs `make release-test`,
 builds all four archives, and only then creates the GitHub release with every
-`dist/local-ai-coach-*.tar.gz`, its `.sha256`, `install.sh` and the Mac app's disk image.
+`dist/local-ai-coach-*.tar.gz`, its `.sha256`, `install.sh`, the Mac app's disk image and
+`appcast.xml`, the list the app reads to find updates. It needs the update key, which you
+make once with `scripts/sparkle-key.sh`; keep a copy in your password manager, because
+without it testers have to download the next version by hand.
 The release runs the real coach. `COACH_STUB=1 local-ai-coach` starts the stub coach (no
 model, no keys) from the same install; the release test uses it for the full browser suite.
 `COACH_RELEASE_REAL=1 make release-test` also sends one real message through the signed app,

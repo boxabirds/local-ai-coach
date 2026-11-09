@@ -10,6 +10,7 @@ Mac only: the app is a Mac app.
 
 from __future__ import annotations
 
+import base64
 import os
 import json
 import plistlib
@@ -21,6 +22,7 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -97,9 +99,35 @@ def fake_tree(dist: Path, arch: str = ARCH, version: str = VERSION) -> Path:
     return tree
 
 
-def build(dist: Path, *mode: str) -> subprocess.CompletedProcess[str]:
-    env = {**os.environ, "COACH_MAC_DIST": str(dist)}
-    return subprocess.run(["bash", str(BUILD_APP), VERSION, *mode], env=env, capture_output=True, text=True, timeout=BUILD_TIMEOUT, check=False)
+ED25519_RAW_BYTES = 32
+
+
+def throwaway_key(folder: Path) -> tuple[Path, Path]:
+    """An update key pair in Sparkle's form (story 39): the private seed and the public key, base64.
+    Made with openssl, so no test ever touches the Keychain or Julian's real key."""
+    folder.mkdir(parents=True, exist_ok=True)
+    der = subprocess.run(["openssl", "genpkey", "-algorithm", "ed25519", "-outform", "DER"], capture_output=True, check=True).stdout
+    public = subprocess.run(["openssl", "pkey", "-inform", "DER", "-pubout", "-outform", "DER"], input=der, capture_output=True, check=True).stdout
+    private_file, public_file = folder / "sparkle_ed25519", folder / "sparkle-public-key"
+    private_file.write_text(base64.b64encode(der[-ED25519_RAW_BYTES:]).decode() + "\n")
+    private_file.chmod(0o600)
+    public_file.write_text(base64.b64encode(public[-ED25519_RAW_BYTES:]).decode() + "\n")
+    return private_file, public_file
+
+
+_session_key: list[Path] = []
+
+
+def session_public_key() -> Path:
+    """One throwaway public key for every build in this run."""
+    if not _session_key:
+        _session_key.append(throwaway_key(Path(tempfile.mkdtemp(prefix="coach-update-key-")))[1])
+    return _session_key[0]
+
+
+def build(dist: Path, *mode: str, version: str = VERSION, public_key: Path | None = None) -> subprocess.CompletedProcess[str]:
+    env = {**os.environ, "COACH_MAC_DIST": str(dist), "COACH_SPARKLE_PUBLIC_KEY": str(public_key or session_public_key())}
+    return subprocess.run(["bash", str(BUILD_APP), version, *mode], env=env, capture_output=True, text=True, timeout=BUILD_TIMEOUT, check=False)
 
 
 def snapshot(path: Path) -> dict[str, tuple[int, int]]:

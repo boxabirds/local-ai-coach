@@ -1,4 +1,4 @@
-.PHONY: help install setup dev serve dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test notary-check publish clean
+.PHONY: help install setup dev serve dev-stub dev-app dev-agent dev-mcp build lint check tail evals evals-smoke map-layout rating-to-case ratings-export smoke release release-test notary-check sparkle-check publish clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -51,12 +51,12 @@ release: ## Build the tester release, one archive per platform: make release VER
 
 release-test: ## Build this machine's archive (its Python bundled), install it from scratch and run the browser suite against the install, and on a Mac against the coach Local AI Coach.app starts; then the smoke test if make dev is running
 	COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_release.py
-	@if [ "$$(uname -s)" = Darwin ]; then (cd apps/mac && swift test -q) && COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_mac_app.py; fi
+	@if [ "$$(uname -s)" = Darwin ]; then (cd apps/mac && swift test -q) && COACH_RELEASE_E2E=1 uv run --directory apps/agent pytest -q tests/test_mac_app.py tests/test_mac_updates.py; fi
 	@if curl -s -m 5 -o /dev/null "$(SMOKE_URL)/api/health"; then $(MAKE) smoke; else echo "SMOKE NOT RUN: nothing answers at $(SMOKE_URL). Start make dev and run make smoke."; fi
 
 mac-test: ## Local AI Coach.app: the Swift unit tests, then build the app from fake release trees and run it (story 35)
 	cd apps/mac && swift test -q
-	COACH_MAC_APP=1 uv run --directory apps/agent pytest -q tests/test_mac_app.py
+	COACH_MAC_APP=1 uv run --directory apps/agent pytest -q tests/test_mac_app.py tests/test_mac_updates.py
 
 mac-app: ## Build Local AI Coach.app from the release trees in dist/: make mac-app VERSION=0.1.10 [MAC_SIGN=--sign|--notarize] (story 35)
 	@test -n "$(VERSION)" || (echo "Set VERSION, for example: make mac-app VERSION=0.1.10"; exit 1)
@@ -66,18 +66,23 @@ NOTARY_PROFILE ?= notarytool-profile
 notary-check: ## Check notarytool's stored credentials are in the Keychain (publish runs it before and between its stages)
 	@if [ "$$(uname -s)" = Darwin ]; then xcrun notarytool history --keychain-profile "$(NOTARY_PROFILE)" >/dev/null 2>&1 && echo "notary-check: $(NOTARY_PROFILE) present ($$(date +%H:%M:%S))" || (echo "notary-check: no $(NOTARY_PROFILE) in the Keychain ($$(date +%H:%M:%S)). Store it: xcrun notarytool store-credentials $(NOTARY_PROFILE) --apple-id <Apple ID> --team-id SANCRLNZFW"; exit 1); fi
 
+sparkle-check: ## Check the update key is there and matches the app's public key (story 39; make it once with scripts/sparkle-key.sh)
+	@bash -c 'source scripts/sparkle-lib.sh && sparkle_check_key' && echo "sparkle-check: the update key matches apps/mac/sparkle-public-key"
+
 publish: ## Test, build all four archives and the notarised Mac app, and publish a GitHub release: make publish VERSION=0.1.7 TITLE="what changed" NOTES=notes.md
 	@test -n "$(VERSION)" && test -n "$(TITLE)" && test -f "$(NOTES)" || (echo "Set VERSION, TITLE and NOTES (a file): make publish VERSION=0.1.7 TITLE='one download' NOTES=notes.md"; exit 1)
 	@test -z "$$(git status --porcelain)" || (echo "publish: commit first; a release is built from what is committed"; exit 1)
 	@git fetch -q origin && test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/main)" || (echo "publish: push main first; the release is tagged on what GitHub has"; exit 1)
 	@! git ls-remote --exit-code --tags origin "v$(VERSION)" >/dev/null || (echo "publish: v$(VERSION) already exists"; exit 1)
+	$(MAKE) sparkle-check
 	$(MAKE) notary-check
 	$(MAKE) release-test
 	$(MAKE) notary-check
 	$(MAKE) release VERSION=$(VERSION)
 	$(MAKE) notary-check
 	$(MAKE) mac-app VERSION=$(VERSION) MAC_SIGN=--notarize
-	gh release create "v$(VERSION)" --target "$$(git rev-parse HEAD)" --title "v$(VERSION): $(TITLE)" --notes-file "$(NOTES)" dist/local-ai-coach-*.tar.gz dist/local-ai-coach-*.tar.gz.sha256 install.sh "dist/Local-AI-Coach-$(VERSION).dmg"
+	scripts/make-appcast.sh $(VERSION) "dist/Local-AI-Coach-$(VERSION).dmg" "$(NOTES)" dist/appcast.xml
+	gh release create "v$(VERSION)" --target "$$(git rev-parse HEAD)" --title "v$(VERSION): $(TITLE)" --notes-file "$(NOTES)" dist/local-ai-coach-*.tar.gz dist/local-ai-coach-*.tar.gz.sha256 install.sh "dist/Local-AI-Coach-$(VERSION).dmg" dist/appcast.xml
 
 SMOKE_URL ?= http://127.0.0.1:3000
 smoke: ## Real-browser smoke test of the running coach (make dev): load, API keys, typing, reload. Never types a key

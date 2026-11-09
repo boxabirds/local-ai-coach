@@ -13,6 +13,8 @@
 #
 #   COACH_MAC_DIST   where the trees are and the app goes (default <repo>/dist)
 #   NOTARY_PROFILE   notarytool's keychain profile (default notarytool-profile)
+#   COACH_SPARKLE_PUBLIC_KEY  the updates' public key file (default apps/mac/sparkle-public-key,
+#                    made by scripts/sparkle-key.sh; the tests pass a throwaway one). Story 39.
 set -euo pipefail
 
 VERSION="${1:?usage: build-mac-app.sh <version> [--sign|--notarize]}"
@@ -28,6 +30,9 @@ DMG="$DIST/Local-AI-Coach-$VERSION.dmg"
 NOTARY_PROFILE="${NOTARY_PROFILE:-notarytool-profile}"
 NOTARY_TIMEOUT=30m
 ARCHES=(arm64 x64)
+PUBLIC_KEY_FILE="${COACH_SPARKLE_PUBLIC_KEY:-$MAC/sparkle-public-key}"
+# An Ed25519 public key in base64: 32 bytes, 44 characters.
+PUBLIC_KEY_PATTERN='^[A-Za-z0-9+/]{43}=$'
 
 fail() { echo "build-mac-app: $*" >&2; exit 1; }
 
@@ -40,6 +45,10 @@ for arch in "${ARCHES[@]}"; do
   trees+=("$arch")
 done
 [ "${#trees[@]}" -gt 0 ] || fail "no release tree in $DIST (release-darwin-arm64 or release-darwin-x64). Run scripts/build-release.sh $VERSION first."
+
+[ -f "$PUBLIC_KEY_FILE" ] || fail "no update key at $PUBLIC_KEY_FILE. Julian makes it once: scripts/sparkle-key.sh"
+PUBLIC_KEY="$(tr -d '[:space:]' <"$PUBLIC_KEY_FILE")"
+[[ "$PUBLIC_KEY" =~ $PUBLIC_KEY_PATTERN ]] || fail "$PUBLIC_KEY_FILE does not hold an Ed25519 public key in base64"
 
 IDENTITY=-
 if [ "$MODE" != adhoc ]; then
@@ -54,10 +63,14 @@ SWIFT=(swift build -c release --arch arm64 --arch x86_64 --package-path "$MAC")
 BIN="$("${SWIFT[@]}" --show-bin-path)"
 
 rm -rf "$APP" "$DMG"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp "$BIN/LocalAICoach" "$APP/Contents/MacOS/LocalAICoach"
+# The updater (story 39): Sparkle's framework, found through the app's Frameworks folder.
+ditto "$BIN/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
+install_name_tool -add_rpath @executable_path/../Frameworks "$APP/Contents/MacOS/LocalAICoach"
+cp "$MAC/LocalAICoach.sdef" "$APP/Contents/Resources/LocalAICoach.sdef"
 cp "$MAC/Info.plist" "$APP/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" -c "Set :CFBundleVersion $VERSION" "$APP/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" -c "Set :CFBundleVersion $VERSION" -c "Set :SUPublicEDKey $PUBLIC_KEY" "$APP/Contents/Info.plist"
 
 ICONS="$(mktemp -d "${TMPDIR:-/tmp}/coach-icon.XXXXXX")"
 trap 'rm -rf "$ICONS"' EXIT
@@ -90,13 +103,23 @@ else
     # Python: ctypes and cffi callbacks need writable executable memory.
     "${SIGN[@]}" --entitlements "$MAC/entitlements/python.plist" "$(cd "$tree/python/bin" && pwd -P)/$(readlink "$tree/python/bin/python3" || echo python3)"
   done
-  grep -v -e '/bin/coach-web$' -e '/python/bin/python3' "$macho" | tr '\n' '\0' | xargs -0 -n 200 "${SIGN[@]}"
+  # grep exits 1 when nothing is left; xargs then signs nothing.
+  { grep -v -e '/bin/coach-web$' -e '/python/bin/python3' "$macho" || true; } | tr '\n' '\0' | xargs -0 -n 200 "${SIGN[@]}"
+  # Sparkle's helpers inside out, then the framework (Sparkle's documented order for a
+  # Developer ID with the hardened runtime). The downloader keeps its own entitlements.
+  SPARKLE="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+  "${SIGN[@]}" "$SPARKLE/XPCServices/Installer.xpc"
+  "${SIGN[@]}" --preserve-metadata=entitlements "$SPARKLE/XPCServices/Downloader.xpc"
+  "${SIGN[@]}" "$SPARKLE/Autoupdate"
+  "${SIGN[@]}" "$SPARKLE/Updater.app"
+  "${SIGN[@]}" "$APP/Contents/Frameworks/Sparkle.framework"
   "${SIGN[@]}" --entitlements "$MAC/entitlements/app.plist" "$APP"
 fi
 codesign --verify --deep --strict "$APP"
 echo "Built $APP"
 
-[ "$MODE" = --notarize ] || exit 0
+# The disk image is made when signed: the update test (story 39) installs from a --sign one.
+[ "$MODE" != adhoc ] || exit 0
 
 # ---------------------------------------------------------------- notarising and the disk image
 notarise() {
@@ -105,9 +128,11 @@ notarise() {
   grep -q 'status: Accepted' "$ICONS/notary.txt" || fail "Apple did not accept $(basename "$1"). See: xcrun notarytool log <id> --keychain-profile $NOTARY_PROFILE"
 }
 
-ditto -c -k --keepParent "$APP" "$ICONS/app.zip"
-notarise "$ICONS/app.zip"
-xcrun stapler staple "$APP"
+if [ "$MODE" = --notarize ]; then
+  ditto -c -k --keepParent "$APP" "$ICONS/app.zip"
+  notarise "$ICONS/app.zip"
+  xcrun stapler staple "$APP"
+fi
 
 STAGE="$ICONS/stage"
 mkdir -p "$STAGE"
@@ -115,9 +140,11 @@ ditto "$APP" "$STAGE/$NAME.app"
 ln -s /Applications "$STAGE/Applications"
 hdiutil create -quiet -volname "$NAME" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
 codesign --force --timestamp --sign "$IDENTITY" "$DMG"
-notarise "$DMG"
-xcrun stapler staple "$DMG"
 
-spctl --assess --type execute --verbose "$APP"
-xcrun stapler validate "$DMG"
+if [ "$MODE" = --notarize ]; then
+  notarise "$DMG"
+  xcrun stapler staple "$DMG"
+  spctl --assess --type execute --verbose "$APP"
+  xcrun stapler validate "$DMG"
+fi
 echo "Built $DMG ($(du -h "$DMG" | cut -f1))"

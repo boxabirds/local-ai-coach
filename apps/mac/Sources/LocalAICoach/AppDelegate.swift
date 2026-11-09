@@ -8,6 +8,7 @@ enum Words {
     static let stoppedStatus = "The coach isn't running"
     static let openCoach = "Open coach"
     static let openLogs = "Open logs"
+    static let checkForUpdates = "Check for updates\u{2026}"
     static let quit = "Quit Local AI Coach"
     static let couldNotStart = "I couldn't start."
     static let stoppedUnexpectedly = "I stopped unexpectedly."
@@ -16,7 +17,7 @@ enum Words {
     static let quitButton = "Quit"
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// How long Quit waits for the coach to stop before it is killed.
     static let stopWait: TimeInterval = 10
     static let homeFolder = ".local-ai-coach"
@@ -27,6 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var item: NSStatusItem!
     private let statusLine = NSMenuItem(title: Words.starting, action: nil, keyEquivalent: "")
     private let openItem = NSMenuItem(title: Words.openCoach, action: #selector(openCoach), keyEquivalent: "")
+    private let updateItem = NSMenuItem(title: Words.checkForUpdates, action: #selector(checkForUpdates), keyEquivalent: "")
+    private var updates: Updates!
     /// The running coach, and whether a quit has begun; read from the main thread, the
     /// start-up thread and the signal handler, so behind a lock.
     private let lock = NSLock()
@@ -44,15 +47,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = CoachIcon.menuBarImage()
         item.button?.setAccessibilityLabel("Local AI Coach")
+        updates = Updates(relaunch: openBrowser)
         let menu = NSMenu()
         menu.autoenablesItems = false
+        menu.delegate = self
+        updateItem.target = self
         statusLine.isEnabled = false
         openItem.target = self
         openItem.isEnabled = false
         let logs = NSMenuItem(title: Words.openLogs, action: #selector(openLogs), keyEquivalent: "")
         logs.target = self
         let quit = NSMenuItem(title: Words.quit, action: #selector(NSApplication.terminate(_:)), keyEquivalent: Self.quitKey)
-        [statusLine, openItem, logs, .separator(), quit].forEach { menu.addItem($0) }
+        [statusLine, openItem, logs, updateItem, .separator(), quit].forEach { menu.addItem($0) }
         item.menu = menu
 
         // A kill or Ctrl-C stops the coach and exits without AppKit, which may be inside an
@@ -143,6 +149,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openCoach() {
         if let address { NSWorkspace.shared.open(address) }
+    }
+
+    /// The menu item and the AppleScript command `check for updates` (story 39).
+    @objc func checkForUpdates() {
+        updates.check()
+    }
+
+    /// Check for updates is off while a check is already running.
+    func menuWillOpen(_ menu: NSMenu) {
+        updateItem.isEnabled = updates.canCheck()
     }
 
     @objc private func openLogs() {
